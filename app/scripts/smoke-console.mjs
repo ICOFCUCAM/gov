@@ -80,8 +80,22 @@ const PAGES = [
   { path: '/gov/health-regulation/programmes', map: false, text: /public-health programmes and workforce/i },
   // Independent oversight (plan I8): complaints, disclosures, audit engagements and data-protection requests; protected identities hidden.
   { path: '/gov/oversight', map: false, text: /independent oversight/i },
+  // Territory and infrastructure (plan I7): land dealings and disputes, building control and housing, local governments, transport.
+  { path: '/gov/land', map: false, text: /land dealings and disputes/i },
+  { path: '/gov/building', map: false, text: /planning, building control and housing/i },
+  { path: '/gov/local-government', map: false, text: /local and regional government/i },
+  { path: '/gov/transport', map: false, text: /transport registers/i },
+  // Human services (plan I6): identity, passports and travel documents, labour, social protection.
+  { path: '/gov/identity', map: false, text: /national identity/i },
+  { path: '/gov/passports', map: false, text: /passports and travel documents/i },
+  { path: '/gov/labour', map: false, text: /labour and employment/i },
+  { path: '/gov/social-protection', map: false, text: /social protection/i },
   // Tax services (plan step I5) and forms batch 6: the procedures and a form of each kind, in three channels.
   { path: '/gov/tax/services', map: false, text: /tax services/i },
+  // Plan step I5: budget and treasury, procurement, the Cabinet office (records as the official may read them, and the procedures).
+  { path: '/gov/treasury/budget', map: false, text: /budget and treasury/i },
+  { path: '/gov/treasury/procurement', map: false, text: /procurement/i },
+  { path: '/gov/cabinet-office', map: false, text: /cabinet office/i },
   { path: '/gov/law/procedures/forms/tax.return.periodic.nil', map: false, text: /register status/i },
   { path: '/gov/law/procedures/forms/tax.return.periodic.late_submission/print', map: false, text: /register status/i },
   { path: '/gov/law/procedures/forms/tax.objection.submit', map: false, text: /register status/i },

@@ -55,7 +55,17 @@ export function directive(ref: string): DirectiveRow | undefined {
   return r ? { ...r, targets: [...r.targets] } : undefined;
 }
 
-export function draftDirective(input: { ref?: string; kind?: string; issuedByCharterId?: string; title?: string; citation?: string | null; legalBasis?: { instrument?: string; eId?: string }[]; targets?: string[]; payload?: Record<string, unknown>; by?: string }): DirectiveRow | { error: string } {
+/**
+ * What a directive asks of its recipients (plan step I5; specification Part 1
+ * §3.4 "Executive directives: issuer, recipient, scope, legal basis, effective
+ * period, required response and status"): the scope it covers, when it ends,
+ * and whether each recipient must respond (by a date the directive states,
+ * never a platform default). Kept in the payload beside the legal basis.
+ */
+export interface DirectiveTerms { scope?: string; effectiveUntil?: string; response?: { required: true; by?: string; what: string } }
+export interface DirectiveResponse { institution: string; text: string; by: string; at: string; version: number }
+
+export function draftDirective(input: { ref?: string; kind?: string; issuedByCharterId?: string; title?: string; citation?: string | null; legalBasis?: { instrument?: string; eId?: string }[]; targets?: string[]; payload?: Record<string, unknown>; by?: string; scope?: string; effectiveUntil?: string; response?: { required?: boolean; by?: string; what?: string } }): DirectiveRow | { error: string } {
   const by = input.by?.trim();
   if (!by) return { error: 'Name the official drafting the directive' };
   const ref = (input.ref ?? '').trim();
@@ -82,12 +92,26 @@ export function draftDirective(input: { ref?: string; kind?: string; issuedByCha
   // A caretaker restriction the nation adopted, or a court's ruling that a cited provision is invalid or suspended (plan phase 6).
   const transition = caretakerRefusal({ institution: issuer, directive: kind }) ?? judicialRefusal(legalBasis);
   if (transition) return { error: transition };
+  // Scope, effective period and required response (plan step I5).
+  const terms: DirectiveTerms = {};
+  if (typeof input.scope === 'string' && input.scope.trim()) terms.scope = input.scope.trim().slice(0, 1000);
+  if (input.effectiveUntil) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(input.effectiveUntil)) return { error: 'The end of the effective period is a date (YYYY-MM-DD)' };
+    terms.effectiveUntil = input.effectiveUntil;
+  }
+  if (input.response?.required) {
+    const what = String(input.response.what ?? '').trim();
+    if (!what) return { error: 'Say what response each recipient must give' };
+    if (input.response.by && !/^\d{4}-\d{2}-\d{2}$/.test(input.response.by)) return { error: 'The response date is a date (YYYY-MM-DD), as the directive states it' };
+    if (!targets.length) return { error: 'A directive that requires a response names its recipients' };
+    terms.response = { required: true, what: what.slice(0, 1000), ...(input.response.by ? { by: input.response.by } : {}) };
+  }
   const row: DirectiveRow = {
     id: randomUUID(), ref, kind, issued_by_charter_id: issuer,
     issued_by_name: by, title: title.slice(0, 300), citation: input.citation?.trim() || null, status: 'drafting',
     targets,
     // The legal basis travels in the payload (the substrate mirror's columns stay as they are).
-    payload: { ...(input.payload && typeof input.payload === 'object' ? input.payload : {}), ...(legalBasis.length ? { legalBasis } : {}) },
+    payload: { ...(input.payload && typeof input.payload === 'object' ? input.payload : {}), ...(legalBasis.length ? { legalBasis } : {}), ...terms },
     signed_at: null, signed_by_id: null, effective_at: null, rescinded_at: null, created_at: now, updated_at: now,
   };
   db().rows.push(row);
@@ -130,6 +154,38 @@ export function rescindDirective(ref: string, by: string | undefined): Directive
   r.rescinded_at = r.updated_at = new Date().toISOString();
   recordAudit(who, 'directive.rescind', `Directive:${ref}`, 'ok', r.title);
   return directive(ref)!;
+}
+
+/**
+ * A recipient's response to a directive that requires one: an official of a
+ * recipient institution (checked in the route), once the directive is in
+ * effect; a later response is a new version, the earlier kept.
+ */
+export function respondToDirective(ref: string, institution: string, text: string, by: string | undefined, now = new Date()): DirectiveRow | { error: string } {
+  const who = by?.trim();
+  if (!who) return { error: 'Name the official responding' };
+  const r = db().rows.find(x => x.ref === ref);
+  if (!r) return { error: 'No such directive' };
+  if (r.status !== 'effective' && r.status !== 'signed') return { error: `Only a signed directive is answered (this one is ${r.status})` };
+  if (!r.targets.includes(institution)) return { error: 'Only a recipient institution responds to the directive' };
+  const t = text.trim();
+  if (!t) return { error: 'Give the response' };
+  const p = (r.payload ?? {}) as { responses?: DirectiveResponse[] };
+  const list = Array.isArray(p.responses) ? p.responses : [];
+  const version = list.filter(x => x.institution === institution).length + 1;
+  r.payload = { ...(r.payload ?? {}), responses: [...list, { institution, text: t.slice(0, 4000), by: who, at: now.toISOString(), version }] };
+  r.updated_at = now.toISOString();
+  recordAudit(who, 'directive.respond', `Directive:${ref}`, 'ok', `${institution} · version ${version}`);
+  return directive(ref)!;
+}
+
+/** The recipients that have not responded to a directive that requires a response, and whether its date has passed. */
+export function outstandingResponses(d: DirectiveRow, now = new Date()): { institution: string; overdue: boolean }[] {
+  const p = (d.payload ?? {}) as DirectiveTerms & { responses?: DirectiveResponse[] };
+  if (!p.response?.required || d.status === 'rescinded' || d.status === 'drafting') return [];
+  const done = new Set((p.responses ?? []).map(x => x.institution));
+  const overdue = !!p.response.by && now.toISOString().slice(0, 10) > p.response.by;
+  return d.targets.filter(t => !done.has(t)).map(institution => ({ institution, overdue }));
 }
 
 /** Signed directives whose effective time has come take effect (read-time; nothing runs in the background). Returns the refs that did. */

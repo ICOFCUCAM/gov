@@ -1,0 +1,243 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "TRN-VEH-002",
+ "record_type": "transport.vehicle-transfer",
+ "form_version": 1,
+ "procedure_package_id": "transport.vehicle-transfer",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-TRN-001: competent authorities and statutory responsibilities (the vehicleRegistration, roadAuthority and transportRegulator slots; none ship).",
+  "CFG-DAT-001: retention and disclosure of the case and its personal data."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/PARTS-08-11.md",
+  "id": "TRN-VEH-002",
+  "part": 9,
+  "section": "2.1",
+  "line": 550,
+  "batch": 10
+ },
+ "library": {
+  "title": "Change a vehicle's keeper",
+  "intro": "Record a change of keeper on a registered vehicle. Two officials decide; the earlier keeper stays in the vehicle's history.",
+  "owner": "vehicleRegistration",
+  "filled_by": "The seller and the buyer; an official at an office.",
+  "authority": "Filed with the vehicle and driver licensing body the nation names (vehicleRegistration slot, shipped empty).",
+  "procedure": {
+   "key": "transport.vehicle-transfer",
+   "stage": "received",
+   "action": "check",
+   "document": "transfer-instrument"
+  },
+  "lists": {},
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "slot-owner",
+    "what": "The competent body is the institution the nation names for its slot of the deployment profile (landRegistry, buildingControl, housing, vehicleRegistration, roadAuthority, transportRegulator), shipped empty; who holds each power over a decision comes from the permit authority registry, proposed and unapproved",
+    "why": "Authority comes from the deployment profile and the approved mappings, never a ministry by name; a production installation refuses a power no approved mapping covers.",
+    "rule": "CLAUDE.md Government operating model: authorityFor(); lib/permits/decisions.ts (plan I7)"
+   },
+   {
+    "id": "separate-records",
+    "what": "Vehicle registration, a driving licence, an operator licence and a road works permit are four records kept apart, each by the body the nation names",
+    "why": "Catalogue Part 9 §4.3: never one undifferentiated approved status.",
+    "rule": "lib/transport/register.ts"
+   },
+   {
+    "id": "two-officials",
+    "what": "Every registration and decision is proposed by one official and confirmed by a different person; the official who verified or reviewed does not decide",
+    "why": "Catalogue Part 8 §3.3 and Part 9 §5: dual control by distinct authorised individuals.",
+    "rule": "lib/casework/engine.ts act() (fourEyes, distinctFrom); lib/data/dual-control.ts dualControlRefusal()"
+   },
+   {
+    "id": "no-ai-decision",
+    "what": "No step is decided by a model, a score or a map: officials decide with reasons",
+    "why": "AI never makes a legally material decision.",
+    "rule": "CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   },
+   {
+    "id": "nation-lists",
+    "what": "Categories, classes and kinds the law decides are the nation's configured lists; none ship (a proposed list is marked proposed)",
+    "why": "CivicOS never invents authority or classifications.",
+    "rule": "lib/forms/contract.ts configured lists; lib/forms/publication.ts"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/PARTS-08-11.md",
+    "line": 550,
+    "quotes": [
+     "TRN-VEH-002",
+     "Change of vehicle ownership",
+     "Linked transfer and ownership-history event"
+    ],
+    "met_by": {
+     "fields": [
+      "transfer.mark",
+      "transfer.new_keeper"
+     ],
+     "procedure": "grant"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-08-11.md",
+    "line": 753,
+    "quotes": [
+     "REG-TRN-002",
+     "Vehicle register",
+     "Vehicle identifier, registration, recorded keepers or owners as defined by law, inspections and status"
+    ],
+    "met_by": {
+     "fields": [
+      "transfer.new_keeper"
+     ],
+     "platform": {
+      "file": "app/src/lib/transport/register.ts",
+      "how": "transferVehicle(): the history keeps every keeper"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "transfer.mark",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 20
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Registration mark"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter registration mark.",
+     "length": "Registration mark is too long."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "transfer.new_keeper",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.person_or_organisation",
+   "personal_data_class": "personal",
+   "evidence": [],
+   "label": {
+    "en": "New keeper (a person or an organisation of the registers)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter new keeper (a person or an organisation of the registers).",
+     "reference_exists": "There is no record with that reference in the register."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "transfer.instrument",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "transfer-instrument",
+     "when": "when_the_form_asks_for_it"
+    }
+   ],
+   "label": {
+    "en": "The sale or transfer document, signed by both"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the sale or transfer document, signed by both."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "only": [
+    "declaration.text_version",
+    "declaration.confirmed",
+    "declaration.signed_at"
+   ],
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "transfer.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

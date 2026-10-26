@@ -23,6 +23,15 @@
 // never typed; overlaps with published parcels by area. Gaps are not
 // checked: an incomplete cadastre is normal.
 //
+// Since plan step I7 the rights of a published parcel change only through the
+// land registry's procedures (lib/land/procedures.ts: a transfer, an
+// encumbrance and its discharge, a correction, each recorded by one official
+// and decided by another), never by an amendment of the parcel: their effects
+// call applyRightsChange(), and a dispute freezes the interest it concerns
+// (freezeInterest(), releaseInterest()) until it is decided. Every right has a
+// stable reference (PCL-000001/R1) so a transaction or a dispute can name it
+// without naming its holder.
+//
 // Holders are personal data. Rights and holders are returned only by
 // viewParcel() with `rights: true` (the routes decide it with
 // canSeeParcelRights() in lib/auth/roles.ts); publicParcel() — the only shape
@@ -32,7 +41,7 @@
 // policy, its changes and loads are the store's own records.
 
 import { createHash, randomUUID } from 'node:crypto';
-import { getMinistry, listMinistries, recordAudit } from '@/lib/data/store';
+import { authorityFor, getMinistry, listMinistries, recordAudit } from '@/lib/data/store';
 import { parcelRepo } from '@/lib/data/repo';
 import { touch } from '@/lib/data/repo/track';
 import { withDefaults } from '@/lib/data/defaults';
@@ -108,6 +117,8 @@ export const SOURCE_KINDS: { key: SourceKind; label: string }[] = [
 
 /** One right, restriction or responsibility: personal data (holder, holder reference). */
 export interface ParcelRight {
+  /** Its stable reference on the parcel (PCL-000001/R1): what a transaction or a dispute names, never the holder. */
+  id?: string;
   rrr: Rrr;
   type: RightType;
   holderKind: HolderKind;
@@ -117,7 +128,16 @@ export interface ParcelRight {
   /** A fraction "n/d" (ownership-type rights add up to at most one). */
   share?: string;
   source: { kind: SourceKind; ref: string; date?: string };
+  /** A mortgage's rank among the mortgages on the parcel, in the order they were registered (1 first). */
+  priority?: number;
+  /** The right this restriction burdens, where it burdens one (a mortgage of a lease). */
+  burdens?: string;
+  /** Registered through a land registry case (plan I7): the case and the date the registration takes effect. */
+  registered?: { case: string; effective: string };
 }
+
+/** A dispute or objection holds an interest (a right, the boundary or the whole parcel) until it is decided (lib/land). */
+export interface ParcelFreeze { interest: string; case: string; since: string; by: string }
 
 export interface ParcelSurvey {
   method: SurveyMethod;
@@ -136,6 +156,8 @@ export interface ParcelOverlap { id: string; parcelId: string; areaM2: number }
 
 export interface ParcelVersion {
   n: number; at: string; by: string; what: string;
+  /** A registered change (plan I7): the date it takes effect and the case (and sealed decision) that authorised it. */
+  effective?: string; change?: string;
   parcelId: string; landUse: LandUse; areaM2: number; geometry: MultiPolygonGeom; survey: ParcelSurvey; rights: ParcelRight[];
 }
 
@@ -169,6 +191,10 @@ export interface Parcel {
   pending?: ParcelAmendment;
   versions: ParcelVersion[];
   note?: string;
+  /** Interests held by an open dispute or objection (plan I7): none of them changes until it is decided. */
+  freezes?: ParcelFreeze[];
+  /** The last right reference given on this parcel. */
+  rightSeq?: number;
 }
 
 export interface ParcelPolicy {
@@ -219,10 +245,17 @@ const db = (): Db => {
   // Snapshots saved before a field existed get its default (withDefaults fills nested policy fields).
   const filled = withDefaults(d as unknown as Record<string, unknown>, { parcels: [], policy: structuredClone(DEFAULT_POLICY), changes: [], imports: [], seq: 1, changeSeq: 1 } as unknown as Record<string, unknown>) as unknown as Db;
   for (const k of Object.keys(filled) as (keyof Db)[]) if (d[k] === undefined || k === 'policy') (d as unknown as Record<string, unknown>)[k] = filled[k];
+  // Rights recorded before they had references get them now, in their order (plan I7).
+  for (const p of d.parcels) if (p.rights.some(r => !r.id)) numberRights(p, p.rights);
   upgraded.add(d);
   return d;
 };
 const repo = () => parcelRepo(db);
+/** Give each right without a reference the parcel's next one. */
+function numberRights(p: Pick<Parcel, 'id' | 'rightSeq'>, rights: ParcelRight[]): ParcelRight[] {
+  for (const r of rights) if (!r.id) { p.rightSeq = (p.rightSeq ?? 0) + 1; r.id = `${p.id}/R${p.rightSeq}`; }
+  return rights;
+}
 export function resetParcels(): void { g.__civicosParcels = undefined; g.__parcelIndex = undefined; }
 
 const now = () => new Date().toISOString();
@@ -549,6 +582,7 @@ export async function recordParcel(input: RecordInput, by: string, source: Parce
     rights: rights.rights, state: 'proposed', recordedBy: by.trim(), recordedAt: now(), overlaps: check.overlaps, source, versions: [],
     ...(clean(input.note, 400) ? { note: clean(input.note, 400) } : {}),
   };
+  numberRights(p, p.rights);
   pushVersion(p, p.recordedBy, 'recorded');
   repo().add(p);
   reindex(p, true);
@@ -592,6 +626,7 @@ export async function actOnParcel(id: string, a: ParcelAction, by: string): Prom
       if (p.state === 'withdrawn') return { error: 'The parcel is already withdrawn' };
       const reason = clean(a.reason, 300);
       if (!reason) return { error: 'Say why the parcel is withdrawn' };
+      if (p.freezes?.length) return { error: `The parcel is held by an open dispute (${p.freezes[0]!.case}) until it is decided` };
       p.state = 'withdrawn'; p.withdrawnBy = who; p.withdrawnAt = now(); p.withdrawReason = reason;
       delete p.pending;
       pushVersion(p, who, `withdrawn: ${reason}`);
@@ -605,6 +640,10 @@ export async function actOnParcel(id: string, a: ParcelAction, by: string): Prom
       const reason = clean(a.reason, 300);
       if (!reason) return { error: 'Say why the parcel changes' };
       if (a.areaM2 !== undefined && a.areaM2 !== null && a.areaM2 !== '') return { error: 'The area is computed from the outline, never typed' };
+      // Plan I7: once published, rights change only through the land registry's procedures (a transfer, an encumbrance, a discharge, a correction).
+      if (p.state === 'published' && a.rights !== undefined) return { error: 'The rights of a published parcel change only through the land registry\'s procedures (a transfer, an encumbrance or its discharge, a correction), each decided by a second official' };
+      const held = (p.freezes ?? []).find(f => f.interest === 'boundary' || f.interest === 'parcel');
+      if (a.geometry !== undefined && held) return { error: `The boundary of this parcel is held by an open dispute (${held.case}) until it is decided` };
       const landUse = a.landUse === undefined || a.landUse === '' ? p.landUse : a.landUse;
       if (!isLandUse(landUse)) return { error: 'Choose the land use' };
       const survey = a.method === undefined && a.accuracyM === undefined && a.surveyedAt === undefined && a.surveyor === undefined && a.planRef === undefined
@@ -621,7 +660,7 @@ export async function actOnParcel(id: string, a: ParcelAction, by: string): Prom
       p.pending = { ...structuredClone(shape), landUse, survey, rights: rights.rights, reason, proposedBy: who, proposedAt: now() };
       if (p.state === 'proposed') {
         // Not yet published: the change is the record (the publisher reviews it).
-        Object.assign(p, { geometry: shape.geometry, areaM2: shape.areaM2, bbox: shape.bbox, place: shape.place, overlaps: shape.overlaps, landUse, survey, rights: rights.rights });
+        Object.assign(p, { geometry: shape.geometry, areaM2: shape.areaM2, bbox: shape.bbox, place: shape.place, overlaps: shape.overlaps, landUse, survey, rights: numberRights(p, rights.rights) });
         delete p.pending;
         pushVersion(p, who, `changed before publication: ${reason}`);
         reindex(p);
@@ -636,7 +675,10 @@ export async function actOnParcel(id: string, a: ParcelAction, by: string): Prom
       // Checked again: another parcel may have been published since the change was proposed.
       const ov = overlapsOf(c.geometry, c.bbox, p.id);
       if (ov.overlaps.length && db().policy.overlap === 'refuse') return { error: `The new outline overlaps published parcel${ov.overlaps.length === 1 ? '' : 's'} ${ov.overlaps.map(o => `${o.parcelId} by ${o.areaM2.toLocaleString('en')} m²`).join(', ')}` };
-      Object.assign(p, { geometry: c.geometry, areaM2: c.areaM2, bbox: c.bbox, place: c.place, overlaps: ov.overlaps, landUse: c.landUse, survey: c.survey, rights: c.rights });
+      const held = (p.freezes ?? []).find(f => f.interest === 'boundary' || f.interest === 'parcel');
+      if (held && JSON.stringify(c.geometry) !== JSON.stringify(p.geometry)) return { error: `The boundary of this parcel is held by an open dispute (${held.case}) until it is decided` };
+      // The rights stay as registered now: a transaction may have been registered while the change waited (plan I7).
+      Object.assign(p, { geometry: c.geometry, areaM2: c.areaM2, bbox: c.bbox, place: c.place, overlaps: ov.overlaps, landUse: c.landUse, survey: c.survey, ...(p.state === 'published' ? {} : { rights: c.rights }) });
       delete p.pending;
       pushVersion(p, who, `changed: ${c.reason} (proposed by ${c.proposedBy})`);
       reindex(p);
@@ -654,6 +696,177 @@ export async function actOnParcel(id: string, a: ParcelAction, by: string): Prom
     }
     default: return { error: 'Say what to do: publish, amend, confirm-amend, discard-amend or withdraw' };
   }
+  return structuredClone(p);
+}
+
+// ── Registered interests (plan step I7) ───────────────────────────────────
+// The rights of a published parcel change only here, called from the land
+// registry's procedure effects (lib/land/procedures.ts; register-writes test):
+// each change a new version with the date it takes effect and the case and
+// sealed decision that authorised it, the earlier state kept. A dispute or
+// objection holds the interest it concerns (a right, the boundary or the
+// whole parcel) until it is decided; nothing resolves it on its own.
+
+/** Who keeps the rights on the parcels: the cadastre authority (parcel policy) and the land registry the nation names (lib/nation/deployment.ts). */
+export function rightsKeepers(): string[] {
+  return [...new Set([db().policy.authorityId, authorityFor('landRegistry')].filter((x): x is string => !!x))];
+}
+
+/** A right's reference, type and kind, never its holder (what a case, a dispute or a list may name). */
+export interface RightRef { id: string; type: RightType; rrr: Rrr; priority?: number; burdens?: string }
+export function rightRefs(p: Pick<Parcel, 'rights'>): RightRef[] {
+  return p.rights.filter(r => r.id).map(r => ({ id: r.id!, type: r.type, rrr: r.rrr, ...(r.priority ? { priority: r.priority } : {}), ...(r.burdens ? { burdens: r.burdens } : {}) }));
+}
+
+/** What holds an interest of a parcel now: a freeze on it, or on the whole parcel. */
+export function freezeOn(p: Pick<Parcel, 'freezes'>, interest: string): ParcelFreeze | undefined {
+  return (p.freezes ?? []).find(f => f.interest === interest || f.interest === 'parcel');
+}
+
+/** Types a transfer moves to new holders; the others are registered and discharged. */
+export const TRANSFERABLE: RightType[] = ['ownership', 'customary', 'leasehold', 'occupancy', 'usufruct'];
+/** Types registered on a parcel as an interest in it (never a first ownership: that is the parcel's first registration). */
+export const ADDABLE: RightType[] = ['leasehold', 'occupancy', 'usufruct', 'easement', 'mortgage', 'caveat', 'use-restriction', 'maintenance'];
+const fraction = (s: string) => { const [n, d] = s.split('/').map(Number); return n! / d!; };
+
+export type RightsChange =
+  | { kind: 'transfer'; interest: string; to: unknown[]; source: unknown }
+  | { kind: 'add'; right: unknown }
+  | { kind: 'discharge'; interest: string }
+  | { kind: 'correct'; interest: string; right: unknown };
+
+/**
+ * Register a change to the rights of a published parcel, authorised by a land
+ * registry case: a transfer of an interest to new holders, an interest added
+ * (a lease, an easement, a mortgage with its rank, a caveat, a restriction),
+ * an interest discharged, or a correction. Refused while a dispute holds the
+ * interest or the parcel. The reasons never repeat a holder's name.
+ */
+export function applyRightsChange(id: string, change: RightsChange, by: string, ref: { case: string; decision?: string; effective: string; reason: string; dryRun?: boolean }): { parcel: Parcel; interest: string; before: number; after: number } | { error: string } {
+  const found = findParcel(id);
+  if (!found) return { error: 'No such parcel' };
+  // A dry run (the effect's check before the decision is sealed) works on a copy and changes nothing.
+  const p = ref.dryRun ? structuredClone(found) : found;
+  if (p.state !== 'published') return { error: p.state === 'withdrawn' ? 'The parcel is withdrawn' : 'Rights are registered on a published parcel (publish its first registration first)' };
+  if (!by.trim()) return { error: 'Name the official registering the change' };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ref.effective)) return { error: 'The date the registration takes effect is YYYY-MM-DD' };
+  numberRights(p, p.rights);
+  const find = (interest: string) => p.rights.find(r => r.id === interest);
+  const held = (interest: string) => freezeOn(p, interest);
+  const label = (t: RightType) => RIGHT_TYPES.find(x => x.key === t)!.label.toLowerCase();
+  let next: ParcelRight[];
+  let interest: string;
+  let what: string;
+  const one = (raw: unknown, type?: RightType): ParcelRight | { error: string } => {
+    const r = readRights([{ ...((raw ?? {}) as Record<string, unknown>), ...(type ? { type } : {}) }]);
+    return 'error' in r ? { error: r.error.replace(/^Right 1: /, '') } : r.rights[0]!;
+  };
+  switch (change.kind) {
+    case 'transfer': {
+      const from = find(change.interest);
+      if (!from) return { error: `No interest ${change.interest} on this parcel` };
+      const h = held(from.id!);
+      if (h) return { error: `This interest is held by an open dispute or objection (${h.case}) until it is decided` };
+      if (!TRANSFERABLE.includes(from.type)) return { error: `A ${label(from.type)} is not transferred: it is discharged and registered anew` };
+      const to = Array.isArray(change.to) ? change.to : [];
+      if (!to.length) return { error: 'Name who receives the interest' };
+      if (to.length > 20) return { error: 'At most 20 receiving parties' };
+      const src = (change.source ?? {}) as Record<string, unknown>;
+      const received = readRights(to.map(t => ({ ...((t ?? {}) as Record<string, unknown>), type: from.type, source: src })));
+      if ('error' in received) return { error: received.error.replace(/^Right (\d+)/, 'Receiving party $1') };
+      if (from.share && received.rights.every(r => r.share)) {
+        const total = received.rights.reduce((n, r) => n + fraction(r.share!), 0);
+        if (Math.abs(total - fraction(from.share)) > 1e-9) return { error: `The receiving shares add up to ${Math.round(total * 1000) / 1000}, not the ${from.share} transferred` };
+      }
+      const fresh = numberRights(p, received.rights.map(r => ({ ...r, ...(from.share && received.rights.length === 1 && !r.share ? { share: from.share } : {}), registered: { case: ref.case, effective: ref.effective } })));
+      // Restrictions that burdened the interest now burden what replaced it (the first receiving party's interest).
+      next = p.rights.flatMap(r => (r.id === from.id ? fresh : [r.burdens === from.id ? { ...r, burdens: fresh[0]!.id } : r]));
+      interest = from.id!;
+      what = `transfer of ${from.id} registered to ${fresh.map(r => r.id).join(', ')}`;
+      break;
+    }
+    case 'add': {
+      const whole = held('parcel');
+      if (whole) return { error: `The parcel is held by an open dispute (${whole.case}) until it is decided` };
+      const raw = (change.right ?? {}) as Record<string, unknown>;
+      if (!ADDABLE.includes(raw.type as RightType)) return { error: `The interest registered is one of ${ADDABLE.join(', ')} (ownership passes by transfer or first registration)` };
+      const r = one(raw);
+      if ('error' in r) return r;
+      const burdens = typeof raw.burdens === 'string' && raw.burdens.trim() ? raw.burdens.trim() : '';
+      if (burdens && !find(burdens)) return { error: `No interest ${burdens} on this parcel to burden` };
+      const hb = burdens ? held(burdens) : undefined;
+      if (hb) return { error: `The interest it burdens is held by an open dispute (${hb.case}) until it is decided` };
+      const priority = r.type === 'mortgage' ? p.rights.filter(x => x.type === 'mortgage').length + 1 : undefined;
+      const added = numberRights(p, [{ ...r, ...(priority ? { priority } : {}), ...(burdens ? { burdens } : {}), registered: { case: ref.case, effective: ref.effective } }])[0]!;
+      next = [...p.rights, added];
+      interest = added.id!;
+      what = `${label(added.type)} ${added.id} registered${priority ? ` (rank ${priority})` : ''}`;
+      break;
+    }
+    case 'discharge': {
+      const r = find(change.interest);
+      if (!r) return { error: `No interest ${change.interest} on this parcel` };
+      const h = held(r.id!);
+      if (h) return { error: `This interest is held by an open dispute or objection (${h.case}) until it is decided` };
+      if (r.type === 'ownership' || r.type === 'customary') return { error: 'Ownership and customary tenure are not discharged: they pass by transfer' };
+      if (p.rights.some(x => x.burdens === r.id)) return { error: `Discharge first what burdens ${r.id}` };
+      // Later mortgages move up one rank.
+      next = p.rights.filter(x => x.id !== r.id).map(x => (r.type === 'mortgage' && x.type === 'mortgage' && (x.priority ?? 0) > (r.priority ?? 0) ? { ...x, priority: (x.priority ?? 1) - 1 } : x));
+      interest = r.id!;
+      what = `${label(r.type)} ${r.id} discharged`;
+      break;
+    }
+    case 'correct': {
+      const r = find(change.interest);
+      if (!r) return { error: `No interest ${change.interest} on this parcel` };
+      const h = held(r.id!);
+      if (h) return { error: `This interest is held by an open dispute or objection (${h.case}) until it is decided` };
+      const c = one(change.right, r.type);
+      if ('error' in c) return c;
+      next = p.rights.map(x => (x.id === r.id ? { ...c, id: r.id, ...(r.priority ? { priority: r.priority } : {}), ...(r.burdens ? { burdens: r.burdens } : {}), registered: { case: ref.case, effective: ref.effective } } : x));
+      interest = r.id!;
+      what = `${r.id} corrected`;
+      break;
+    }
+    default: return { error: 'The change is a transfer, an added interest, a discharge or a correction' };
+  }
+  // Ownership-type shares still add up to at most one.
+  const bare = next.map(x => ({ type: x.type, holderKind: x.holderKind, holder: x.holder, ...(x.share ? { share: x.share } : {}), source: x.source }));
+  const check = readRights(bare);
+  if ('error' in check) return { error: check.error.replace(/^Right \d+: /, '') };
+  const before = p.versions.length;
+  p.rights = next;
+  p.versions.push({ n: p.versions.length + 1, at: now(), by: by.trim(), what: `${what}: ${clean(ref.reason, 200)}`, effective: ref.effective, change: `${ref.case}${ref.decision ? ` · decision ${ref.decision}` : ''}`,
+    parcelId: p.parcelId, landUse: p.landUse, areaM2: p.areaM2, geometry: structuredClone(p.geometry), survey: structuredClone(p.survey), rights: structuredClone(p.rights) });
+  if (ref.dryRun) return { parcel: p, interest, before, after: p.versions.length };
+  repo().save(p);
+  recordAudit(by.trim(), `parcel.rights.${change.kind}`, `Parcel:${p.id}`, 'ok', `${p.parcelId}: ${interest} · ${change.kind} · case ${ref.case} · effective ${ref.effective}`);
+  return { parcel: structuredClone(p), interest, before, after: p.versions.length };
+}
+
+/** A dispute or objection holds an interest of a published parcel (a right's reference, `boundary` or `parcel`) until it is decided. */
+export function freezeInterest(id: string, interest: string, caseRef: string, by: string): Parcel | { error: string } {
+  const p = findParcel(id);
+  if (!p) return { error: 'No such parcel' };
+  if (p.state !== 'published') return { error: 'Only a published parcel is held by a dispute' };
+  numberRights(p, p.rights);
+  if (interest !== 'boundary' && interest !== 'parcel' && !p.rights.some(r => r.id === interest)) return { error: `No interest ${interest} on this parcel` };
+  if ((p.freezes ?? []).some(f => f.case === caseRef && f.interest === interest)) return structuredClone(p);
+  (p.freezes ??= []).push({ interest, case: caseRef, since: now(), by: by.trim() });
+  repo().save(p);
+  recordAudit(by.trim(), 'parcel.interest.hold', `Parcel:${p.id}`, 'ok', `${p.parcelId}: ${interest} held by ${caseRef}`);
+  return structuredClone(p);
+}
+
+/** The decision (or withdrawal) of a dispute releases what it held; nothing else does. */
+export function releaseInterest(id: string, caseRef: string, by: string): Parcel | { error: string } {
+  const p = findParcel(id);
+  if (!p) return { error: 'No such parcel' };
+  const kept = (p.freezes ?? []).filter(f => f.case !== caseRef);
+  if (kept.length === (p.freezes ?? []).length) return structuredClone(p);
+  p.freezes = kept;
+  repo().save(p);
+  recordAudit(by.trim(), 'parcel.interest.release', `Parcel:${p.id}`, 'ok', `${p.parcelId}: released by ${caseRef}`);
   return structuredClone(p);
 }
 
@@ -691,6 +904,8 @@ export type OfficialParcel = PublicParcel & {
   versions: (Omit<ParcelVersion, 'rights'> & { rights?: ParcelRight[]; rightsCount: number })[];
   pending?: Omit<ParcelAmendment, 'rights'> & { rights?: ParcelRight[]; rightsCount: number };
   rights?: ParcelRight[]; rightsCount: number; rightsHidden: boolean;
+  /** Interests held by an open dispute (references only, never a holder). */
+  freezes: ParcelFreeze[];
 };
 
 export function viewParcel(p: Parcel, viewer: { rights: boolean }): OfficialParcel {
@@ -705,6 +920,7 @@ export function viewParcel(p: Parcel, viewer: { rights: boolean }): OfficialParc
     source: { ...p.source }, ...(p.note ? { note: p.note } : {}),
     versions: p.versions.map(v => strip(v)), ...(p.pending ? { pending: strip(p.pending) } : {}),
     rightsCount: p.rights.length, rightsHidden: !withRights, ...(withRights ? { rights: structuredClone(p.rights) } : {}),
+    freezes: (p.freezes ?? []).map(f => ({ ...f })),
   };
 }
 

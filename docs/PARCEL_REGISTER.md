@@ -178,9 +178,18 @@ A test scans every one of these outputs for holder fields and names
   a parcel has no observations of its own and 10⁶–10⁷ entities would swamp
   the twin's entity table and crosswalk. Parcels reach the twin's readers
   through the OGC collection and the tiles instead.
-- Mutation of rights (transfers, mortgages registered by a bank) is an
-  amendment of the parcel, not a transaction register with its own
-  workflow (LADM's `LA_RRR` history is the version list).
+- Mutation of rights was an amendment of the parcel until plan step I7.
+  Since then rights on a published parcel change only through the land
+  registry's decided cases (`lib/land/procedures.ts`: transfer, encumbrance,
+  discharge, correction, dispute) by `applyRightsChange()`: each right has a
+  reference and, for a mortgage, a rank; each change is a new version with
+  its case, decision and effective date (LADM's `LA_RRR` history is still the
+  version list, now with the transaction beside it in `lib/land/register.ts`).
+  A dispute holds the interest or the boundary until a decision, a recorded
+  court order or a withdrawal (`freezeInterest()`); an amendment of a
+  published parcel cannot change rights. Title extracts, valuation and a
+  `land.title` exchange service are not built (integration register 21.63,
+  21.64).
 - No public (signed-out) view: the register is behind the session like the
   rest of the twin; a nation that wants a public parcel map can serve the
   tiles through an `ogc:read` key.

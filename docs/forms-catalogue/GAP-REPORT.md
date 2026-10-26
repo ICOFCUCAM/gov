@@ -52,8 +52,8 @@ Derived from the files and the scope list; nothing in the catalogue is approved 
 | Status | Forms |
 |---|---|
 | catalogued | 0 |
-| contract_missing | 1511 |
-| contract_draft | 341 |
+| contract_missing | 1350 |
+| contract_draft | 502 |
 | under_review | 91 |
 | blocked | 1 |
 | excluded | 128 |
@@ -69,7 +69,7 @@ Derived from the files and the scope list; nothing in the catalogue is approved 
 
 ## Contracts CivicOS wrote (form library, controlled batches)
 
-219 contracts in `app/src/lib/forms/library/catalogue-contracts/`, 219 matched to exactly one registered form (by source file and catalogue ID, and by line where the catalogue repeats an ID in one file), 0 unmatched or ambiguous. Each is a contract draft: nothing in it is approved, and its publication gates (`lib/forms/publication.ts`) decide everything after that.
+408 contracts in `app/src/lib/forms/library/catalogue-contracts/`, 408 matched to exactly one registered form (by source file and catalogue ID, and by line where the catalogue repeats an ID in one file), 0 unmatched or ambiguous. Each is a contract draft: nothing in it is approved, and its publication gates (`lib/forms/publication.ts`) decide everything after that.
 
 
 **Batch 1** (health regulation, owner approved 21 October 2026): 25 contracts added; form status contract_draft 25.
@@ -328,45 +328,247 @@ HLT-MED-024: its public answer is bound to a rule. Built only through publicProd
 | DEM-CON-020 | `PARTS-12-13:DEM-CON-020@1` | DEM-CON-020 | 12 | contract_draft | allowed |
 | DEM-PUB-009 | `PARTS-12-13:DEM-PUB-009@1` | DEM-PUB-009 | 17 | contract_draft | allowed |
 
+**Batch 8** (executive office, Cabinet, treasury and budget, owner approved 21 October 2026): 57 contracts added; form status contract_draft 57.
+
+| Form | Identity | Register row | Fields | Form status | Scope |
+|---|---|---|---|---|---|
+| budget.allocation.approve | `FIELD-SERIES-PARTS-01-02:budget.allocation.approve@1` | budget.allocation.approve | 7 | contract_draft | allowed |
+| budget.allocation.notify | `FIELD-SERIES-PARTS-01-02:budget.allocation.notify@1` | budget.allocation.notify | 4 | contract_draft | allowed |
+| budget.allocation.propose | `FIELD-SERIES-PARTS-01-02:budget.allocation.propose@1` | budget.allocation.propose | 5 | contract_draft | allowed |
+| budget.bid.justification | `FIELD-SERIES-PARTS-01-02:budget.bid.justification@1` | budget.bid.justification | 5 | contract_draft | allowed |
+| budget.bid.revise | `FIELD-SERIES-PARTS-01-02:budget.bid.revise@1` | budget.bid.revise | 6 | contract_draft | allowed |
+| budget.bid.withdraw | `FIELD-SERIES-PARTS-01-02:budget.bid.withdraw@1` | budget.bid.withdraw | 4 | contract_draft | allowed |
+| budget.ceiling.approve | `FIELD-SERIES-PARTS-01-02:budget.ceiling.approve@1` | budget.ceiling.approve | 7 | contract_draft | allowed |
+| budget.ceiling.propose | `FIELD-SERIES-PARTS-01-02:budget.ceiling.propose@1` | budget.ceiling.propose | 7 | contract_draft | allowed |
+| budget.circular.issue | `FIELD-SERIES-PARTS-01-02:budget.circular.issue@1` | budget.circular.issue | 6 | contract_draft | allowed |
+| budget.execution.commitment.approve | `FIELD-SERIES-PARTS-01-02:budget.execution.commitment.approve@1` | budget.execution.commitment.approve | 7 | contract_draft | allowed |
+| budget.execution.commitment | `FIELD-SERIES-PARTS-01-02:budget.execution.commitment@1` | budget.execution.commitment | 13 | contract_draft | allowed |
+| budget.execution.correction | `FIELD-SERIES-PARTS-01-02:budget.execution.correction@1` | budget.execution.correction | 12 | contract_draft | allowed |
+| budget.execution.overrun.report | `FIELD-SERIES-PARTS-01-02:budget.execution.overrun.report@1` | budget.execution.overrun.report | 12 | contract_draft | allowed |
+| budget.execution.reallocation.approve | `FIELD-SERIES-PARTS-01-02:budget.execution.reallocation.approve@1` | budget.execution.reallocation.approve | 8 | contract_draft | allowed |
+| budget.execution.reallocation.request | `FIELD-SERIES-PARTS-01-02:budget.execution.reallocation.request@1` | budget.execution.reallocation.request | 14 | contract_draft | allowed |
+| budget.execution.supplementary.request | `FIELD-SERIES-PARTS-01-02:budget.execution.supplementary.request@1` | budget.execution.supplementary.request | 13 | contract_draft | allowed |
+| budget.execution.underspend.report | `FIELD-SERIES-PARTS-01-02:budget.execution.underspend.report@1` | budget.execution.underspend.report | 12 | contract_draft | allowed |
+| budget.execution.variance.report | `FIELD-SERIES-PARTS-01-02:budget.execution.variance.report@1` | budget.execution.variance.report | 12 | contract_draft | allowed |
+| budget.execution.virement | `FIELD-SERIES-PARTS-01-02:budget.execution.virement@1` | budget.execution.virement | 14 | contract_draft | allowed |
+| budget.execution.year_end | `FIELD-SERIES-PARTS-01-02:budget.execution.year_end@1` | budget.execution.year_end | 12 | contract_draft | allowed |
+| budget.negotiation.record | `FIELD-SERIES-PARTS-01-02:budget.negotiation.record@1` | budget.negotiation.record | 5 | contract_draft | allowed |
+| budget.programme.costing | `FIELD-SERIES-PARTS-01-02:budget.programme.costing@1` | budget.programme.costing | 10 | contract_draft | allowed |
+| exec.cabinet.action.close | `FIELD-SERIES-PARTS-01-02:exec.cabinet.action.close@1` | exec.cabinet.action.close | 7 | contract_draft | allowed |
+| exec.cabinet.action.update | `FIELD-SERIES-PARTS-01-02:exec.cabinet.action.update@1` | exec.cabinet.action.update | 5 | contract_draft | allowed |
+| exec.cabinet.agenda.approve | `FIELD-SERIES-PARTS-01-02:exec.cabinet.agenda.approve@1` | exec.cabinet.agenda.approve | 5 | contract_draft | allowed |
+| exec.cabinet.agenda.propose | `FIELD-SERIES-PARTS-01-02:exec.cabinet.agenda.propose@1` | exec.cabinet.agenda.propose | 5 | contract_draft | allowed |
+| exec.cabinet.decision.action_assign | `FIELD-SERIES-PARTS-01-02:exec.cabinet.decision.action_assign@1` | exec.cabinet.decision.action_assign | 7 | contract_draft | allowed |
+| exec.cabinet.decision.correct | `FIELD-SERIES-PARTS-01-02:exec.cabinet.decision.correct@1` | exec.cabinet.decision.correct | 7 | contract_draft | allowed |
+| exec.cabinet.decision.distribution | `FIELD-SERIES-PARTS-01-02:exec.cabinet.decision.distribution@1` | exec.cabinet.decision.distribution | 6 | contract_draft | allowed |
+| exec.cabinet.decision.record | `FIELD-SERIES-PARTS-01-02:exec.cabinet.decision.record@1` | exec.cabinet.decision.record | 15 | contract_draft | allowed |
+| exec.cabinet.paper.fiscal_review | `FIELD-SERIES-PARTS-01-02:exec.cabinet.paper.fiscal_review@1` | exec.cabinet.paper.fiscal_review | 8 | contract_draft | allowed |
+| exec.cabinet.paper.legal_review | `FIELD-SERIES-PARTS-01-02:exec.cabinet.paper.legal_review@1` | exec.cabinet.paper.legal_review | 7 | contract_draft | allowed |
+| exec.cabinet.paper.revise | `FIELD-SERIES-PARTS-01-02:exec.cabinet.paper.revise@1` | exec.cabinet.paper.revise | 13 | contract_draft | allowed |
+| exec.presidency.correspondence.complaint | `FIELD-SERIES-PARTS-01-02:exec.presidency.correspondence.complaint@1` | exec.presidency.correspondence.complaint | 7 | contract_draft | allowed |
+| exec.presidency.correspondence.decision | `FIELD-SERIES-PARTS-01-02:exec.presidency.correspondence.decision@1` | exec.presidency.correspondence.decision | 8 | contract_draft | allowed |
+| exec.presidency.correspondence.notice | `FIELD-SERIES-PARTS-01-02:exec.presidency.correspondence.notice@1` | exec.presidency.correspondence.notice | 5 | contract_draft | allowed |
+| exec.presidency.correspondence.referral | `FIELD-SERIES-PARTS-01-02:exec.presidency.correspondence.referral@1` | exec.presidency.correspondence.referral | 6 | contract_draft | allowed |
+| exec.presidency.correspondence.submit | `FIELD-SERIES-PARTS-01-02:exec.presidency.correspondence.submit@1` | exec.presidency.correspondence.submit | 15 | contract_draft | allowed |
+| exec.presidency.correspondence.supplement | `FIELD-SERIES-PARTS-01-02:exec.presidency.correspondence.supplement@1` | exec.presidency.correspondence.supplement | 7 | contract_draft | allowed |
+| exec.presidency.correspondence.withdraw | `FIELD-SERIES-PARTS-01-02:exec.presidency.correspondence.withdraw@1` | exec.presidency.correspondence.withdraw | 6 | contract_draft | allowed |
+| treasury.cash_forecast.close | `FIELD-SERIES-PARTS-01-02:treasury.cash_forecast.close@1` | treasury.cash_forecast.close | 4 | contract_draft | allowed |
+| treasury.cash_forecast.review | `FIELD-SERIES-PARTS-01-02:treasury.cash_forecast.review@1` | treasury.cash_forecast.review | 5 | contract_draft | allowed |
+| treasury.cash_forecast.revise | `FIELD-SERIES-PARTS-01-02:treasury.cash_forecast.revise@1` | treasury.cash_forecast.revise | 20 | contract_draft | allowed |
+| treasury.cash_forecast.submit | `FIELD-SERIES-PARTS-01-02:treasury.cash_forecast.submit@1` | treasury.cash_forecast.submit | 20 | contract_draft | allowed |
+| treasury.cash_position.report | `FIELD-SERIES-PARTS-01-02:treasury.cash_position.report@1` | treasury.cash_position.report | 6 | contract_draft | allowed |
+| treasury.liquidity.response | `FIELD-SERIES-PARTS-01-02:treasury.liquidity.response@1` | treasury.liquidity.response | 6 | contract_draft | allowed |
+| treasury.liquidity.shortfall | `FIELD-SERIES-PARTS-01-02:treasury.liquidity.shortfall@1` | treasury.liquidity.shortfall | 6 | contract_draft | allowed |
+| treasury.payment.approve | `FIELD-SERIES-PARTS-01-02:treasury.payment.approve@1` | treasury.payment.approve | 8 | contract_draft | allowed |
+| treasury.payment.cancel_request | `FIELD-SERIES-PARTS-01-02:treasury.payment.cancel_request@1` | treasury.payment.cancel_request | 4 | contract_draft | allowed |
+| treasury.payment.correction | `FIELD-SERIES-PARTS-01-02:treasury.payment.correction@1` | treasury.payment.correction | 5 | contract_draft | allowed |
+| treasury.payment.dispute | `FIELD-SERIES-PARTS-01-02:treasury.payment.dispute@1` | treasury.payment.dispute | 5 | contract_draft | allowed |
+| treasury.payment.execute | `FIELD-SERIES-PARTS-01-02:treasury.payment.execute@1` | treasury.payment.execute | 7 | contract_draft | allowed |
+| treasury.payment.reconcile | `FIELD-SERIES-PARTS-01-02:treasury.payment.reconcile@1` | treasury.payment.reconcile | 6 | contract_draft | allowed |
+| treasury.payment.refund | `FIELD-SERIES-PARTS-01-02:treasury.payment.refund@1` | treasury.payment.refund | 6 | contract_draft | allowed |
+| treasury.payment.reject | `FIELD-SERIES-PARTS-01-02:treasury.payment.reject@1` | treasury.payment.reject | 5 | contract_draft | allowed |
+| treasury.payment.supporting_evidence | `FIELD-SERIES-PARTS-01-02:treasury.payment.supporting_evidence@1` | treasury.payment.supporting_evidence | 5 | contract_draft | allowed |
+| treasury.payment.verify | `FIELD-SERIES-PARTS-01-02:treasury.payment.verify@1` | treasury.payment.verify | 5 | contract_draft | allowed |
+
+**Batch 9** (human services forms, owner approved 21 October 2026): 96 contracts added; form status contract_draft 96.
+
+| Form | Identity | Register row | Fields | Form status | Scope |
+|---|---|---|---|---|---|
+| IDN-ACC-001 | `FIELD-SERIES-PARTS-03-04:IDN-ACC-001@1` | IDN-ACC-001 | 3 | contract_draft | allowed |
+| IDN-ACC-002 | `FIELD-SERIES-PARTS-03-04:IDN-ACC-002@1` | IDN-ACC-002 | 3 | contract_draft | allowed |
+| IDN-ACC-003 | `FIELD-SERIES-PARTS-03-04:IDN-ACC-003@1` | IDN-ACC-003 | 3 | contract_draft | allowed |
+| IDN-ACC-004 | `FIELD-SERIES-PARTS-03-04:IDN-ACC-004@1` | IDN-ACC-004 | 3 | contract_draft | allowed |
+| IDN-CARD-001 | `FIELD-SERIES-PARTS-03-04:IDN-CARD-001@1` | IDN-CARD-001 | 5 | contract_draft | allowed |
+| IDN-CARD-002 | `FIELD-SERIES-PARTS-03-04:IDN-CARD-002@1` | IDN-CARD-002 | 5 | contract_draft | allowed |
+| IDN-CARD-003 | `FIELD-SERIES-PARTS-03-04:IDN-CARD-003@1` | IDN-CARD-003 | 6 | contract_draft | allowed |
+| IDN-CARD-004 | `FIELD-SERIES-PARTS-03-04:IDN-CARD-004@1` | IDN-CARD-004 | 5 | contract_draft | allowed |
+| IDN-CARD-005 | `FIELD-SERIES-PARTS-03-04:IDN-CARD-005@1` | IDN-CARD-005 | 4 | contract_draft | allowed |
+| IDN-CARD-006 | `FIELD-SERIES-PARTS-03-04:IDN-CARD-006@1` | IDN-CARD-006 | 6 | contract_draft | allowed |
+| IDN-CARD-007 | `FIELD-SERIES-PARTS-03-04:IDN-CARD-007@1` | IDN-CARD-007 | 4 | contract_draft | allowed |
+| IDN-REG-001 | `FIELD-SERIES-PARTS-03-04:IDN-REG-001@1` | IDN-REG-001 | 8 | contract_draft | allowed |
+| IDN-REG-002 | `FIELD-SERIES-PARTS-03-04:IDN-REG-002@1` | IDN-REG-002 | 4 | contract_draft | allowed |
+| IDN-REG-003 | `FIELD-SERIES-PARTS-03-04:IDN-REG-003@1` | IDN-REG-003 | 5 | contract_draft | allowed |
+| IDN-REG-004 | `FIELD-SERIES-PARTS-03-04:IDN-REG-004@1` | IDN-REG-004 | 5 | contract_draft | allowed |
+| IDN-REG-005 | `FIELD-SERIES-PARTS-03-04:IDN-REG-005@1` | IDN-REG-005 | 4 | contract_draft | allowed |
+| IDN-SEC-001 | `FIELD-SERIES-PARTS-03-04:IDN-SEC-001@1` | IDN-SEC-001 | 3 | contract_draft | allowed |
+| IDN-SEC-002 | `FIELD-SERIES-PARTS-03-04:IDN-SEC-002@1` | IDN-SEC-002 | 4 | contract_draft | allowed |
+| IDN-SEC-003 | `FIELD-SERIES-PARTS-03-04:IDN-SEC-003@1` | IDN-SEC-003 | 3 | contract_draft | allowed |
+| IDN-VER-001 | `FIELD-SERIES-PARTS-03-04:IDN-VER-001@1` | IDN-VER-001 | 4 | contract_draft | allowed |
+| IDN-VER-002 | `FIELD-SERIES-PARTS-03-04:IDN-VER-002@1` | IDN-VER-002 | 4 | contract_draft | allowed |
+| IDN-VER-003 | `FIELD-SERIES-PARTS-03-04:IDN-VER-003@1` | IDN-VER-003 | 3 | contract_draft | allowed |
+| LAB-EMP-001 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-001@1` | LAB-EMP-001 | 10 | contract_draft | allowed |
+| LAB-EMP-002 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-002@1` | LAB-EMP-002 | 3 | contract_draft | allowed |
+| LAB-EMP-003 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-003@1` | LAB-EMP-003 | 9 | contract_draft | allowed |
+| LAB-EMP-004 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-004@1` | LAB-EMP-004 | 10 | contract_draft | allowed |
+| LAB-EMP-005 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-005@1` | LAB-EMP-005 | 9 | contract_draft | allowed |
+| LAB-EMP-006 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-006@1` | LAB-EMP-006 | 3 | contract_draft | allowed |
+| LAB-EMP-007 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-007@1` | LAB-EMP-007 | 3 | contract_draft | allowed |
+| LAB-EMP-008 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-008@1` | LAB-EMP-008 | 15 | contract_draft | allowed |
+| LAB-EMP-009 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-009@1` | LAB-EMP-009 | 8 | contract_draft | allowed |
+| LAB-EMP-010 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-010@1` | LAB-EMP-010 | 9 | contract_draft | allowed |
+| LAB-EMP-011 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-011@1` | LAB-EMP-011 | 11 | contract_draft | allowed |
+| LAB-EMP-012 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-012@1` | LAB-EMP-012 | 3 | contract_draft | allowed |
+| LAB-EMP-013 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-013@1` | LAB-EMP-013 | 3 | contract_draft | allowed |
+| LAB-EMP-014 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-014@1` | LAB-EMP-014 | 5 | contract_draft | allowed |
+| LAB-EMP-015 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-015@1` | LAB-EMP-015 | 5 | contract_draft | allowed |
+| LAB-EMP-016 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-016@1` | LAB-EMP-016 | 9 | contract_draft | allowed |
+| LAB-EMP-017 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-017@1` | LAB-EMP-017 | 2 | contract_draft | allowed |
+| LAB-EMP-018 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-018@1` | LAB-EMP-018 | 2 | contract_draft | allowed |
+| LAB-EMP-019 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-019@1` | LAB-EMP-019 | 2 | contract_draft | allowed |
+| LAB-EMP-020 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LAB-EMP-020@1` | LAB-EMP-020 | 10 | contract_draft | allowed |
+| NAT-APP-001 | `FIELD-SERIES-PARTS-03-04:NAT-APP-001@1` | NAT-APP-001 | 6 | contract_draft | allowed |
+| NAT-APP-002 | `FIELD-SERIES-PARTS-03-04:NAT-APP-002@1` | NAT-APP-002 | 6 | contract_draft | allowed |
+| NAT-APP-003 | `FIELD-SERIES-PARTS-03-04:NAT-APP-003@1` | NAT-APP-003 | 6 | contract_draft | allowed |
+| NAT-APP-004 | `FIELD-SERIES-PARTS-03-04:NAT-APP-004@1` | NAT-APP-004 | 6 | contract_draft | allowed |
+| NAT-APP-005 | `FIELD-SERIES-PARTS-03-04:NAT-APP-005@1` | NAT-APP-005 | 6 | contract_draft | allowed |
+| NAT-APP-006 | `FIELD-SERIES-PARTS-03-04:NAT-APP-006@1` | NAT-APP-006 | 6 | contract_draft | allowed |
+| NAT-APP-007 | `FIELD-SERIES-PARTS-03-04:NAT-APP-007@1` | NAT-APP-007 | 6 | contract_draft | allowed |
+| NAT-APP-008 | `FIELD-SERIES-PARTS-03-04:NAT-APP-008@1` | NAT-APP-008 | 2 | contract_draft | allowed |
+| NAT-APP-009 | `FIELD-SERIES-PARTS-03-04:NAT-APP-009@1` | NAT-APP-009 | 2 | contract_draft | allowed |
+| NAT-APP-010 | `FIELD-SERIES-PARTS-03-04:NAT-APP-010@1` | NAT-APP-010 | 6 | contract_draft | allowed |
+| NAT-APP-011 | `FIELD-SERIES-PARTS-03-04:NAT-APP-011@1` | NAT-APP-011 | 2 | contract_draft | allowed |
+| NAT-APP-012 | `FIELD-SERIES-PARTS-03-04:NAT-APP-012@1` | NAT-APP-012 | 6 | contract_draft | allowed |
+| PAS-APP-001 | `FIELD-SERIES-PARTS-03-04:PAS-APP-001@1` | PAS-APP-001 | 9 | contract_draft | allowed |
+| PAS-APP-002 | `FIELD-SERIES-PARTS-03-04:PAS-APP-002@1` | PAS-APP-002 | 9 | contract_draft | allowed |
+| PAS-APP-003 | `FIELD-SERIES-PARTS-03-04:PAS-APP-003@1` | PAS-APP-003 | 10 | contract_draft | allowed |
+| PAS-APP-004 | `FIELD-SERIES-PARTS-03-04:PAS-APP-004@1` | PAS-APP-004 | 11 | contract_draft | allowed |
+| PAS-APP-005 | `FIELD-SERIES-PARTS-03-04:PAS-APP-005@1` | PAS-APP-005 | 11 | contract_draft | allowed |
+| PAS-APP-006 | `FIELD-SERIES-PARTS-03-04:PAS-APP-006@1` | PAS-APP-006 | 4 | contract_draft | allowed |
+| PAS-APP-007 | `FIELD-SERIES-PARTS-03-04:PAS-APP-007@1` | PAS-APP-007 | 3 | contract_draft | allowed |
+| PAS-APP-008 | `FIELD-SERIES-PARTS-03-04:PAS-APP-008@1` | PAS-APP-008 | 11 | contract_draft | allowed |
+| PAS-APP-009 | `FIELD-SERIES-PARTS-03-04:PAS-APP-009@1` | PAS-APP-009 | 10 | contract_draft | allowed |
+| PAS-APP-010 | `FIELD-SERIES-PARTS-03-04:PAS-APP-010@1` | PAS-APP-010 | 11 | contract_draft | allowed |
+| PAS-APP-011 | `FIELD-SERIES-PARTS-03-04:PAS-APP-011@1` | PAS-APP-011 | 3 | contract_draft | allowed |
+| PAS-APP-012 | `FIELD-SERIES-PARTS-03-04:PAS-APP-012@1` | PAS-APP-012 | 2 | contract_draft | allowed |
+| PAS-APP-013 | `FIELD-SERIES-PARTS-03-04:PAS-APP-013@1` | PAS-APP-013 | 5 | contract_draft | allowed |
+| PAS-APP-014 | `FIELD-SERIES-PARTS-03-04:PAS-APP-014@1` | PAS-APP-014 | 5 | contract_draft | allowed |
+| PAS-APP-015 | `FIELD-SERIES-PARTS-03-04:PAS-APP-015@1` | PAS-APP-015 | 3 | contract_draft | allowed |
+| PAS-APP-016 | `FIELD-SERIES-PARTS-03-04:PAS-APP-016@1` | PAS-APP-016 | 4 | contract_draft | allowed |
+| PAS-APP-017 | `FIELD-SERIES-PARTS-03-04:PAS-APP-017@1` | PAS-APP-017 | 4 | contract_draft | allowed |
+| PAS-APP-018 | `FIELD-SERIES-PARTS-03-04:PAS-APP-018@1` | PAS-APP-018 | 5 | contract_draft | allowed |
+| SOC-BEN-001 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-001@1` | SOC-BEN-001 | 7 | contract_draft | allowed |
+| SOC-BEN-002 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-002@1` | SOC-BEN-002 | 9 | contract_draft | allowed |
+| SOC-BEN-003 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-003@1` | SOC-BEN-003 | 8 | contract_draft | allowed |
+| SOC-BEN-004 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-004@1` | SOC-BEN-004 | 20 | contract_draft | allowed |
+| SOC-BEN-005 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-005@1` | SOC-BEN-005 | 5 | contract_draft | allowed |
+| SOC-BEN-006 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-006@1` | SOC-BEN-006 | 5 | contract_draft | allowed |
+| SOC-BEN-007 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-007@1` | SOC-BEN-007 | 5 | contract_draft | allowed |
+| SOC-BEN-008 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-008@1` | SOC-BEN-008 | 2 | contract_draft | allowed |
+| SOC-BEN-009 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-009@1` | SOC-BEN-009 | 5 | contract_draft | allowed |
+| SOC-BEN-010 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-010@1` | SOC-BEN-010 | 7 | contract_draft | allowed |
+| SOC-BEN-011 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-011@1` | SOC-BEN-011 | 5 | contract_draft | allowed |
+| SOC-BEN-012 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-012@1` | SOC-BEN-012 | 5 | contract_draft | allowed |
+| SOC-BEN-013 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-013@1` | SOC-BEN-013 | 2 | contract_draft | allowed |
+| SOC-BEN-014 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-014@1` | SOC-BEN-014 | 5 | contract_draft | allowed |
+| SOC-BEN-015 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-015@1` | SOC-BEN-015 | 8 | contract_draft | allowed |
+| SOC-BEN-016 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-016@1` | SOC-BEN-016 | 2 | contract_draft | allowed |
+| SOC-BEN-017 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-017@1` | SOC-BEN-017 | 5 | contract_draft | allowed |
+| SOC-BEN-018 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-018@1` | SOC-BEN-018 | 7 | contract_draft | allowed |
+| SOC-BEN-019 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-019@1` | SOC-BEN-019 | 8 | contract_draft | allowed |
+| SOC-BEN-020 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-020@1` | SOC-BEN-020 | 7 | contract_draft | allowed |
+| SOC-BEN-021 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-021@1` | SOC-BEN-021 | 2 | contract_draft | allowed |
+| SOC-BEN-022 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-022@1` | SOC-BEN-022 | 2 | contract_draft | allowed |
+| SOC-BEN-023 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-023@1` | SOC-BEN-023 | 2 | contract_draft | allowed |
+| SOC-BEN-024 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:SOC-BEN-024@1` | SOC-BEN-024 | 2 | contract_draft | allowed |
+
+**Batch 10** (territory and infrastructure, owner approved 21 October 2026): 36 contracts added; form status contract_draft 36.
+
+| Form | Identity | Register row | Fields | Form status | Scope |
+|---|---|---|---|---|---|
+| HPC-BLD-014 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HPC-BLD-014@1` | HPC-BLD-014 | 13 | contract_draft | allowed |
+| HPC-BLD-015 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HPC-BLD-015@1` | HPC-BLD-015 | 4 | contract_draft | allowed |
+| HPC-BLD-016 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HPC-BLD-016@1` | HPC-BLD-016 | 5 | contract_draft | allowed |
+| HPC-BLD-017 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HPC-BLD-017@1` | HPC-BLD-017 | 4 | contract_draft | allowed |
+| HPC-BLD-018 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HPC-BLD-018@1` | HPC-BLD-018 | 10 | contract_draft | allowed |
+| HPC-BLD-019 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HPC-BLD-019@1` | HPC-BLD-019 | 5 | contract_draft | allowed |
+| HPC-BLD-020 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HPC-BLD-020@1` | HPC-BLD-020 | 10 | contract_draft | allowed |
+| HPC-HOU-001 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HPC-HOU-001@1` | HPC-HOU-001 | 7 | contract_draft | allowed |
+| HPC-HOU-002 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HPC-HOU-002@1` | HPC-HOU-002 | 11 | contract_draft | allowed |
+| HPC-HOU-003 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HPC-HOU-003@1` | HPC-HOU-003 | 7 | contract_draft | allowed |
+| HPC-HOU-004 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HPC-HOU-004@1` | HPC-HOU-004 | 5 | contract_draft | allowed |
+| HPC-PLN-009 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HPC-PLN-009@1` | HPC-PLN-009 | 13 | contract_draft | allowed |
+| HPC-PLN-012 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HPC-PLN-012@1` | HPC-PLN-012 | 5 | contract_draft | allowed |
+| HPC-PLN-013 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HPC-PLN-013@1` | HPC-PLN-013 | 8 | contract_draft | allowed |
+| LND-REG-005 | `PARTS-08-11:LND-REG-005@1` | LND-REG-005 | 11 | contract_draft | allowed |
+| LND-REG-007 | `PARTS-08-11:LND-REG-007@1` | LND-REG-007 | 20 | contract_draft | allowed |
+| LND-REG-008 | `PARTS-08-11:LND-REG-008@1` | LND-REG-008 | 17 | contract_draft | allowed |
+| LND-REG-009 | `PARTS-08-11:LND-REG-009@1` | LND-REG-009 | 17 | contract_draft | allowed |
+| LND-REG-010 | `PARTS-08-11:LND-REG-010@1` | LND-REG-010 | 13 | contract_draft | allowed |
+| LND-REG-011 | `PARTS-08-11:LND-REG-011@1` | LND-REG-011 | 17 | contract_draft | allowed |
+| LND-REG-012 | `PARTS-08-11:LND-REG-012@1` | LND-REG-012 | 17 | contract_draft | allowed |
+| LND-REG-016 | `PARTS-08-11:LND-REG-016@1` | LND-REG-016 | 16 | contract_draft | allowed |
+| LND-REG-017 | `PARTS-08-11:LND-REG-017@1` | LND-REG-017 | 11 | contract_draft | allowed |
+| LND-REG-020 | `PARTS-08-11:LND-REG-020@1` | LND-REG-020 | 17 | contract_draft | allowed |
+| LND-REG-021 | `PARTS-08-11:LND-REG-021@1` | LND-REG-021 | 13 | contract_draft | allowed |
+| LND-REG-022 | `PARTS-08-11:LND-REG-022@1` | LND-REG-022 | 11 | contract_draft | allowed |
+| LRG-FIN-008 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LRG-FIN-008@1` | LRG-FIN-008 | 10 | contract_draft | allowed |
+| LRG-ORG-004 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LRG-ORG-004@1` | LRG-ORG-004 | 5 | contract_draft | allowed |
+| LRG-ORG-005 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LRG-ORG-005@1` | LRG-ORG-005 | 12 | contract_draft | allowed |
+| LRG-SVC-013 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LRG-SVC-013@1` | LRG-SVC-013 | 11 | contract_draft | allowed |
+| LRG-SVC-014 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LRG-SVC-014@1` | LRG-SVC-014 | 11 | contract_draft | allowed |
+| TRN-DRV-001 | `PARTS-08-11:TRN-DRV-001@1` | TRN-DRV-001 | 9 | contract_draft | allowed |
+| TRN-OPS-001 | `PARTS-08-11:TRN-OPS-001@1` | TRN-OPS-001 | 10 | contract_draft | allowed |
+| TRN-ROAD-002 | `PARTS-08-11:TRN-ROAD-002@1` | TRN-ROAD-002 | 11 | contract_draft | allowed |
+| TRN-VEH-001 | `PARTS-08-11:TRN-VEH-001@1` | TRN-VEH-001 | 11 | contract_draft | allowed |
+| TRN-VEH-002 | `PARTS-08-11:TRN-VEH-002@1` | TRN-VEH-002 | 7 | contract_draft | allowed |
+
 **Totals beside the earlier ones** (the register without the library's contracts, after each batch, and now):
 
-| Status | Before (without the library) | After batch 1 | After batch 2 | After batch 3 | After batch 4 | After batch 5 | After batch 6 | After batch 7 | Now |
-|---|---|---|---|---|---|---|---|---|---|
-| catalogued | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| contract_missing | 1723 | 1698 | 1677 | 1648 | 1646 | 1613 | 1518 | 1511 | 1511 |
-| contract_draft | 129 | 154 | 175 | 204 | 206 | 239 | 334 | 341 | 341 |
-| under_review | 91 | 91 | 91 | 91 | 91 | 91 | 91 | 91 | 91 |
-| blocked | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 |
-| excluded | 128 | 128 | 128 | 128 | 128 | 128 | 128 | 128 | 128 |
-| approved | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| production | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| forms without a contract | 1927 | 1902 | 1881 | 1852 | 1850 | 1817 | 1722 | 1715 | 1715 |
+| Status | Before (without the library) | After batch 1 | After batch 2 | After batch 3 | After batch 4 | After batch 5 | After batch 6 | After batch 7 | After batch 8 | After batch 9 | After batch 10 | Now |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| catalogued | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| contract_missing | 1723 | 1698 | 1677 | 1648 | 1646 | 1613 | 1518 | 1511 | 1454 | 1377 | 1350 | 1350 |
+| contract_draft | 129 | 154 | 175 | 204 | 206 | 239 | 334 | 341 | 398 | 475 | 502 | 502 |
+| under_review | 91 | 91 | 91 | 91 | 91 | 91 | 91 | 91 | 91 | 91 | 91 | 91 |
+| blocked | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 |
+| excluded | 128 | 128 | 128 | 128 | 128 | 128 | 128 | 128 | 128 | 128 | 128 | 128 |
+| approved | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| production | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| forms without a contract | 1927 | 1902 | 1881 | 1852 | 1850 | 1817 | 1722 | 1715 | 1658 | 1581 | 1554 | 1554 |
 
 ## Forms with no contract
 
-1715 forms have no field contract (`contract: not yet given` in the register). By part:
+1554 forms have no field contract (`contract: not yet given` in the register). By part:
 
 | Part | Forms without a contract |
 |---|---|
-| Part 2 | 139 |
+| Part 2 | 82 |
 | Part 3 | 361 |
-| Part 4 | 116 |
+| Part 4 | 64 |
 | Part 5 | 136 |
 | Part 6 | 93 |
 | Part 7 | 152 |
-| Part 8 | 202 |
-| Part 9 | 76 |
+| Part 8 | 190 |
+| Part 9 | 72 |
 | Part 10 | 76 |
 | Part 11 | 66 |
 | Part 12 | 87 |
 | Part 13 | 83 |
-| Part 14 | 10 |
-| Part 15 | 15 |
 | Part 16 | 17 |
 | Part 17 | 18 |
 | Part 18 | 15 |
-| Part 19 | 14 |
-| Part 20 | 19 |
+| Part 19 | 12 |
+| Part 20 | 10 |
 | Part 22 | 14 |
 | Part 7 (supplement, Stage B contracts) | 1 |
 | Part 10 (supplement, Stage B contracts) | 1 |

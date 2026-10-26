@@ -1,0 +1,568 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "LRG-ORG-005",
+ "record_type": "lg.resolution",
+ "form_version": 1,
+ "procedure_package_id": "lg.resolution",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-LRG: the council's standing rules (seats, quorum, majority), adopted by two of its own officials citing the law; none ship.",
+  "CFG-DAT-001: retention and disclosure of the case and its personal data."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+  "id": "LRG-ORG-005",
+  "part": 19,
+  "section": "19.1",
+  "line": 869,
+  "batch": 10
+ },
+ "library": {
+  "title": "Record a council resolution",
+  "intro": "Record a resolution of the council: the meeting, the agenda item, the text and the vote. The vote is checked against the council's own rules in force (quorum, then the majority) and the resolution is certified by two officials with the signed minutes.",
+  "owner": "institution",
+  "filled_by": "The council's clerk.",
+  "authority": "Each local government's own: filed with the local government (an institution of standing subnational) that adopted the procedure; never the whole government's.",
+  "procedure": {
+   "key": "lg.resolution",
+   "stage": "moved",
+   "action": "record",
+   "document": "agenda"
+  },
+  "lists": {},
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "institution-owned",
+    "what": "The owner is each local government itself (an institution of standing subnational): it adopts the procedure as its own (lg.<template>.<institution>), drafted by one of its officials and approved by another",
+    "why": "Local and regional authorities have their own institutional scope, records and delegated powers; the whole government reaches them only under an approved relationship.",
+    "rule": "lib/localgov/procedures.ts installLocalGovernmentProcedures(); lib/auth/roles.ts Boundaries.subnational"
+   },
+   {
+    "id": "two-officials",
+    "what": "Every registration and decision is proposed by one official and confirmed by a different person; the official who verified or reviewed does not decide",
+    "why": "Catalogue Part 8 §3.3 and Part 9 §5: dual control by distinct authorised individuals.",
+    "rule": "lib/casework/engine.ts act() (fourEyes, distinctFrom); lib/data/dual-control.ts dualControlRefusal()"
+   },
+   {
+    "id": "no-ai-decision",
+    "what": "No step is decided by a model, a score or a map: officials decide with reasons",
+    "why": "AI never makes a legally material decision.",
+    "rule": "CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   },
+   {
+    "id": "quorum-rules",
+    "what": "Seats, quorum and the majority are the council's own rules, adopted by two of its officials citing the law; the vote is checked against the version in force, kept on the certified resolution",
+    "why": "A council resolution needs a quorum verification; no quorum ships.",
+    "rule": "lib/localgov/register.ts checkVote(), proposeCouncilRules()"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 869,
+    "quotes": [
+     "LRG-ORG-005",
+     "Council resolution record"
+    ],
+    "met_by": {
+     "fields": [
+      "resolution.text",
+      "resolution.quorum_check"
+     ],
+     "procedure": "certify"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 903,
+    "quotes": [
+     "\"form_id\": \"LRG-ORG-005\""
+    ],
+    "met_by": {
+     "fields": [
+      "resolution.text"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 904,
+    "quotes": [
+     "\"title\": \"Council Resolution Record\""
+    ],
+    "met_by": {
+     "fields": [
+      "resolution.text"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 905,
+    "quotes": [
+     "\"fields\": ["
+    ],
+    "met_by": {
+     "fields": [
+      "resolution.council"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 906,
+    "quotes": [
+     "{\"key\": \"council_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "resolution.council"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 907,
+    "quotes": [
+     "{\"key\": \"meeting_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "resolution.meeting"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 908,
+    "quotes": [
+     "{\"key\": \"agenda_item_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "resolution.agenda_item"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 909,
+    "quotes": [
+     "{\"key\": \"resolution_text\", \"type\": \"long_text\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "resolution.text"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 910,
+    "quotes": [
+     "{\"key\": \"vote_record\", \"type\": \"structured_object\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "resolution.present",
+      "resolution.for",
+      "resolution.against",
+      "resolution.abstain"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 911,
+    "quotes": [
+     "{\"key\": \"quorum_verification_reference\", \"type\": \"verification_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "resolution.quorum_check"
+     ],
+     "deviation": "quorum-rules"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 912,
+    "quotes": [
+     "{\"key\": \"conflict_of_interest_declarations\", \"type\": \"array\", \"required\": false, \"items_type\": \"declaration_reference\"}"
+    ],
+    "met_by": {
+     "fields": [
+      "resolution.conflicts"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 913,
+    "quotes": [
+     "{\"key\": \"signed_minutes_reference\", \"type\": \"document_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "resolution.minutes"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "resolution.council",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "actor_authorized_for_institution",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.institutions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Council (its id in the institution register)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter council (its id in the institution register).",
+     "reference_exists": "There is no record with that reference in the register."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "resolution.meeting",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 80
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Meeting (its reference)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter meeting (its reference).",
+     "length": "Meeting (its reference) is too long."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "resolution.agenda_item",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 80
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Agenda item"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter agenda item.",
+     "length": "Agenda item is too long."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "resolution.text",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 8000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The resolution"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the resolution.",
+     "length": "The resolution is too long."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "resolution.present",
+   "type": "number",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "integer_range",
+     "params": {
+      "min": 0,
+      "max": 2000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Members present"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter members present.",
+     "integer_range": "Members present must be a whole number in range."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "resolution.for",
+   "type": "number",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "integer_range",
+     "params": {
+      "min": 0,
+      "max": 2000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Votes for"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter votes for.",
+     "integer_range": "Votes for must be a whole number in range."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "resolution.against",
+   "type": "number",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "integer_range",
+     "params": {
+      "min": 0,
+      "max": 2000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Votes against"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter votes against.",
+     "integer_range": "Votes against must be a whole number in range."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "resolution.abstain",
+   "type": "number",
+   "required": false,
+   "validation": [
+    {
+     "rule": "integer_range",
+     "params": {
+      "min": 0,
+      "max": 2000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Abstentions"
+   },
+   "error_text": {
+    "en": {
+     "integer_range": "Abstentions must be a whole number in range."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "resolution.quorum_check",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Quorum check (the council's rules version, recorded by the platform)"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "resolution.conflicts",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Declarations of interest recorded (one per line)"
+   },
+   "error_text": {
+    "en": {
+     "length": "Declarations of interest recorded (one per line) is too long."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "resolution.minutes",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [
+    {
+     "kind": "signed-minutes",
+     "when": "when_the_form_asks_for_it"
+    }
+   ],
+   "label": {
+    "en": "Signed minutes"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter signed minutes."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "resolution.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

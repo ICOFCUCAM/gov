@@ -849,11 +849,12 @@ Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21
 - Workforce counts derived from the professions register on every read: by profession, standing and region of practice (recorded by the registration decision), small cells suppressed by the nation's threshold, no name, number or person reference; a read-only indicator (/api/health-regulation/workforce) and the twin as a registered source's observations (`app/src/lib/professions/workforce.ts`, `app/src/lib/professions/register.ts`, `app/src/lib/health/small-cells.ts`, `app/src/app/api/health-regulation/workforce/route.ts`)
 - Supply items at the administrative level: a programme's supply item is a decided product of the medicines register by its number and a unit; programme supply received and used as aggregate counts (HLT-PH-011) (`app/src/lib/health/programmes/register.ts`)
 - Policy: health policy instruments are recorded in the laws register (no second register); programmes carry their indicators and coverage definitions (`app/src/lib/law/register.ts`, `app/src/lib/health/programmes/register.ts`)
+- Budget and procurement (plan step I5): a programme's budget reference resolves to an appropriation in the finance register (fin:APP-…; budgetLink(): an unknown reference refused, free text refused in production once the finance slot is named); the health institution commits against its appropriation (finance.commitment, two officials) and buys through its own procurement procedures (proc.plan and proc.tender adopted as its own: sealed bids, evaluation with reasons, award, standstill, complaints to the review body) (`app/src/lib/health/programmes/procedures.ts`, `app/src/lib/finance/register.ts`, `app/src/lib/finance/procedures.ts`, `app/src/lib/procurement/procedures.ts`)
 
 **What is missing:**
 
 - Logistics and inventory (lots, stock, locations, expiry, transactions) and essential-supply availability from reliable inventory feeds: not built (integration register 20.36)
-- Budget, procurement and grants: plan step I5 (finance), recorded as a dependency (integration register 20.37); a programme carries a budget reference only
+- Grants and transfers to health institutions or programmes: not built (plan step I5 left grants and transfers; integration register 20.37); budget and procurement are built (I5)
 - Service-quality investigations beyond the complaint's referral; planning and performance frameworks with indicator definitions (I3)
 - Adoption by the nation of the complaint procedures (a version approved by a second official; its complaint kinds and relationships configured)
 
@@ -875,6 +876,7 @@ Owner's direction of 21 October 2026 (`docs/forms-catalogue/DIRECTION-2026-10-21
 - `app/src/lib/health/complaints/complaints.test.ts` "takes a conduct complaint about a registered professional and refers it to a fitness-to-practise case, or closes it with reasons"
 - `app/src/lib/professions/workforce.test.ts` "records the region of practice through the registration decision, never on the public check"
 - `app/src/lib/professions/workforce.test.ts` "counts by profession, standing and region, suppresses small cells by the nation's threshold, and names nobody"
+- `app/src/lib/finance/finance.test.ts` "links a public-health programme's budget reference to the appropriation it names"
 - To write: Logistics: once an inventory feed exists, essential-supply availability from it (integration register 20.36)
 
 **Release gate:** Each function has its record and procedure

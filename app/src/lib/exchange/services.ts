@@ -27,6 +27,10 @@ import { integrationPurposes } from '@/lib/data/store/federation';
 import { purposeSlug } from './usage-policy';
 import { samplesAllowed } from '@/lib/ops/mode';
 import { slotConnection } from '@/lib/nation/edition';
+import { verifyIdentity, VERIFY_MEANING } from '@/lib/identity/register';
+import { documentStatus } from '@/lib/passports/register';
+import { employerStanding } from '@/lib/labour/register';
+import { authorityFor } from '@/lib/data/store';
 
 export interface Caller { kind: 'module' | 'integration'; id: string; name: string; institution?: string }
 export interface ServiceResult { status: number; result: string; data: Record<string, unknown> }
@@ -180,6 +184,46 @@ export const SERVICES: ServiceDef[] = [
       const a = statusOn({ nationality, documentNumber, ...(kind ? { kind } : {}), ...(str(input.on) ? { on: str(input.on) } : {}) });
       // The answer never names the holder or the file: what is valid, until when, under which conditions.
       return { status: 200, result: a.valid ? 'valid' : 'not valid', data: a.valid ? { valid: 'yes', kind: a.kind, category: a.category, validUntil: a.validUntil, conditions: a.conditions } : { valid: 'no' } };
+    },
+  },
+  {
+    // Plan step I6 (field series Part 4 §3.3, specification Part 2 §C.1 "Identity verification response"): a narrow
+    // verification result and its meaning, never the record. The caller states the purpose; an outside caller only one two
+    // officials approved for it and this service. A failed lookup is never proof that a person does not exist or is ineligible.
+    id: 'identity.verify', version: 1, kind: 'query', title: 'Is this identity credential valid, and do these facts match it?', owner: 'identity', scope: 'service:identity.verify',
+    returns: { result: 'verified, not_verified, unable_to_verify or additional_review_required', meaning: 'what the result means (and what may not be concluded from it)', credentialState: 'the credential\'s status', validUntil: 'YYYY-MM-DD', source: 'the identity register, as at the time of the answer' }, dataClass: 'personal',
+    legalBasis: 'The national identity law\'s provisions on verification (named by the identity authority when it approves the service for a caller; CFG-IDN-003)',
+    handle: input => {
+      // No identity authority named: the service cannot answer, and says so (never a negative answer).
+      if (!authorityFor('identity')) return { status: 503, result: 'unable_to_verify (no identity authority named)', data: { result: 'unable_to_verify', meaning: VERIFY_MEANING.unable_to_verify } };
+      const v = verifyIdentity({ number: str(input.number), givenNames: str(input.givenNames), familyName: str(input.familyName), birthDate: str(input.birthDate) });
+      return { status: 200, result: v.result, data: { ...v, meaning: VERIFY_MEANING[v.result], source: `identity register, ${new Date().toISOString()}` } };
+    },
+  },
+  {
+    // Plan step I6 (field series Part 4 §5.2 and §9.2): whether a travel document the nation issued is valid; never the
+    // holder, the application or the document's history. A lost or stolen report answers not valid with its class.
+    id: 'travel-document.status', version: 1, kind: 'query', title: 'Is this travel document, issued by this nation, valid on this date?', owner: 'travelDocuments', scope: 'service:travel-document.status',
+    returns: { status: 'valid, not-valid or unknown', reason: 'why not valid (expired, reported-lost, reported-stolen, cancelled, revoked, surrendered, superseded…)', validUntil: 'YYYY-MM-DD' }, dataClass: 'personal',
+    legalBasis: 'The passport law\'s provisions on checking travel documents (named by the travel document authority when it approves the service for a caller)',
+    handle: input => {
+      const n = str(input.documentNumber);
+      if (!n) return { status: 422, result: 'documentNumber needed', data: { status: 'unknown' } };
+      const a = documentStatus(n, str(input.on) || undefined);
+      return { status: 200, result: a.status, data: a };
+    },
+  },
+  {
+    // Plan step I6 (specification Part 2 §C.5): whether an employer is registered with the labour authority; never its workers,
+    // inspections, complaints or injuries.
+    id: 'employer.standing', version: 1, kind: 'query', title: 'Is this employer registered with the labour authority?', owner: 'labour', scope: 'service:employer.standing',
+    returns: { registered: 'yes or no', state: 'registered, suspended or deregistered', employer: 'the labour register number' }, dataClass: 'public',
+    legalBasis: 'The labour law\'s provisions on employer registration (named by the labour authority when it approves the service for a caller)',
+    handle: input => {
+      const n = str(input.employer) || str(input.organisation);
+      if (!n) return { status: 422, result: 'employer or organisation needed', data: { registered: 'no' } };
+      const a = employerStanding(n);
+      return { status: 200, result: a.registered === 'yes' ? 'registered' : 'not registered', data: a };
     },
   },
   {

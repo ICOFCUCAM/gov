@@ -22,7 +22,18 @@ export type AuthorityKey =
   // Health bodies the nation's law may set apart from the health regulator (owner's direction 2026-10-21,
   // docs/forms-catalogue/DIRECTION-2026-10-21-HEALTH-INTEGRATION.md §3): empty until named. Until then a
   // form that names one is owned provisionally (provisionalOwner()), never as proof of legal competence.
-  | 'medicinesRegulation' | 'controlledSubstances' | 'publicHealth';
+  | 'medicinesRegulation' | 'controlledSubstances' | 'publicHealth'
+  // Territory and infrastructure (plan step I7): empty until the nation names each body. Who holds a power over a permit
+  // type still comes from the permit authority registry (lib/permits/authority.ts); these name who keeps each register.
+  | 'landRegistry' | 'buildingControl' | 'housing' | 'vehicleRegistration' | 'roadAuthority' | 'transportRegulator'
+  // The economic group (plan step I5): public finance (budget, appropriations, commitments, payments and cash, kept by
+  // the finance authority the nation names, whether a ministry of finance, a treasury or a budget office), the cabinet
+  // office (Cabinet submissions, decisions and actions; executive correspondence and petitions) and the body that
+  // reviews procurement complaints independently of the procuring institution. Empty until named; nothing is assumed.
+  | 'finance' | 'cabinetOffice' | 'procurementReview'
+  // Human services (plan step I6, specification Part 2): bodies a nation may keep apart, each named by the nation;
+  // empty until named, no case opens under a slot nobody is named for, and no stand-in acts for them.
+  | 'travelDocuments' | 'citizenship' | 'labour' | 'socialProtection';
 
 export type ModuleKey = 'law' | 'civil' | 'organisations' | 'accreditation' | 'licensing' | 'immigration' | 'police' | 'courts' | 'tax' | 'customs' | 'education' | 'health' | 'professions';
 
@@ -94,6 +105,23 @@ export const AUTHORITIES: { key: AuthorityKey; label: string; registers: string;
   { key: 'medicinesRegulation', label: 'Medicines and medical devices regulation', registers: 'Authorised medicines and medical devices, manufacturing sites, imports, safety reports and recalls', optional: true },
   { key: 'controlledSubstances', label: 'Controlled substances authority', registers: 'Authorisations to handle controlled medicines (only where the nation\'s law names a body apart from the medicines regulator)', optional: true },
   { key: 'publicHealth', label: 'Public health authority', registers: 'Public-health programmes and the aggregate returns they receive (never an individual case)', optional: true },
+  // Plan step I7: territory and infrastructure.
+  { key: 'landRegistry', label: 'Land registry (registered interests)', registers: 'Registered interests in land: transfers, mortgages, easements, leases, caveats and restrictions, their discharge, corrections and disputes (the parcels themselves are kept by the cadastre authority the parcel policy names)', optional: true },
+  { key: 'buildingControl', label: 'Planning and building control', registers: 'Planning applications and decisions, building permits with their approved design versions, inspections, stop-work orders and occupancy certificates', optional: true },
+  { key: 'housing', label: 'Housing authority', registers: 'Housing programmes with their approved eligibility and priority rules, housing applications, assessments and allocations', optional: true },
+  { key: 'vehicleRegistration', label: 'Vehicle and driver licensing', registers: 'Registered vehicles and their keepers; driving licences, their categories, restrictions and validity', optional: true },
+  { key: 'roadAuthority', label: 'Road authority', registers: 'Permits for works in public roads, with the place, the period and the traffic arrangements they allow', optional: true },
+  { key: 'transportRegulator', label: 'Transport regulator', registers: 'Licensed transport operators (organisations of the organisations register), their fleets, routes and conditions', optional: true },
+  // Plan step I5: optional like the health slots, empty until the nation names each; a procedure that names one opens no case until then.
+  { key: 'finance', label: 'Public finance (budget and treasury)', registers: 'Budget calls, ceilings and bids; appropriations and their releases and revisions; commitments; payment orders and payee accounts; cash forecasts', optional: true },
+  { key: 'cabinetOffice', label: 'Cabinet office', registers: 'Cabinet submissions, decisions with their votes, the action register; executive correspondence and petitions', optional: true },
+  { key: 'procurementReview', label: 'Procurement review body', registers: 'Procurement complaints and their review decisions, kept apart from the procuring institution', optional: true },
+  // Human services (plan step I6): optional, so an installation set up before them stays complete; until the nation names one,
+  // its procedures open no case and its register stays empty (the nation may name the same institution as for immigration).
+  { key: 'travelDocuments', label: 'Passports and travel documents', registers: 'Passports and other travel documents: applications, issuance, custody, status and production reconciliation', optional: true },
+  { key: 'citizenship', label: 'Citizenship determination', registers: 'Citizenship and nationality applications and determinations (only where the nation\'s law names a competent authority)', optional: true },
+  { key: 'labour', label: 'Labour and employment', registers: 'Employers and workplaces, employment registrations, vacancies and jobseekers, inspections and corrective orders, labour complaints, occupational injury notifications, mediation', optional: true },
+  { key: 'socialProtection', label: 'Social protection and benefits', registers: 'Claimants and households, benefit claims and their calculations, entitlements, payment instructions, overpayments and appeals', optional: true },
 ];
 /** Health bodies a nation may set apart from the health regulator: optional, provisionally stood in for until named (PROVISIONAL_FALLBACK). */
 export const HEALTH_SLOTS: AuthorityKey[] = ['medicinesRegulation', 'controlledSubstances', 'publicHealth'];
@@ -105,13 +133,17 @@ export const REQUIRED_AUTHORITIES = AUTHORITIES.filter(a => !a.optional);
  * protection as before; the legislature, head of state and a constitutional
  * court by their nature; since plan step I8 the oversight bodies, the public
  * audit office, the ombudsman, the human rights institution and the
- * anti-corruption commission, whose records are their own: lib/oversight).
+ * anti-corruption commission, whose records are their own: lib/oversight;
+ * since plan step I5 the procurement review body, whose complaint cases the
+ * procuring institution never edits or reads: lib/procurement).
  * Other bodies are independent only when their recorded standing says so
  * (lib/data/store/institutions.ts). The public audit office's power to read
  * another independent body's case still needs its recorded standing
  * (institutionBounds().audit).
  */
-export const INDEPENDENT_SLOTS: AuthorityKey[] = ['judiciary', 'dataProtection', 'legislature', 'headOfState', 'constitutionalCourt', 'supremeAudit', 'ombudsman', 'humanRights', 'anticorruption'];
+export const INDEPENDENT_SLOTS: AuthorityKey[] = ['judiciary', 'dataProtection', 'legislature', 'headOfState', 'constitutionalCourt', 'supremeAudit', 'ombudsman', 'humanRights', 'anticorruption',
+  // Plan step I5 (field series Part 3 §3.5 Department G): an executive-wide account never inherits access to independent procurement review cases.
+  'procurementReview'];
 /** Slots whose named institution is a court: its cases are closed to every other institution. */
 export const JUDICIAL_SLOTS: AuthorityKey[] = ['judiciary', 'constitutionalCourt'];
 export const isAuthorityKey = (v: unknown): v is AuthorityKey => AUTHORITIES.some(a => a.key === v);

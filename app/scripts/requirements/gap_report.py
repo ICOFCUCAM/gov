@@ -19,6 +19,11 @@ REPORTED = {'listed forms, parts 14–22': 216, 'contracts, parts 14–22': 61, 
 BATCH_LABEL = {1: 'health regulation', 2: 'medicines and medical devices regulation', 3: 'taxpayer registration and account', 4: 'public-health programme forms', 5: 'internal administration', 7: 'independent oversight and accountability forms'}
 # Batch 6 (owner's assignment, 21 October 2026): tax services, the field series Part 2 §2.6 Departments B–H.
 BATCH_LABEL[6] = 'tax services'
+# Batch 10 (plan I7): territory and infrastructure, the forms the land, building, housing, local-government and transport procedures carry.
+BATCH_LABEL[10] = 'territory and infrastructure'
+# Batch 8 (owner's assignment, plan step I5): the executive office, Cabinet, treasury and budget forms of the field series Part 2.
+BATCH_LABEL[8] = 'executive office, Cabinet, treasury and budget'
+BATCH_LABEL[9] = 'human services forms'
 GATES = [
     'The form owner and competent authority are verified.',
     'Legal references and their versions have been approved.',

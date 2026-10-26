@@ -107,6 +107,19 @@ describe('where setup stands', () => {
     setSovereign({ deployment: { authorities: {} } }, 'test');
   });
 
+  // Territory and infrastructure (plan I7): a track only once a body is named or a local government recorded; its links exist.
+  it('shows the territory track only once the nation names a land, building, housing or transport body', async () => {
+    const { setSovereign } = await import('@/lib/data/store/sovereign');
+    const { listMinistries } = await import('@/lib/data/store/ministries');
+    expect(onboardingStatus(env('demo')).tracks.some(t => t.key === 'territory')).toBe(false);
+    const id = listMinistries().find(m => m.status === 'active')!.id;
+    setSovereign({ deployment: { authorities: { landRegistry: id, buildingControl: id } } }, 'test');
+    const t = onboardingStatus(env('demo')).tracks.find(x => x.key === 'territory')!;
+    expect(t.checks.map(c => c.label)).toEqual(expect.arrayContaining([expect.stringMatching(/procedures approved/), expect.stringMatching(/permit authorities/), expect.stringMatching(/parcel policy/), expect.stringMatching(/Building control rules/)]));
+    for (const h of [t.href, ...t.checks.map(c => c.href)]) expect(locked.has(h.split('#')[0]!), h).toBe(true);
+    setSovereign({ deployment: { authorities: {} } }, 'test');
+  });
+
   it('says which tracks may be done only because of samples', () => {
     expect(onboardingStatus(env('demo')).tracks.find(t => t.key === 'exchange')!.samplesCounted).toBe(true);
   });

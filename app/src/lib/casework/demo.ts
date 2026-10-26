@@ -1,7 +1,8 @@
 // The demonstration set (demo and training installations only, lib/ops/mode.ts):
 // sample acts (civil registration; business registration, licensing and
 // accreditation; immigration, police, courts; tax, education, health
-// professions and facilities, customs), recorded and confirmed, and the reference procedures cited
+// professions and facilities, customs; land, building control, housing and
+// transport), recorded and confirmed, and the reference procedures cited
 // to them and approved, so cases can be run end to end
 // without a nation's real law. Everything goes through the same registers and
 // four-eyes rules as real work, under named demonstration officials, and the
@@ -11,7 +12,11 @@ import { samplesAllowed } from '@/lib/ops/mode';
 import { authorityFor, getSovereign } from '@/lib/data/store';
 import { recordAudit } from '@/lib/data/store/audit';
 import { recordVersion, confirmVersion, listInstruments } from '@/lib/law/register';
-import { REFERENCE_PROCEDURES, ORGANISATION_PROCEDURES, IMMIGRATION_PROCEDURES, POLICE_PROCEDURES, COURT_PROCEDURES, TAX_PROCEDURES, EDUCATION_PROCEDURES, PROFESSION_PROCEDURES, HEALTH_PROCEDURES, CUSTOMS_PROCEDURES, PRODUCT_PROCEDURES, PROGRAMME_PROCEDURES, COMPLAINT_PROCEDURES, installReferenceProcedures } from '@/lib/casework/modules';
+import { LAND_PROCEDURES } from '@/lib/land/procedures';
+import { BUILDING_PROCEDURES } from '@/lib/building/procedures';
+import { HOUSING_PROCEDURES } from '@/lib/housing/procedures';
+import { TRANSPORT_PROCEDURES } from '@/lib/transport/procedures';
+import { REFERENCE_PROCEDURES, ORGANISATION_PROCEDURES, IMMIGRATION_PROCEDURES, POLICE_PROCEDURES, COURT_PROCEDURES, TAX_PROCEDURES, EDUCATION_PROCEDURES, PROFESSION_PROCEDURES, HEALTH_PROCEDURES, CUSTOMS_PROCEDURES, PRODUCT_PROCEDURES, PROGRAMME_PROCEDURES, COMPLAINT_PROCEDURES, FINANCE_PROCEDURES, CABINET_PROCEDURES, REFERENCE_PROCUREMENT_COMPLAINT, IDENTITY_PROCEDURES, PASSPORT_PROCEDURES, CITIZENSHIP_PROCEDURES, LABOUR_PROCEDURES, SOCIAL_PROCEDURES, installReferenceProcedures } from '@/lib/casework/modules';
 import type { AuthorityKey } from '@/lib/nation/deployment';
 import { activePackage, approvePackage, draftPackage, listPackages, withSampleDeadlines } from '@/lib/casework/packages';
 import { registeredEffects } from '@/lib/casework/engine';
@@ -113,8 +118,93 @@ const MORE_ACTS: { title: string; number: string; authority: AuthorityKey; provi
   { title: 'Controlled Substances Act (sample for demonstration)', number: 'sample-12', authority: 'controlledSubstances', procedures: PRODUCT_PROCEDURES, provisions: {
     'medicines.controlled': P('sec_8', '8', 'No person shall import, export, manufacture or distribute a controlled substance except under an authorisation, within the quantities the regulations set.'),
   } },
+  // The economic group (plan step I5): powers only. No ceiling, threshold, approval tier, quorum or period is sampled: payments are
+  // approved without tiers and Cabinet decisions recorded without adopted rules only in a demonstration, marked as such.
+  { title: 'Public Finance Management Act (sample for demonstration)', number: 'sample-14', authority: 'finance', procedures: FINANCE_PROCEDURES, provisions: {
+    'budget.circular': P('sec_10', '10', 'The finance authority shall issue a budget call circular for each budget period, stating the calendar and what bids must contain.'),
+    'budget.ceiling': P('sec_11', '11', 'The finance authority shall set each institution\'s budget ceiling within the fiscal framework.'),
+    'budget.bid': P('sec_12', '12', 'Each institution shall submit its budget bid within its ceiling; the finance authority shall review, negotiate and allocate.'),
+    'budget.appropriation': P('sec_20', '20', 'Money appropriated by the legislature shall be released for commitment by the finance authority once its authority is validated.'),
+    'budget.revision': P('sec_25', '25', 'The finance authority may transfer between appropriations, release further sums or reduce an appropriation as the law permits; supplementary sums need a supplementary appropriation.'),
+    'finance.commitment': P('sec_30', '30', 'No commitment shall be made unless a released appropriation covers it.'),
+    'treasury.payee-account': P('sec_34', '34', 'A payee\'s bank account shall be verified independently and approved by two officers before any payment is made to it.'),
+    'treasury.payment': P('sec_35', '35', 'No payment shall be made unless instructed against a commitment, verified, approved by two officers, executed by the bank and reconciled, each step by a different officer.'),
+    'treasury.cash-forecast': P('sec_40', '40', 'Each institution shall report a cash forecast for each period; the finance authority shall review it.'),
+  } },
+  { title: 'Cabinet Procedure Order (sample for demonstration)', number: 'sample-15', authority: 'cabinetOffice', procedures: CABINET_PROCEDURES, provisions: {
+    'cabinet.decision': P('art_4', '4', 'The cabinet office shall register Cabinet papers, have them reviewed, circulate them, record and authenticate Cabinet\'s decisions and follow up the actions they assign.'),
+    'exec.correspondence': P('art_9', '9', 'The cabinet office shall receive petitions and correspondence to the executive, acknowledge them and respond or refer them to the responsible institution.'),
+  } },
+  { title: 'Public Procurement Review Act (sample for demonstration)', number: 'sample-16', authority: 'procurementReview', procedures: [REFERENCE_PROCUREMENT_COMPLAINT], provisions: {
+    'procurement-review.complaint': P('sec_50', '50', 'A bidder may complain to the review body about a procurement decision; the review body may suspend the award and shall decide with reasons.'),
+  } },
+  // Human services (plan I6): powers only. No fee, validity period, benefit rate or means limit is sampled: the passport fee
+  // schedule and each programme's rule stay for the nation to approve (Rates and tariffs), and the mappings stay drafts.
+  { title: 'National Identity Act (sample for demonstration)', number: 'sample-i6-1', authority: 'identity', procedures: IDENTITY_PROCEDURES, provisions: {
+    'identity.enrolment': P('sec_4', '4', 'An eligible person may be enrolled in the national identity register on verified evidence of identity; a possible duplicate is determined by an authorised officer.'),
+    'identity.credential': P('sec_8', '8', 'The authority issues, renews and replaces identity credentials for the period the regulations set.'),
+    'identity.credential-status': P('sec_10', '10', 'After notice and representations, a credential may be suspended or revoked; a lost or stolen credential may be cancelled.'),
+    'identity.resolution': P('sec_12', '12', 'The authority determines suspected duplicate, misused or compromised identity records.'),
+  } },
+  { title: 'Passports Act (sample for demonstration)', number: 'sample-i6-2', authority: 'travelDocuments', procedures: PASSPORT_PROCEDURES, provisions: {
+    'passport.application': P('sec_5', '5', 'A citizen may be issued a passport or other travel document on application and the fee the Schedule sets.'),
+    'passport.status': P('sec_9', '9', 'A travel document reported lost or stolen may be cancelled; after notice and representations, one may be revoked.'),
+    'passport.review': P('sec_11', '11', 'A person refused a passport may ask for the refusal to be reviewed by officers who did not take it.'),
+  } },
+  { title: 'Citizenship Act (sample for demonstration)', number: 'sample-i6-3', authority: 'citizenship', procedures: CITIZENSHIP_PROCEDURES, provisions: {
+    'citizenship.application': P('sec_5', '5', 'The competent authority determines applications for citizenship on the grounds this Act sets.'),
+  } },
+  { title: 'Employment and Labour Relations Act (sample for demonstration)', number: 'sample-i6-4', authority: 'labour', procedures: LABOUR_PROCEDURES, provisions: {
+    'labour.employer-registration': P('sec_4', '4', 'Every employer shall register with the labour authority.'),
+    'labour.employment-registration': P('sec_6', '6', 'An employer shall register each employment relationship.'),
+    'labour.vacancy': P('sec_20', '20', 'The labour authority may publish vacancies employers notify.'),
+    'labour.jobseeker': P('sec_21', '21', 'The labour authority may register jobseekers and refer them to vacancies.'),
+    'labour.inspection': P('sec_30', '30', 'A labour inspector may inspect any workplace, record findings and issue corrective orders.'),
+    'labour.complaint': P('sec_40', '40', 'Any worker may complain to the labour authority, which shall assess and decide the complaint with reasons.'),
+    'labour.injury': P('sec_50', '50', 'An employer shall notify the labour authority of every occupational injury or dangerous occurrence.'),
+    'labour.mediation': P('sec_60', '60', 'The labour authority may mediate a dispute at the request of a party.'),
+    'labour.notice': P('sec_70', '70', 'Notice of a strike or of redundancies shall be given to the labour authority.'),
+  } },
+  { title: 'Social Assistance Act (sample for demonstration)', number: 'sample-i6-5', authority: 'socialProtection', procedures: SOCIAL_PROCEDURES, provisions: {
+    'social.registration': P('sec_4', '4', 'A person may register with the social protection authority.'),
+    'social.household': P('sec_5', '5', 'A registered person shall declare their household and any change to it.'),
+    'social.benefit': P('sec_10', '10', 'A benefit is paid as the programme\'s regulations calculate, on a decision with reasons.'),
+    'social.reassessment': P('sec_12', '12', 'A benefit may be reassessed on a change of circumstances.'),
+    'social.suspension': P('sec_14', '14', 'After notice and representations, a benefit may be suspended or terminated.'),
+    'social.payment': P('sec_16', '16', 'Payments are made on instructions approved by an officer other than the one who prepared them.'),
+    'social.overpayment': P('sec_18', '18', 'An overpayment may be recovered or waived.'),
+    'social.appeal': P('sec_20', '20', 'A person may appeal a decision to officers who did not take it.'),
+  } },
   { title: 'Customs Act (sample for demonstration)', number: 'sample-10', authority: 'customs', procedures: CUSTOMS_PROCEDURES, provisions: {
     'customs.declaration': P('sec_30', '30', 'Goods shall be declared to customs, may be examined, and are released once the duty assessed on them is paid.'),
+  } },
+  // Plan I7: territory and infrastructure. Powers only: no fee, period, category or rate is sampled; building control rules, programme terms and
+  // council rules stay unset until officials adopt them, and the permit authority mappings stay drafts.
+  { title: 'Land Registration Act (sample for demonstration)', number: 'sample-i7-1', authority: 'landRegistry', procedures: LAND_PROCEDURES, provisions: {
+    'land.transfer': P('sec_30', '30', 'A transfer of a registered interest is registered by the Registrar on a verified instrument; the earlier entry is kept.'),
+    'land.encumbrance': P('sec_40', '40', 'A lease, charge, easement or caveat is registered against the parcel in the order lodged.'),
+    'land.discharge': P('sec_45', '45', 'A charge or caveat is discharged on the release of the person entitled to it.'),
+    'land.correction': P('sec_50', '50', 'The Registrar may correct an entry on evidence of the error; the earlier entry is kept.'),
+    'land.dispute': P('sec_60', '60', 'A dispute concerning a registered interest is registered and determined by the Registrar or referred to the court; the interest is not dealt with meanwhile.'),
+  } },
+  { title: 'Physical Planning and Building Control Act (sample for demonstration)', number: 'sample-i7-2', authority: 'buildingControl', procedures: BUILDING_PROCEDURES, provisions: {
+    'building.planning': P('sec_20', '20', 'No development shall be carried out without planning permission granted on an application after consultation.'),
+    'building.permit': P('sec_40', '40', 'No building shall be erected without a building permit; works are inspected, may be stopped, and are occupied only on a certificate of occupancy.'),
+  } },
+  { title: 'Housing Act (sample for demonstration)', number: 'sample-i7-3', authority: 'housing', procedures: HOUSING_PROCEDURES, provisions: {
+    'housing.programme': P('sec_10', '10', 'The housing authority may establish a housing programme with eligibility criteria and priority rules approved under this Act.'),
+    'housing.application': P('sec_20', '20', 'Homes under a programme are allocated to eligible applicants according to its priority rules, with reasons.'),
+  } },
+  { title: 'Traffic Act (sample for demonstration)', number: 'sample-i7-4', authority: 'vehicleRegistration', procedures: TRANSPORT_PROCEDURES.filter(p => /vehicle|driving/.test(p.key)), provisions: {
+    'transport.vehicle-registration': P('sec_5', '5', 'Every motor vehicle shall be registered and assigned a registration mark.'),
+    'transport.vehicle-transfer': P('sec_9', '9', 'A change of the keeper of a registered vehicle shall be registered.'),
+    'transport.driving-licence': P('sec_30', '30', 'No person shall drive without a driving licence for the category of vehicle, issued after a test.'),
+  } },
+  { title: 'Roads Act (sample for demonstration)', number: 'sample-i7-5', authority: 'roadAuthority', procedures: TRANSPORT_PROCEDURES.filter(p => p.key === 'transport.road-works'), provisions: {
+    'transport.road-works': P('sec_12', '12', 'No person shall excavate or obstruct a public road except under a permit of the road authority.'),
+  } },
+  { title: 'Transport Licensing Act (sample for demonstration)', number: 'sample-i7-6', authority: 'transportRegulator', procedures: TRANSPORT_PROCEDURES.filter(p => p.key === 'transport.operator-licence'), provisions: {
+    'transport.operator-licence': P('sec_8', '8', 'No person shall operate a public service vehicle except under an operator licence.'),
   } },
 ];
 

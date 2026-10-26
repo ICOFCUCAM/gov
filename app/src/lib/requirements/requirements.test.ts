@@ -142,10 +142,11 @@ describe('rows plan steps I0.2 and I2 deliver', () => {
       expect(r!.status, id).toBe(status);
       for (const [, f] of (r!.evidence ?? '').matchAll(/\b((?:lib|components)\/[\w./-]+\.tsx?)\b/g)) expect(fs.existsSync(path.join(ROOT, 'app/src', f!)), `${id}: ${f}`).toBe(true);
     }
-    // Every ADM form of Part 21 has a library contract; the nine its procedures carry are Partial, the rest wait (Not yet).
+    // Every ADM form of Part 21 has a library contract; the twelve its procedures carry are Partial, the rest wait (Not yet).
     const adm = all.filter(r => r.category === 'form' && (r.catalogue_id ?? '').startsWith('ADM-'));
     expect(adm).toHaveLength(40);
-    expect(adm.filter(r => r.status === 'Partial').map(r => r.catalogue_id).sort()).toEqual(['ADM-GOV-039', 'ADM-GOV-040', 'ADM-HR-001', 'ADM-HR-010', 'ADM-ICT-030', 'ADM-LEG-027', 'ADM-PAY-011', 'ADM-PAY-012', 'ADM-PAY-013']);
+    // Since plan step I5 the procurement requisition, evaluation and order are carried by the institution's procurement templates.
+    expect(adm.filter(r => r.status === 'Partial').map(r => r.catalogue_id).sort()).toEqual(['ADM-GOV-039', 'ADM-GOV-040', 'ADM-HR-001', 'ADM-HR-010', 'ADM-ICT-030', 'ADM-LEG-027', 'ADM-PAY-011', 'ADM-PAY-012', 'ADM-PAY-013', 'ADM-PRC-018', 'ADM-PRC-019', 'ADM-PRC-020']);
     for (const r of adm) expect((r as { contract_file?: string }).contract_file, r.id).toBe(`app/src/lib/forms/library/catalogue-contracts/${r.catalogue_id}.json`);
   });
 });

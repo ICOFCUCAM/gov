@@ -1,0 +1,225 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "LRG-ORG-004",
+ "record_type": "lg.agenda",
+ "form_version": 1,
+ "procedure_package_id": "lg.resolution",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-DAT-001: retention and disclosure of the case and its personal data."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+  "id": "LRG-ORG-004",
+  "part": 19,
+  "section": "19.1",
+  "line": 868,
+  "batch": 10
+ },
+ "library": {
+  "title": "File a council meeting agenda and papers",
+  "intro": "File the agenda and papers of a council meeting with the resolutions it will consider.",
+  "owner": "institution",
+  "filled_by": "The council's clerk.",
+  "authority": "Each local government's own: filed with the local government (an institution of standing subnational) that adopted the procedure; never the whole government's.",
+  "procedure": {
+   "key": "lg.resolution",
+   "stage": "moved",
+   "action": "record",
+   "document": "agenda"
+  },
+  "lists": {},
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "institution-owned",
+    "what": "The owner is each local government itself (an institution of standing subnational): it adopts the procedure as its own (lg.<template>.<institution>), drafted by one of its officials and approved by another",
+    "why": "Local and regional authorities have their own institutional scope, records and delegated powers; the whole government reaches them only under an approved relationship.",
+    "rule": "lib/localgov/procedures.ts installLocalGovernmentProcedures(); lib/auth/roles.ts Boundaries.subnational"
+   },
+   {
+    "id": "two-officials",
+    "what": "Every registration and decision is proposed by one official and confirmed by a different person; the official who verified or reviewed does not decide",
+    "why": "Catalogue Part 8 §3.3 and Part 9 §5: dual control by distinct authorised individuals.",
+    "rule": "lib/casework/engine.ts act() (fourEyes, distinctFrom); lib/data/dual-control.ts dualControlRefusal()"
+   },
+   {
+    "id": "no-ai-decision",
+    "what": "No step is decided by a model, a score or a map: officials decide with reasons",
+    "why": "AI never makes a legally material decision.",
+    "rule": "CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 868,
+    "quotes": [
+     "LRG-ORG-004",
+     "Council meeting agenda and papers"
+    ],
+    "met_by": {
+     "fields": [
+      "agenda.items",
+      "agenda.papers"
+     ],
+     "procedure": "record"
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "agenda.meeting",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 80
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Meeting (its reference)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter meeting (its reference).",
+     "length": "Meeting (its reference) is too long."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "agenda.date",
+   "type": "date",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Date of the meeting"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter date of the meeting."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "agenda.items",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 8000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Agenda items (one per line)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter agenda items (one per line).",
+     "length": "Agenda items (one per line) is too long."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "agenda.papers",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [
+    {
+     "kind": "agenda",
+     "when": "when_the_form_asks_for_it"
+    }
+   ],
+   "label": {
+    "en": "The agenda and papers"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the agenda and papers."
+    }
+   },
+   "country_decision": null,
+   "multiple": true
+  },
+  {
+   "id": "agenda.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

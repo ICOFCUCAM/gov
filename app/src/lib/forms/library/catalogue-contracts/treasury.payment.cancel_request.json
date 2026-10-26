@@ -1,0 +1,280 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "treasury.payment.cancel_request",
+ "record_type": "treasury.payment",
+ "form_version": 1,
+ "procedure_package_id": "treasury.payment",
+ "legal_basis": [],
+ "country_decisions": [
+  "country.treasury.payments: payment authorization thresholds and delegated approval limits (the approved treasury.payment.approval-tiers rule), permitted payment instruments, settlement systems and payment calendars, the separation required between instruction, approval, execution and reconciliation, and retention, audit and disclosure of payment records (none ship).",
+  "country.exec.finance.retention: retention, confidentiality, disclosure and access restrictions for public finance records (records owner and legal and privacy reviewers)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+  "id": "treasury.payment.cancel_request",
+  "part": 2,
+  "section": "2.4",
+  "line": 2142,
+  "batch": 8
+ },
+ "library": {
+  "title": "Request cancellation of a payment",
+  "intro": "Ask for a payment order to be cancelled before it is approved, with the reasons. A treasury official records the cancellation; an approved or executed payment is not cancelled by this form.",
+  "owner": "finance",
+  "filled_by": "An official of the spending institution that submitted the payment.",
+  "authority": "The finance authority the nation names for the finance slot under Who is responsible (authorityFor('finance')); the spending institution is named on each record and acts only for itself; never a ministry by name.",
+  "procedure": {
+   "key": "treasury.payment",
+   "stage": "instructed",
+   "action": "cancel"
+  },
+  "lists": {},
+  "policies": {
+   "access.read_rule": "canReadFinance() in lib/auth/roles.ts: officials of the finance authority, and of a spending institution for its own records; auditors with a purpose; every read of a payment in the access log",
+   "access.others": "Payee bank details are sealed and shown masked; no other institution reads them"
+  },
+  "nation_values": [
+   {
+    "key": "treasury.payment.approval-tiers",
+    "kind": "threshold",
+    "source": "rule",
+    "decision": "The payment approval tiers by amount and who may approve each (the nation's delegated approval limits); none ships, and production refuses an approval without one."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "officer-from-sign-in",
+    "what": "The official who records it comes from the signed-in session, never typed; their authority is the power the procedure step needs and the role roles.ts gives them",
+    "why": "Who acted is the verified signed-in official.",
+    "rule": "CLAUDE.md Who acted: withOfficial() replaces any name in the request"
+   },
+   {
+    "id": "separation-by-person",
+    "what": "Separation of duties compares people, not accounts (personOf()): the verifier is not the instructing official, the approver neither of them, the official recording execution neither the instructing official nor the approver, and the reconciling official none of the three (distinctFrom steps through dualControlRefusal())",
+    "why": "The field series: the submitting officer cannot approve their own instruction; each stage has its own actor.",
+    "rule": "CLAUDE.md Government operating model: dual control compares people (personOf()); plan step I5 (separation of duties by person)"
+   },
+   {
+    "id": "no-amounts-typed",
+    "what": "No threshold, approval tier or limit, payment calendar, fiscal period, variance threshold, forecast horizon, quorum or deadline is typed: each is a named nation value (an approved rule in lib/law/rules.ts or a country rule set) checked by a binding rule, recorded as not performed and a publication blocker until the nation approves it; categories, purposes, outcomes and types the law decides are nation lists that ship empty",
+    "why": "The field series Part 2: fiscal calendars, official values, budget authority and statutory deadlines are configured by each nation and approved by its authorized officials.",
+    "rule": "CLAUDE.md Government operating model: rates, bands and tariffs come only from lib/law/rules.ts; never type a statutory rate, penalty or deadline into code or seed data"
+   },
+   {
+    "id": "config-impact",
+    "what": "Changing a country configuration does not generate an impact assessment of the forms and open procedure packages it touches: the publication gates re-read the rules and lists in force each time they run, and a procedure version keeps what it was approved with until a new version is approved",
+    "why": "No impact-assessment record exists on the platform yet (integration register 20.11).",
+    "rule": "CLAUDE.md Integration register: a stand-in is listed with what connecting it for real takes"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2142,
+    "quotes": [
+     "treasury.payment.cancel_request",
+     "Request cancellation of a payment",
+     "Authorized spending institution",
+     "Cancellation request",
+     "Cancellation review"
+    ],
+    "met_by": {
+     "fields": [
+      "cancellation.reasons"
+     ],
+     "procedure": "cancel"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2254,
+    "quotes": [
+     "\"Payment authorization thresholds and delegated approval limits.\""
+    ],
+    "met_by": {
+     "country_decision": "country.treasury.payments",
+     "platform": {
+      "file": "app/src/lib/law/rules.ts",
+      "how": "The approval tier comes from the approved treasury.payment.approval-tiers rule (tierFor()); production refuses an approval without one"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2255,
+    "quotes": [
+     "\"Permitted payment instruments, settlement systems and payment calendars.\""
+    ],
+    "met_by": {
+     "country_decision": "country.treasury.payments"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2256,
+    "quotes": [
+     "\"Required separation between instruction, approval, execution and reconciliation.\""
+    ],
+    "met_by": {
+     "country_decision": "country.treasury.payments",
+     "deviation": "separation-by-person"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2257,
+    "quotes": [
+     "\"Retention, audit and disclosure rules for treasury payment records.\""
+    ],
+    "met_by": {
+     "country_decision": "country.treasury.payments"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2262,
+    "quotes": [
+     "Universal control: the submitting officer cannot approve their own instruction where separation of duties is required.",
+     "An approval cannot be treated as proof that the payment was executed.",
+     "An execution confirmation cannot be treated as reconciliation.",
+     "Each stage has its own actor, timestamp, evidence and outcome."
+    ],
+    "met_by": {
+     "deviation": "separation-by-person",
+     "platform": {
+      "file": "app/src/lib/finance/procedures.ts",
+      "how": "Instruction, verification, approval, execution and reconciliation are separate steps, each with its own official, time, evidence and outcome; an approval is never an execution and an execution never a reconciliation"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "cancellation.case_ref",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "case_exists_and_is_open",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The payment order"
+   },
+   "hint": {
+    "en": "The open case of the procedure this record belongs to."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the payment order.",
+     "case_exists_and_is_open": "Select an open case of this procedure."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "cancellation.reasons",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "min": 1,
+      "max": 10000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Why it should be cancelled"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter why it should be cancelled.",
+     "length": "Why it should be cancelled must be between 1 and 10000 characters."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "cancellation.recorded_by",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "actor_has_role",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Requested by"
+   },
+   "hint": {
+    "en": "The signed-in official; never typed."
+   },
+   "country_decision": null
+  },
+  {
+   "id": "cancellation.recorded_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Recorded at"
+   },
+   "hint": {
+    "en": "Recorded by the platform."
+   },
+   "country_decision": null
+  }
+ ]
+}

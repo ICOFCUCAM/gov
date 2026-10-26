@@ -9,7 +9,9 @@
 //   - issuing, renewing, suspending, reinstating, revoking or correcting a
 //     regulated credential or register standing (qualification-record and
 //     every register-type and profession permit type: grant, register,
-//     record, renew, suspend, reinstate, revoke, correct).
+//     record, renew, suspend, reinstate, revoke, correct);
+//   - approving a government payment, and changing the account a payee is
+//     paid into (plan step I5: payment-authorisation, payee-account-change).
 //
 // Refusals and other decisions follow the procedure. The country adds its own
 // (statutory thresholds) as `packageKey:actionKey` entries, never removes the
@@ -82,6 +84,9 @@ export function platformMinimum(c: Case, a: ActionSpec, pkg: Pick<CasePackage, '
   if (!cls || cls.kind !== 'mapping') return null;
   if (cls.permitType === 'tax-assessment' && ['assess', 'vary'].includes(a.decision)) return 'a tax assessment or its variation';
   if (cls.permitType === 'customs-clearance' && a.decision === 'assess') return 'a customs duty assessment';
+  // Plan step I5: every approval of a government payment, and every change of where a payee is paid, needs two officials.
+  if (cls.permitType === 'payment-authorisation' && a.decision === 'approve-payment') return 'approving a government payment';
+  if (cls.permitType === 'payee-account-change' && a.decision === 'approve-account') return 'changing the account a payee is paid into';
   if (['tax-registration', 'tax-assessment', 'customs-clearance'].includes(cls.permitType)) return null;
   if (CREDENTIAL.includes(a.decision)) return 'issuing or changing a regulated credential or register standing';
   return null;

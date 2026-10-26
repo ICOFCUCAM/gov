@@ -33,6 +33,18 @@ import { PRODUCT_PERMIT_TYPES, PROCEDURE_PERMITS } from '@/lib/health/products/p
 import { PROGRAMME_PERMITS } from '@/lib/health/programmes/procedures';
 import { OVERSIGHT_PERMITS } from '@/lib/oversight/procedures';
 import { TAX_PERMITS } from '@/lib/tax/procedures';
+import { LAND_PERMITS } from '@/lib/land/procedures';
+import { BUILDING_DECISION_PERMITS } from '@/lib/building/procedures';
+import { HOUSING_PERMITS } from '@/lib/housing/procedures';
+import { TRANSPORT_PERMITS } from '@/lib/transport/procedures';
+import { FINANCE_PERMITS } from '@/lib/finance/procedures';
+import { PROCUREMENT_PERMITS, PROCURING_ENTITY } from '@/lib/procurement/procedures';
+import { CABINET_PERMITS } from '@/lib/cabinet/procedures';
+import { IDENTITY_PERMITS } from '@/lib/identity/procedures';
+import { PASSPORT_PERMITS } from '@/lib/passports/procedures';
+import { CITIZENSHIP_PERMITS } from '@/lib/citizenship/procedures';
+import { LABOUR_PERMITS } from '@/lib/labour/procedures';
+import { SOCIAL_PERMITS } from '@/lib/social/procedures';
 import { mappingInForce, powerRefusal, type Power } from './authority';
 import type { ActionSpec, Case, CasePackage } from '@/lib/casework/types';
 
@@ -54,6 +66,9 @@ const DEPLOYMENT_DOMAINS: [prefix: string, authority: string][] = [
   ['civil', 'civilRegistration'], ['immigration', 'immigration'], ['court', 'judiciary'], ['police', 'police'], ['referral', 'the institution whose referral procedure it is'],
   // Internal administration (plan I2): each institution's own procedure (adm.<function>.<institution>), decided by its own officials.
   ['adm', 'the institution whose internal administration procedure it is'],
+  // Local and regional government (plan I7): each local government's own procedure (lg.<template>.<institution>): its council's
+  // resolutions, its budget, its service requests and complaints, decided by its own officials under its own powers.
+  ['lg', 'the local government whose own procedure it is'],
 ];
 
 /** Classify a decision step; null when the platform cannot say which authority it rests on. */
@@ -94,6 +109,27 @@ export function classifyDecision(c: Case, a: ActionSpec, pkg: Pick<CasePackage, 
   // Independent oversight (plan I8, lib/oversight): admissibility, issued findings and recommendations, approved audit reports and the
   // data-protection authority's decisions, each family under its own permit type (lead: the body's slot). Proposed, unapproved.
   for (const [prefix, permitType] of Object.entries(OVERSIGHT_PERMITS)) if (key.startsWith(prefix)) return mapped(permitType);
+  // Territory and infrastructure (plan I7): dealings in registered land and land disputes (lib/land), each under its own permit type
+  // (lead: the landRegistry slot). Proposed, unapproved.
+  for (const [prefix, permitType] of Object.entries(LAND_PERMITS)) if (key.startsWith(prefix)) return mapped(permitType);
+  // Planning and building control (plan I7, lib/building): a planning permission, a building permit and its variations, enforcement
+  // (stop-work orders) and occupancy, each its own permit type, so a local government can lead for its area; housing programmes and allocations.
+  if (key.startsWith('building.')) {
+    const byDecision = BUILDING_DECISION_PERMITS[a.decision ?? ''];
+    if (byDecision) return mapped(byDecision);
+    for (const [prefix, permitType] of Object.entries(BUILDING_DECISION_PERMITS)) if (key.startsWith(prefix)) return mapped(permitType);
+  }
+  for (const [prefix, permitType] of Object.entries(HOUSING_PERMITS)) if (key.startsWith(prefix)) return mapped(permitType);
+  // Transport (plan I7, lib/transport): vehicles, driving licences, road works and operators, each its own permit type.
+  for (const [prefix, permitType] of Object.entries(TRANSPORT_PERMITS)) if (key.startsWith(prefix)) return mapped(permitType);
+  // The economic group (plan step I5): budget and treasury (lead: the finance slot), the Cabinet office's decisions and
+  // correspondence (lead: the cabinet office slot), each institution's own procurement (proc.<template>.<institution>; lead:
+  // the procuring entity, resolved to the case's own institution) and the review body's complaints (lead: its slot).
+  // Proposed mappings, none approved: a production installation refuses these decisions until the nation approves them.
+  for (const [k, permitType] of Object.entries({ ...FINANCE_PERMITS, ...CABINET_PERMITS, ...PROCUREMENT_PERMITS })) if (is(key, k)) return mapped(permitType);
+  // Human services (plan step I6): identity, passports and travel documents, citizenship, labour and social protection, each
+  // family under its own permit type (lead: the slot the nation names). Proposed, unapproved: refused in production until approved.
+  for (const permits of [IDENTITY_PERMITS, PASSPORT_PERMITS, CITIZENSHIP_PERMITS, LABOUR_PERMITS, SOCIAL_PERMITS]) for (const [k, permitType] of Object.entries(permits)) if (is(key, k)) return mapped(permitType);
   for (const [prefix, authority] of DEPLOYMENT_DOMAINS) if (key.startsWith(`${prefix}.`)) return { kind: 'deployment', authority };
   return mapped(pkg.authority?.permitType);
 }
@@ -107,7 +143,8 @@ export function checkDecision(c: Case, a: ActionSpec, pkg: CasePackage, now: Dat
     : { authority: { basis: 'unmapped', note: 'Not classified; a demonstration or training installation only' } };
   if (cls.kind === 'deployment') return { authority: { basis: 'deployment', authority: cls.authority } };
   const on = now.toISOString().slice(0, 10);
-  const why = powerRefusal(cls.permitType, cls.power, c.owner, a2 => ownerInstitution(a2, authorityFor), { on, required: production });
+  // A mapping whose lead is the procuring entity gives the power to each institution for its own procurement.
+  const why = powerRefusal(cls.permitType, cls.power, c.owner, a2 => (a2 === PROCURING_ENTITY ? c.owner : ownerInstitution(a2, authorityFor)), { on, required: production });
   if (why) return { error: why };
   const m = mappingInForce(cls.permitType, on);
   return { authority: m

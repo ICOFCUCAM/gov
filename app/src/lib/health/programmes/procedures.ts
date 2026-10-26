@@ -40,6 +40,7 @@ import { citeBasis } from '@/lib/law/policy-change';
 import { powerRefusal, mappingInForce, type Power } from '@/lib/permits/authority';
 import { samplesAllowed } from '@/lib/ops/mode';
 import { isAuthorityKey } from '@/lib/nation/deployment';
+import { getAppropriation } from '@/lib/finance/register';
 import type { Case, CasePackage, FieldSpec } from '@/lib/casework/types';
 import {
   checkTerms, establishProgramme, amendProgramme, setProgrammeState, attachProgrammeDecision, getProgramme, termsOf,
@@ -78,9 +79,28 @@ function eligibilityOf(c: Case, now: Date) {
   if (!instrument && !eId) return samplesAllowed() ? [] : { error: 'Cite the provision of the nation\'s law that sets the programme\'s eligibility (laws register)' };
   return citeBasis([{ instrument, eId }], now.toISOString().slice(0, 10), `Eligibility of a public-health programme (${c.ref})`);
 }
+/**
+ * The budget reference, linked to the appropriation it names (plan step I5,
+ * integration register 20.37): an appropriation number (APP-… or fin:APP-…)
+ * must resolve in the finance register and is kept as its reference
+ * (fin:APP-…), so the programme points into the budget finance keeps. A free
+ * reference is kept as given only where the nation has not named its finance
+ * authority, or in a demonstration; in production once finance is named, the
+ * reference is the appropriation's number.
+ */
+function budgetLink(v: unknown): { reference?: string } | { error: string } {
+  const ref = str(v);
+  if (!ref) return {};
+  if (/^(fin:)?APP-\d{4}-\d{6}$/.test(ref)) {
+    const a = getAppropriation(ref);
+    return a ? { reference: a.reference } : { error: `No appropriation ${ref} in the finance register` };
+  }
+  if (authorityFor('finance') && !samplesAllowed()) return { error: 'Give the budget reference as the appropriation\'s number in the finance register (APP-…)' };
+  return { reference: ref };
+}
 const termsInput = (c: Case) => ({
   title: c.fields.title, eligibilityNote: c.fields.eligibilityNote, coverageDefinition: c.fields.coverageDefinition, denominator: c.fields.denominator,
-  denominatorSource: c.fields.denominatorSource, budgetReference: c.fields.budgetReference, reportingPeriod: c.fields.reportingPeriod,
+  denominatorSource: c.fields.denominatorSource, budgetReference: (() => { const b = budgetLink(c.fields.budgetReference); return 'reference' in b ? b.reference : undefined; })(), reportingPeriod: c.fields.reportingPeriod,
   indicators: c.fields.indicators, areas: c.fields.areas, supplyItems: c.fields.supplyItems,
 });
 
@@ -89,6 +109,8 @@ const termsInput = (c: Case) => ({
 registerEffect('programme.check', ({ case: c }: EffectContext) => {
   const why = mayAct(c, PROGRAMME_PERMITS['public-health.programme']!, 'issue');
   if (why) return { error: why };
+  const budget = budgetLink(c.fields.budgetReference);
+  if (fail(budget)) return budget;
   const t = checkTerms(termsInput(c));
   return fail(t) ? t : { facts: { indicators: t.indicators.length, supplyItems: t.supplyItems.length } };
 });
@@ -97,6 +119,8 @@ registerEffect('programme.establish', ({ case: c, actor, now, ...ctx }: EffectCo
   if (why) return { error: why };
   const basis = eligibilityOf(c, now);
   if (fail(basis)) return basis;
+  const budget = budgetLink(c.fields.budgetReference);
+  if (fail(budget)) return budget;
   const t = checkTerms({ ...termsInput(c), basis });
   if (fail(t)) return t;
   const p = establishProgramme(t, reasonOf({ case: c, actor, now, ...ctx }), c.id, actor.name, now, sampleMark(c).sample);
@@ -119,6 +143,8 @@ registerEffect('programme.amend', (ctx: EffectContext) => {
   if (!p) return { error: `No programme ${str(c.fields.programme) || '(none given)'} on the register` };
   const cited = str(c.fields.eligibilityLaw) || str(c.fields.eligibilityProvision) ? eligibilityOf(c, now) : undefined;
   if (cited && fail(cited)) return cited;
+  const budget = budgetLink(c.fields.budgetReference);
+  if (fail(budget)) return budget;
   const t = checkTerms({ ...termsInput(c), ...(cited ? { basis: cited } : {}) }, termsOf(p));
   if (fail(t)) return t;
   const r = amendProgramme(p.number, t, reasonOf(ctx), c.id, actor.name, now, sampleMark(c).sample);
@@ -222,7 +248,7 @@ const TERMS: FieldSpec[] = [
   text('coverageDefinition', 'Coverage definition (what is counted as covered)', 'public', true, NO_PERSON),
   text('denominator', 'Coverage denominator (the population or units counted against)', 'public'),
   text('denominatorSource', 'Documented source of the denominator (register, census or survey, with its date)', 'public'),
-  text('budgetReference', 'Budget reference (the nation\'s budget line; kept by finance)', 'administrative'),
+  text('budgetReference', 'Budget reference: the appropriation\'s number in the finance register (APP-…; kept by finance)', 'administrative'),
   { key: 'reportingPeriod', label: 'Reporting period', type: 'choice', options: [...REPORTING_PERIODS], personalDataClass: 'administrative' },
   text('indicators', 'Indicators reported (keys from the nation\'s approved indicator definitions, one per line)', 'administrative', true),
   AREAS,

@@ -42,6 +42,8 @@ import { INDEPENDENT_OVERSIGHT_PROCEDURES, OVERSIGHT_PERMITS } from '@/lib/overs
 import { OVERSIGHT_SLOTS, oversightCounts } from '@/lib/oversight/register';
 import { relationshipGrants } from '@/lib/data/store/relationships';
 import { taxServicesView } from '@/lib/tax/services-view';
+import { economicServicesView } from '@/lib/finance/services-view';
+import { cabinetRuleChanges } from '@/lib/cabinet/register';
 import { smallCellRule, smallCellChanges } from '@/lib/health/small-cells';
 import { indicatorSmallCells } from '@/lib/indicators/disclosure';
 import { listDefinitions as listIndicators, approvedAt as indicatorApprovedAt } from '@/lib/indicators/register';
@@ -58,9 +60,31 @@ import { scheduledJobsHealthy } from '@/lib/ops/cron-runs';
 import { sealKeyRules, sealKeyAuthority, presentedStanding, waitingSealKeys } from '@/lib/keys/seal-register';
 import { signer } from '@/lib/keys/custody';
 import { institutionCompleteness, type InstitutionCompleteness } from './completeness';
+import { LAND_PROCEDURES, LAND_PERMITS } from '@/lib/land/procedures';
+import { landCounts } from '@/lib/land/register';
+import { BUILDING_PROCEDURES, BUILDING_DECISION_PERMITS } from '@/lib/building/procedures';
+import { buildingRules, buildingRuleChanges, buildingCounts } from '@/lib/building/register';
+import { HOUSING_PROCEDURES, HOUSING_PERMITS } from '@/lib/housing/procedures';
+import { housingCounts } from '@/lib/housing/register';
+import { TRANSPORT_PROCEDURES, TRANSPORT_PERMITS } from '@/lib/transport/procedures';
+import { transportCounts } from '@/lib/transport/register';
+import { LOCAL_GOVERNMENT_TEMPLATES, localKey } from '@/lib/localgov/procedures';
+import { councilRules, councilRuleChanges, localCounts } from '@/lib/localgov/register';
+import { institutionBounds } from '@/lib/data/store/institutions';
+import { getMinistry } from '@/lib/data/store/ministries';
+import type { AuthorityKey } from '@/lib/nation/deployment';
 import { departmentsOf, waitingDepartmentChanges } from '@/lib/institution/departments';
 import { ADMINISTRATION_PROCEDURES, administrationKey } from '@/lib/administration/procedures';
 import { ruleInForce } from '@/lib/law/rules';
+import { IDENTITY_PROCEDURES, IDENTITY_PERMITS } from '@/lib/identity/procedures';
+import { PASSPORT_PROCEDURES, PASSPORT_PERMITS } from '@/lib/passports/procedures';
+import { CITIZENSHIP_PROCEDURES, CITIZENSHIP_PERMITS } from '@/lib/citizenship/procedures';
+import { LABOUR_PROCEDURES, LABOUR_PERMITS } from '@/lib/labour/procedures';
+import { SOCIAL_PROCEDURES, SOCIAL_PERMITS } from '@/lib/social/procedures';
+import { identityCounts } from '@/lib/identity/register';
+import { passportCounts, FEE_RULE } from '@/lib/passports/register';
+import { labourCounts } from '@/lib/labour/register';
+import { socialCounts } from '@/lib/social/register';
 
 export type TrackState = 'done' | 'in-progress' | 'not-started' | 'blocked';
 /**
@@ -110,6 +134,7 @@ const TRACK_OWNER: Record<string, string> = {
   administration: 'Administrators of each institution, a different official confirming',
   indicators: 'Officials who can sign at each institution whose figures an indicator defines', tax: 'The tax administration the nation names (officials who can sign there)',
   oversight: 'Each independent oversight body the nation names (its own officials)',
+  territory: 'The land registry, building control, housing and transport bodies the nation names, and each local government for its own records',
 };
 
 /** One track, read defensively: a store that cannot be read shows as a check not done, never breaks the page. */
@@ -402,6 +427,41 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
       ] };
     }),
 
+    // The economic group (plan step I5): budget and treasury, public procurement, the Cabinet office.
+    track({ key: 'finance', title: 'Budget and treasury', why: 'The budget call, ceilings and bids; appropriations released under the law; commitments against them; payments verified, approved by two officials, executed and reconciled by different people; payee accounts changed only after verification; cash forecasts. No ceiling, tier or period ships: each is the nation\'s.', href: '/gov/treasury/budget' }, () => {
+      const v = economicServicesView('finance');
+      const tiers = v.rules.find(r => r.key === 'treasury.payment.approval-tiers');
+      return { checks: [
+        { label: 'Finance authority named (Who is responsible)', done: !!authorityFor('finance'), href: '/gov/configuration/responsible#who-is-responsible', detail: authorityFor('finance') ? undefined : 'Not named: nobody keeps appropriations, commitments or payments until it is' },
+        { label: 'Budget and treasury procedures approved', done: v.counts.approved === v.counts.procedures, href: '/gov/law/procedures', detail: `${v.counts.approved} of ${v.counts.procedures} approved` },
+        { label: 'Who decides each budget and treasury power approved (permit authorities)', done: v.counts.mappingsApproved === v.counts.permitTypes, href: '/gov/law/permit-authorities', detail: `${v.counts.mappingsApproved} of ${v.counts.permitTypes} mappings approved; the proposals ship unapproved` },
+        { label: 'Payment approval tiers approved as a rule citing the law', done: tiers?.state === 'approved', href: '/gov/law/rules', detail: tiers?.state === 'approved' ? undefined : 'treasury.payment.approval-tiers ships unset: a production installation approves no payment without it' },
+      ] };
+    }),
+    track({ key: 'procurement', title: 'Public procurement', why: 'Each institution\'s own procurement: plans against its budget, tenders published once and never silently changed, bids sealed until opened together, evaluation with declared interests and reasons, award by officials who did not evaluate, contracts and their variations; complaints decided by an independent review body.', href: '/gov/treasury/procurement' }, () => {
+      const v = economicServicesView('procurement');
+      const adopted = new Set(v.procedures.flatMap(p => (p.adoptedBy ?? []).filter(x => x.state === 'approved').map(x => x.institution)));
+      const thresholds = v.rules.find(r => r.key === 'procurement.method-thresholds');
+      return { checks: [
+        { label: 'Procurement review body named (Who is responsible)', done: !!authorityFor('procurementReview'), href: '/gov/configuration/responsible#who-is-responsible', detail: authorityFor('procurementReview') ? undefined : 'Not named: complaints cannot be decided independently until it is' },
+        { label: 'At least one procuring institution has adopted and approved the procurement procedures', done: adopted.size > 0, href: '/gov/treasury/procurement', detail: `${adopted.size} institution(s)` },
+        { label: 'Who decides each procurement power approved (permit authorities)', done: v.counts.mappingsApproved === v.counts.permitTypes, href: '/gov/law/permit-authorities', detail: `${v.counts.mappingsApproved} of ${v.counts.permitTypes} mappings approved; the proposals ship unapproved` },
+        { label: 'Procurement method thresholds approved as a rule citing the law', done: thresholds?.state === 'approved', href: '/gov/law/rules', detail: thresholds?.state === 'approved' ? undefined : 'procurement.method-thresholds ships unset: a production installation authorises no method without it' },
+      ] };
+    }),
+    track({ key: 'cabinet', title: 'Cabinet office', why: 'Cabinet papers reviewed and circulated, decisions recorded under the nation\'s quorum and voting rules and authenticated by a second official, actions assigned without transferring any institution\'s powers, directives with required responses, petitions answered or referred.', href: '/gov/cabinet-office' }, () => {
+      const v = economicServicesView('cabinet');
+      const rules = v.rules.find(r => r.key === 'cabinet.rules');
+      const rulesPending = cabinetRuleChanges().pending;
+      if (rulesPending) wait({ what: 'Cabinet composition, quorum and decision rule: a change waiting for a second official', proposedBy: rulesPending.by, at: rulesPending.at, href: '/gov/cabinet-office' });
+      return { checks: [
+        { label: 'Cabinet office named (Who is responsible)', done: !!authorityFor('cabinetOffice'), href: '/gov/configuration/responsible#who-is-responsible', detail: authorityFor('cabinetOffice') ? undefined : 'Not named: no Cabinet paper or petition is registered until it is' },
+        { label: 'Cabinet procedures approved', done: v.counts.approved === v.counts.procedures, href: '/gov/law/procedures', detail: `${v.counts.approved} of ${v.counts.procedures} approved` },
+        { label: 'Cabinet composition, quorum and decision rule adopted (citing the law)', done: rules?.state === 'approved', href: '/gov/cabinet-office', detail: rules?.state === 'approved' ? undefined : 'Ships unset: a production installation records no Cabinet decision without them' },
+        { label: 'Who decides each Cabinet office power approved (permit authorities)', done: v.counts.mappingsApproved === v.counts.permitTypes, href: '/gov/law/permit-authorities', detail: `${v.counts.mappingsApproved} of ${v.counts.permitTypes} mappings approved` },
+      ] };
+    }),
+
     // Departments as records and each institution's internal administration (plan I2).
     track({ key: 'administration', title: 'Departments and internal administration', why: 'Each institution\'s departments as records (an accountable office, services and staff) and its own internal administration procedures: payroll reviewed and approved by different persons, establishment, privileged access, policies, delegations.', href: '/gov/institutions/administration' }, () => {
       const list = active();
@@ -514,6 +574,76 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
         { label: 'Who decides each body\'s findings and decisions approved (permit authorities)', done: mapped.length === types.length, href: '/gov/law/permit-authorities', detail: `${mapped.length} of ${types.length}: ${types.join(', ')}` },
         { label: 'Relationships that let a body ask for evidence or records (audit, request information), approved citing the law', done: grants.length > 0, href: '/gov/configuration/relationships', detail: grants.length ? `${grants.length} in force` : 'None: a body asks no institution for evidence until one is approved' },
         { label: 'Findings issued through decided cases', done: c.issued > 0, href: '/gov/oversight', detail: `${c.findings} finding(s), ${c.issued} issued, ${c.responses} response(s)${c.samples ? ` (${c.samples} samples)` : ''}` },
+      ] };
+    }));
+  }
+
+  // Territory and infrastructure (plan I7): only once the nation names one of its bodies or records a local government.
+  const SLOTS: [AuthorityKey, string, { key: string }[], Record<string, string>][] = [
+    ['landRegistry', 'Land registry', LAND_PROCEDURES, LAND_PERMITS], ['buildingControl', 'Planning and building control', BUILDING_PROCEDURES, BUILDING_DECISION_PERMITS],
+    ['housing', 'Housing authority', HOUSING_PROCEDURES, HOUSING_PERMITS], ['vehicleRegistration', 'Vehicle and driver licensing', TRANSPORT_PROCEDURES.filter(p => !/road-works|operator/.test(p.key)), {}],
+    ['roadAuthority', 'Road authority', TRANSPORT_PROCEDURES.filter(p => /road-works/.test(p.key)), {}], ['transportRegulator', 'Transport regulator', TRANSPORT_PROCEDURES.filter(p => /operator/.test(p.key)), {}],
+  ];
+  const namedSlots = SLOTS.filter(([k]) => !!authorityFor(k));
+  const locals = institutionBounds().subnational ?? [];
+  if (namedSlots.length || locals.length) {
+    tracks.push(track({ key: 'territory', title: 'Territory and infrastructure', why: 'Land dealings and disputes on the parcel register, planning and building control, housing allocations, transport registers, and each local government\'s own resolutions, budgets and services: each worked by the body the nation names, its procedures and rules approved by two officials citing the law.', href: '/gov/land', seeded: true }, () => {
+      const rulesPending = buildingRuleChanges().pending;
+      if (rulesPending) wait({ what: 'Building control rules: a change waiting for a second official', proposedBy: rulesPending.by, at: rulesPending.at, href: '/gov/building' });
+      for (const l of locals) { const pend = councilRuleChanges(l).pending; if (pend) wait({ what: `Council rules of ${getMinistry(l)?.name ?? l}: a change waiting for a second official of that local government`, proposedBy: pend.by, at: pend.at, href: '/gov/local-government' }); }
+      const keys = namedSlots.flatMap(([, , ps]) => ps.map(p => p.key));
+      const approved = keys.filter(k => listPackages({ key: k, state: 'approved' }).length);
+      const types = [...new Set([...namedSlots.flatMap(([, , , m]) => Object.values(m)), ...namedSlots.filter(([k]) => ['vehicleRegistration', 'roadAuthority', 'transportRegulator'].includes(k)).flatMap(() => Object.values(TRANSPORT_PERMITS))])];
+      const mapped = types.filter(t => listMappings(t).some(m => m.state === 'approved'));
+      const lc = landCounts(), bc = buildingCounts(), hc = housingCounts(), tc = transportCounts();
+      const localAdopted = locals.filter(l => LOCAL_GOVERNMENT_TEMPLATES.every(t => listPackages({ key: localKey(t.key, l), state: 'approved' }).length));
+      return { checks: [
+        { label: 'Bodies named (Who is responsible)', done: namedSlots.length > 0, href: '/gov/configuration/responsible#who-is-responsible', detail: namedSlots.map(([, label]) => label).join(', ') || 'None named' },
+        { label: 'Their procedures approved', done: keys.length > 0 && approved.length === keys.length, href: '/gov/law/procedures', detail: `${approved.length} of ${keys.length} approved` },
+        { label: 'Who decides each kind of decision approved (permit authorities)', done: types.length > 0 && mapped.length === types.length, href: '/gov/law/permit-authorities', detail: `${mapped.length} of ${types.length}: ${types.join(', ')}` },
+        ...(authorityFor('landRegistry') ? [{ label: 'The cadastre authority named in the parcel policy', done: !!cadastreAuthority(), href: '/gov/sites/parcels', detail: cadastreAuthority()?.name ?? 'Not named: no parcel is recorded and no right registered' }] : []),
+        ...(authorityFor('buildingControl') ? [{ label: 'Building control rules adopted by two officials citing the law', done: !!buildingRules(), href: '/gov/building', detail: buildingRules() ? `Version ${buildingRules()!.version}` : 'None: no planning or building decision until adopted' }] : []),
+        ...(locals.length ? [
+          { label: 'Each local government has adopted its own procedures', done: localAdopted.length === locals.length, href: '/gov/local-government', detail: `${localAdopted.length} of ${locals.length}` },
+          { label: 'Each council\'s rules (seats, quorum, majority) adopted by two of its officials', done: locals.every(l => !!councilRules(l)), href: '/gov/local-government', detail: `${locals.filter(l => !!councilRules(l)).length} of ${locals.length}` },
+        ] : []),
+        { label: 'Records through decided cases', done: lc.transactions + bc.permits + hc.allocated + tc.vehicles + tc.licences + localCounts().resolutions > 0, href: '/gov/land', detail: `${lc.transactions} land transactions, ${lc.disputes} disputes · ${bc.planning} planning decisions, ${bc.permits} permits · ${hc.allocated} homes allocated · ${tc.vehicles} vehicles, ${tc.licences} licences · ${localCounts().resolutions} resolutions` },
+      ] };
+    }));
+  }
+
+  // Human services (plan I6): one track for each area the nation names a body for (all optional but identity).
+  const HUMAN: { slot: AuthorityKey; key: string; title: string; why: string; href: string; procedures: { key: string }[]; permits: Record<string, string>; extra: () => { label: string; done: boolean; href: string; detail?: string }[] }[] = [
+    { slot: 'identity', key: 'identity', title: 'National identity', href: '/gov/identity', procedures: IDENTITY_PROCEDURES, permits: IDENTITY_PERMITS,
+      why: 'Identity enrolment, credentials and their status, and the resolution of suspected duplicates and misuse, decided by the identity authority\'s officials; others learn only a verification result through identity.verify.',
+      extra: () => { const c = identityCounts(); const n = Object.values(c.records).reduce((a, b) => a + b, 0); return [{ label: 'Identities enrolled and credentials delivered through decided cases', done: n > 0 && c.delivered > 0, href: '/gov/identity', detail: `${n} record(s), ${c.delivered} credential(s) delivered${c.samples ? ` (${c.samples} samples)` : ''}` }]; } },
+    { slot: 'travelDocuments', key: 'travel-documents', title: 'Passports and travel documents', href: '/gov/passports', procedures: PASSPORT_PROCEDURES, permits: PASSPORT_PERMITS,
+      why: 'Applications, the fee from the approved schedule, issuance by two officials, production, custody and collection, and every later status. Only where the nation names its travel document authority.',
+      extra: () => [{ label: 'Fee schedule approved (passports.fees, Rates and tariffs)', done: !!ruleInForce(FEE_RULE), href: '/gov/law/rules', detail: ruleInForce(FEE_RULE) ? `version ${ruleInForce(FEE_RULE)!.version}` : 'None: no fee is calculated until one is (an exemption the law gives is recorded instead)' },
+        { label: 'Documents issued through decided cases', done: (passportCounts().byState.issued ?? 0) > 0, href: '/gov/passports', detail: JSON.stringify(passportCounts().byState) }] },
+    { slot: 'citizenship', key: 'citizenship', title: 'Citizenship determination', href: '/gov/law/procedures', procedures: CITIZENSHIP_PROCEDURES, permits: CITIZENSHIP_PERMITS,
+      why: 'Citizenship and nationality applications decided by the competent authority the nation names. Only where its law names one.', extra: () => [] },
+    { slot: 'labour', key: 'labour', title: 'Labour and employment', href: '/gov/labour', procedures: LABOUR_PROCEDURES, permits: LABOUR_PERMITS,
+      why: 'Employers, employment, employment services, workplace inspections, complaints, injury notifications and mediation, worked by the labour authority. Only where the nation names one.',
+      extra: () => { const c = labourCounts(); return [{ label: 'Employers registered through decided cases', done: (c.employers ?? 0) > 0, href: '/gov/labour', detail: `${c.employers ?? 0} employer(s), ${(c.inspectionsOpen ?? 0) + (c.inspectionsClosed ?? 0)} inspection(s)` }]; } },
+    { slot: 'socialProtection', key: 'social-protection', title: 'Social protection', href: '/gov/social-protection', procedures: SOCIAL_PROCEDURES, permits: SOCIAL_PERMITS,
+      why: 'Benefits calculated only by approved rules and decided by two officials, payment instructions approved by a second official, overpayments and appeals. Only where the nation names its social protection authority.',
+      extra: () => { const rules = listRules().filter(r => r.key.startsWith('social.') && r.state === 'approved').length; const c = socialCounts(); return [{ label: 'A programme rule approved (social.<programme>, Rates and tariffs)', done: rules > 0, href: '/gov/law/rules', detail: rules ? `${rules} approved` : 'None: no claim can be assessed until one is' }, { label: 'Claims decided through cases', done: c.claims.some(x => x.state !== 'assessed'), href: '/gov/social-protection', detail: `${c.claimants} claimant(s)` }]; } },
+  ];
+  for (const h of HUMAN) {
+    const id = authorityFor(h.slot);
+    if (!id && h.slot !== 'identity') continue;
+    tracks.push(track({ key: h.key, title: h.title, why: h.why, href: h.href, seeded: true }, () => {
+      const approved = h.procedures.filter(p => listPackages({ key: p.key, state: 'approved' }).length);
+      const types = [...new Set(Object.values(h.permits))];
+      const mapped = types.filter(t => listMappings(t).some(m => m.state === 'approved'));
+      const signers = id ? listAccounts().filter(a => !a.disabled && a.institution === id && a.role === 'signatory').length : 0;
+      return { checks: [
+        { label: `${h.title}: the institution named (Who is responsible)`, done: !!id, href: '/gov/configuration#who-is-responsible', ...(id ? {} : { detail: 'Not named: no case opens until it is' }) },
+        { label: 'Two officials who can sign there', done: signers >= 2, href: '/admin/officials', detail: `${signers}` },
+        { label: 'Its procedures approved', done: approved.length === h.procedures.length, href: '/gov/law/procedures', detail: `${approved.length} of ${h.procedures.length} approved` },
+        { label: 'Who decides approved (permit authorities)', done: mapped.length === types.length, href: '/gov/law/permit-authorities', detail: `${mapped.length} of ${types.length}: ${types.join(', ')}` },
+        ...h.extra(),
       ] };
     }));
   }

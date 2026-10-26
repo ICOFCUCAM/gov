@@ -1,0 +1,533 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "exec.presidency.correspondence.submit",
+ "record_type": "exec.correspondence",
+ "form_version": 1,
+ "procedure_package_id": "exec.correspondence",
+ "legal_basis": [],
+ "country_decisions": [
+  "country.exec.correspondence: the constitutional role and petition powers of the office, the subjects it may handle, routing rules, whether anonymous petitions are accepted, records retention and any special procedure for constitutional complaints (none ship).",
+  "country.exec.records: retention, confidentiality, disclosure and access restrictions for executive-office and Cabinet records (records owner and legal and privacy reviewers)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+  "id": "exec.presidency.correspondence.submit",
+  "part": 2,
+  "section": "2.1",
+  "line": 1849,
+  "batch": 8
+ },
+ "library": {
+  "title": "Send an official petition or correspondence",
+  "intro": "Write to the executive office: a petition, a request or a message. You will get a reference at once. The office answers it or, where another institution is responsible, refers it there and tells you. You do not need to prove your identity to write; give only the contact details needed for a reply.",
+  "owner": "cabinetOffice",
+  "filled_by": "A person, a business or an institution writing to the executive office, or someone acting for them.",
+  "authority": "The office the nation names for the cabinetOffice slot under Who is responsible (authorityFor('cabinetOffice')); where the head of state's office keeps its own correspondence, the nation names that office; never a ministry by name, and holding an office grants no power.",
+  "procedure": {
+   "key": "exec.correspondence",
+   "stage": "received",
+   "action": "acknowledge",
+   "document": "correspondence"
+  },
+  "lists": {},
+  "policies": {
+   "access.read_rule": "cabinetReadScope() in lib/auth/roles.ts: officials of the office that keeps the record; a restricted case only to its assignee and signatories; every read of personal data in the access log",
+   "access.others": "No other institution reads these records; a referral or an assigned action carries only what its own record names"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "no-identity-demand",
+    "what": "No identity proof is asked merely because the petition is addressed to the executive office: the submitter gives only the contact channel needed for a reply; evidence is optional unless the approved procedure requires it; a restriction on submission, referral, disclosure or retention needs a cited legal basis",
+    "why": "The field series Part 2 §2.1: the office must not require proof of identity merely because a petition is addressed to the head of state.",
+    "rule": "Field series Part 2 §2.1 Department A; CLAUDE.md forms: forms are built to a higher standard than the catalogue where we can"
+   },
+   {
+    "id": "restricted-case",
+    "what": "The petition and the requested outcome are restricted, stricter than the catalogue's \"personal where applicable\": the case runs under the restricted exec.correspondence procedure (assignee and signatories only), every read in the access log",
+    "why": "A petition can carry anything about a person; the class is set by the strictest content it may hold.",
+    "rule": "CLAUDE.md Government operating model: restricted cases go to their assignee and supervisors; every read of personal data goes to the access log"
+   },
+   {
+    "id": "no-amounts-typed",
+    "what": "No threshold, approval tier or limit, payment calendar, fiscal period, variance threshold, forecast horizon, quorum or deadline is typed: each is a named nation value (an approved rule in lib/law/rules.ts or a country rule set) checked by a binding rule, recorded as not performed and a publication blocker until the nation approves it; categories, purposes, outcomes and types the law decides are nation lists that ship empty",
+    "why": "The field series Part 2: fiscal calendars, official values, budget authority and statutory deadlines are configured by each nation and approved by its authorized officials.",
+    "rule": "CLAUDE.md Government operating model: rates, bands and tariffs come only from lib/law/rules.ts; never type a statutory rate, penalty or deadline into code or seed data"
+   },
+   {
+    "id": "config-impact",
+    "what": "Changing a country configuration does not generate an impact assessment of the forms and open procedure packages it touches: the publication gates re-read the rules and lists in force each time they run, and a procedure version keeps what it was approved with until a new version is approved",
+    "why": "No impact-assessment record exists on the platform yet (integration register 20.11).",
+    "rule": "CLAUDE.md Integration register: a stand-in is listed with what connecting it for real takes"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 1849,
+    "quotes": [
+     "exec.presidency.correspondence.submit",
+     "Send an official petition or correspondence",
+     "Citizen, business, institution",
+     "Intake",
+     "Registered correspondence and routing"
+    ],
+    "met_by": {
+     "fields": [
+      "correspondence.subject",
+      "correspondence.message",
+      "correspondence.reference"
+     ],
+     "procedure": "acknowledge"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 1865,
+    "quotes": [
+     "Evidence and legal basis: evidence is optional unless a specific, approved procedure requires it.",
+     "The Presidency must not require proof of identity merely because a petition is addressed to the Head of State.",
+     "Any restriction on submission, referral, public disclosure or retention requires an approved legal basis."
+    ],
+    "met_by": {
+     "deviation": "no-identity-demand",
+     "country_decision": "country.exec.correspondence"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 1867,
+    "quotes": [
+     "Country decisions: constitutional role and petition powers; subjects the Presidency may handle; routing rules; whether anonymous petitions are accepted; records retention; any special procedure for constitutional complaints."
+    ],
+    "met_by": {
+     "country_decision": "country.exec.correspondence"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 1869,
+    "quotes": [
+     "Channels: self-service, assisted, print, postal intake; offline capture for authorized offices."
+    ],
+    "met_by": {
+     "deviation": "scanning",
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+      "how": "The same questions in self-service, assisted and print; a postal or paper submission is transcribed by an official and the case records it"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 1857,
+    "quotes": [
+     "correspondence.subject: text, required; 5–200 characters; administrative."
+    ],
+    "met_by": {
+     "fields": [
+      "correspondence.subject"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 1858,
+    "quotes": [
+     "correspondence.message: long_text, required; 1–10,000 characters; personal if it identifies an individual or contains personal information."
+    ],
+    "met_by": {
+     "fields": [
+      "correspondence.message"
+     ],
+     "deviation": "restricted-case"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 1859,
+    "quotes": [
+     "correspondence.topic: choice, required; source exec.presidency.correspondence_topics; administrative."
+    ],
+    "met_by": {
+     "fields": [
+      "correspondence.topic"
+     ],
+     "country_decision": "country.exec.correspondence"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 1860,
+    "quotes": [
+     "correspondence.requested_outcome: long_text, optional; maximum 2,000 characters; personal where applicable."
+    ],
+    "met_by": {
+     "fields": [
+      "correspondence.requested_outcome"
+     ],
+     "deviation": "restricted-case"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 1861,
+    "quotes": [
+     "correspondence.related_case: identifier_reference, conditional; required only if the submitter refers to an existing case; administrative."
+    ],
+    "met_by": {
+     "fields": [
+      "correspondence.refers_to_case",
+      "correspondence.related_case"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 1862,
+    "quotes": [
+     "correspondence.attachments: document, optional; each attachment must satisfy the approved file policy and be malware-scanned; classification follows the content."
+    ],
+    "met_by": {
+     "fields": [
+      "correspondence.attachments"
+     ],
+     "platform": {
+      "file": "app/src/lib/records/documents.ts",
+      "how": "File type checked by its bytes, size and scan policy before a document is accepted"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 1863,
+    "quotes": [
+     "correspondence.contact: group core.contact, minimized to the channel needed for a response."
+    ],
+    "met_by": {
+     "fields": [
+      "contact.email",
+      "contact.phone",
+      "contact.preferred_channel"
+     ],
+     "deviation": "minimisation"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 1864,
+    "quotes": [
+     "correspondence.representative: group core.representation, only when acting for another party."
+    ],
+    "met_by": {
+     "fields": [
+      "representation.capacity",
+      "representation.actor",
+      "representation.authority_document"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "correspondence.subject",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "min": 5,
+      "max": 200
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Subject"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter subject.",
+     "length": "Subject must be between 5 and 200 characters."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your correspondence"
+   }
+  },
+  {
+   "id": "correspondence.message",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "min": 1,
+      "max": 10000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Your petition or message"
+   },
+   "hint": {
+    "en": "Write in your own words. Include only what the office needs to answer."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter your petition or message.",
+     "length": "Your petition or message must be between 1 and 10000 characters."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your correspondence"
+   }
+  },
+  {
+   "id": "correspondence.topic",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "exec.presidency.correspondence_topics",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Topic"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select topic.",
+     "value_in_source": "Choose one of the listed values for topic."
+    }
+   },
+   "country_decision": "country.exec.correspondence: the subjects the office may handle (none ship).",
+   "section": {
+    "en": "Your correspondence"
+   }
+  },
+  {
+   "id": "correspondence.requested_outcome",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 2000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "What you are asking for"
+   },
+   "error_text": {
+    "en": {
+     "length": "What you are asking for must be 2000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your correspondence"
+   }
+  },
+  {
+   "id": "correspondence.refers_to_case",
+   "type": "boolean",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Does this concern a case you already have with the government?"
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your correspondence"
+   }
+  },
+  {
+   "id": "correspondence.related_case",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "required_if",
+     "params": {
+      "field": "correspondence.refers_to_case",
+      "equals": true
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The case reference"
+   },
+   "error_text": {
+    "en": {
+     "required_if": "Enter the case reference."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your correspondence"
+   }
+  },
+  {
+   "id": "correspondence.attachments",
+   "type": "document",
+   "required": false,
+   "validation": [
+    {
+     "rule": "evidence_requirement_in_approved_package",
+     "params": {}
+    },
+    {
+     "rule": "malware_scan_passed",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.documents.secure_store",
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "supporting_correspondence",
+     "when": "optional_unless_the_approved_procedure_requires_it"
+    }
+   ],
+   "label": {
+    "en": "Attachments"
+   },
+   "hint": {
+    "en": "Optional. Each file is checked against the approved file policy and scanned."
+   },
+   "error_text": {
+    "en": {
+     "evidence_requirement_in_approved_package": "This evidence is not included in the approved procedure.",
+     "malware_scan_passed": "The file could not be accepted safely."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Your correspondence"
+   }
+  },
+  {
+   "use_group": "core.contact",
+   "version": 1,
+   "only": [
+    "contact.email",
+    "contact.phone",
+    "contact.preferred_channel"
+   ],
+   "section": {
+    "en": "How we reply"
+   }
+  },
+  {
+   "use_group": "core.representation",
+   "version": 1,
+   "only": [
+    "representation.capacity",
+    "representation.actor",
+    "representation.authority_document"
+   ],
+   "section": {
+    "en": "Someone acting for another person"
+   }
+  },
+  {
+   "id": "correspondence.reference",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Reference given"
+   },
+   "hint": {
+    "en": "Given by the platform when the case is opened."
+   },
+   "country_decision": null
+  },
+  {
+   "id": "correspondence.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform."
+   },
+   "country_decision": null
+  }
+ ]
+}

@@ -1,0 +1,803 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "treasury.cash_forecast.submit",
+ "record_type": "treasury.cash_forecast",
+ "form_version": 1,
+ "procedure_package_id": "treasury.cash-forecast",
+ "legal_basis": [],
+ "country_decisions": [
+  "country.treasury.cash: the treasury reporting entities, forecast horizons, approved cash categories, reconciliation frequency, variance thresholds and escalation authority (none ship).",
+  "country.exec.finance.retention: retention, confidentiality, disclosure and access restrictions for public finance records (records owner and legal and privacy reviewers)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+  "id": "treasury.cash_forecast.submit",
+  "part": 2,
+  "section": "2.4",
+  "line": 2265,
+  "batch": 8
+ },
+ "library": {
+  "title": "Submit an institutional cash forecast",
+  "intro": "Report your institution's expected cash inflows and outflows for a fiscal period, with the assumptions behind them. A forecast is reported, never observed: the treasury reviews it and keeps every version.",
+  "owner": "finance",
+  "filled_by": "An official of the reporting institution.",
+  "authority": "The finance authority the nation names for the finance slot under Who is responsible (authorityFor('finance')); the spending institution is named on each record and acts only for itself; never a ministry by name.",
+  "procedure": {
+   "key": "treasury.cash-forecast",
+   "stage": "submitted",
+   "action": "record",
+   "document": "forecast"
+  },
+  "lists": {},
+  "policies": {
+   "access.read_rule": "canReadFinance() in lib/auth/roles.ts: officials of the finance authority, and of a spending institution for its own records; auditors with a purpose; every read of a payment in the access log",
+   "access.others": "Payee bank details are sealed and shown masked; no other institution reads them",
+   "amounts.stated": "cash_forecast.inflows, cash_forecast.outflows (expectedAmount): the expected amounts the reporting institution forecasts (reported, never observed)"
+  },
+  "nation_values": [
+   {
+    "key": "treasury.cash_forecast.variance_threshold",
+    "kind": "threshold",
+    "source": "setting",
+    "decision": "The variance above which an explanation is required and escalated (the nation's treasury rules); none ships."
+   }
+  ],
+  "deviations": [
+   {
+    "id": "officer-from-sign-in",
+    "what": "The official who records it comes from the signed-in session, never typed; their authority is the power the procedure step needs and the role roles.ts gives them",
+    "why": "Who acted is the verified signed-in official.",
+    "rule": "CLAUDE.md Who acted: withOfficial() replaces any name in the request"
+   },
+   {
+    "id": "stated-amount",
+    "what": "The amount is what a person states (an institution's request or forecast, an invoice, the officials' proposed figure), typed as money with its currency and named in the form's amounts.stated policy; it is never a charge, and the amount that binds is the one the sealed decision and the register record",
+    "why": "A request or forecast is a statement; only a decision of the officials the procedure names fixes an allocation, a commitment or a payment.",
+    "rule": "CLAUDE.md Government operating model: rates, bands and tariffs come only from lib/law/rules.ts; plan step I5 (no amount typed into code)"
+   },
+   {
+    "id": "no-amounts-typed",
+    "what": "No threshold, approval tier or limit, payment calendar, fiscal period, variance threshold, forecast horizon, quorum or deadline is typed: each is a named nation value (an approved rule in lib/law/rules.ts or a country rule set) checked by a binding rule, recorded as not performed and a publication blocker until the nation approves it; categories, purposes, outcomes and types the law decides are nation lists that ship empty",
+    "why": "The field series Part 2: fiscal calendars, official values, budget authority and statutory deadlines are configured by each nation and approved by its authorized officials.",
+    "rule": "CLAUDE.md Government operating model: rates, bands and tariffs come only from lib/law/rules.ts; never type a statutory rate, penalty or deadline into code or seed data"
+   },
+   {
+    "id": "config-impact",
+    "what": "Changing a country configuration does not generate an impact assessment of the forms and open procedure packages it touches: the publication gates re-read the rules and lists in force each time they run, and a procedure version keeps what it was approved with until a new version is approved",
+    "why": "No impact-assessment record exists on the platform yet (integration register 20.11).",
+    "rule": "CLAUDE.md Integration register: a stand-in is listed with what connecting it for real takes"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2265,
+    "quotes": [
+     "treasury.cash_forecast.submit",
+     "Submit an institutional cash forecast",
+     "Public institution",
+     "Forecast cycle",
+     "Forecast received"
+    ],
+    "met_by": {
+     "fields": [
+      "cash_forecast.inflows",
+      "cash_forecast.outflows"
+     ],
+     "procedure": "record",
+     "platform": {
+      "file": "app/src/lib/finance/register.ts",
+      "how": "submitForecast(): basis 'reported'"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2283,
+    "quotes": [
+     "Country decisions: treasury reporting entities; forecast horizons; approved cash categories; reconciliation frequency; variance thresholds and escalation authority."
+    ],
+    "met_by": {
+     "country_decision": "country.treasury.cash"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2273,
+    "quotes": [
+     "cash_forecast.institution: registry_reference, required; authorized reporting institution."
+    ],
+    "met_by": {
+     "fields": [
+      "cash_forecast.institution"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2274,
+    "quotes": [
+     "cash_forecast.period: registry_reference, required; configured fiscal period."
+    ],
+    "met_by": {
+     "fields": [
+      "cash_forecast.period"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2275,
+    "quotes": [
+     "cash_forecast.currency: choice, required; source civicos.finance.approved_currencies."
+    ],
+    "met_by": {
+     "fields": [
+      "cash_forecast.currency"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2276,
+    "quotes": [
+     "cash_forecast.inflows: repeated entries with source_category (choice, required), expected_amount (money, required), expected_date (date, conditional if the forecast is date-specific), source_record_ref (registry_reference, conditional if based on an existing receivable)."
+    ],
+    "met_by": {
+     "fields": [
+      "cash_forecast.inflows"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2277,
+    "quotes": [
+     "cash_forecast.outflows: equivalent structure using approved expenditure categories and payable references."
+    ],
+    "met_by": {
+     "fields": [
+      "cash_forecast.outflows"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2278,
+    "quotes": [
+     "cash_forecast.assumptions: long_text, required; administrative."
+    ],
+    "met_by": {
+     "fields": [
+      "cash_forecast.assumptions"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2279,
+    "quotes": [
+     "cash_forecast.confidence_basis: choice, required; source civicos.finance.forecast_basis; administrative."
+    ],
+    "met_by": {
+     "fields": [
+      "cash_forecast.confidence_basis"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2280,
+    "quotes": [
+     "cash_forecast.previous_version_ref: identifier_reference, required for a revision."
+    ],
+    "met_by": {
+     "fields": [
+      "cash_forecast.previous_version_ref"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2281,
+    "quotes": [
+     "cash_forecast.variance_explanation: long_text, required when variance exceeds a configured review threshold."
+    ],
+    "met_by": {
+     "fields": [
+      "cash_forecast.variance_explanation"
+     ],
+     "country_decision": "country.treasury.cash"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 2282,
+    "quotes": [
+     "cash_forecast.supporting_evidence: document, conditional under the approved reporting procedure."
+    ],
+    "met_by": {
+     "fields": [
+      "cash_forecast.supporting_evidence"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "cash_forecast.institution",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "institution_active",
+     "params": {}
+    },
+    {
+     "rule": "actor_authorized_for_institution",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.institutions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Reporting institution"
+   },
+   "hint": {
+    "en": "The institution in the institution register."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter reporting institution.",
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The forecast"
+   }
+  },
+  {
+   "id": "cash_forecast.period",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "budget_period_open",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.finance.budget_periods",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Fiscal period"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter fiscal period.",
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The forecast"
+   }
+  },
+  {
+   "id": "cash_forecast.currency",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.finance.approved_currencies",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Currency"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select currency.",
+     "value_in_source": "Choose one of the listed values for currency."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The forecast"
+   }
+  },
+  {
+   "id": "cash_forecast.inflows",
+   "type": "group",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Inflows"
+   },
+   "error_text": {
+    "en": {
+     "required": "Add at least one entry to inflows."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "items": [
+    {
+     "id": "sourceCategory",
+     "type": "choice",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "value_in_source",
+       "params": {}
+      }
+     ],
+     "values_source": "civicos.finance.cash_inflow_categories",
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Category"
+     },
+     "error_text": {
+      "en": {
+       "required": "Select category.",
+       "value_in_source": "Choose one of the listed values for category."
+      }
+     },
+     "country_decision": "country.treasury.cash: approved cash categories (none ship)."
+    },
+    {
+     "id": "expectedAmount",
+     "type": "money",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "NONNEGATIVE",
+       "params": {}
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Expected amount"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter expected amount.",
+       "NONNEGATIVE": "The amount cannot be below zero."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "expectedDate",
+     "type": "date",
+     "required": false,
+     "validation": [],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Expected date (for a date-specific forecast)"
+     },
+     "country_decision": null
+    },
+    {
+     "id": "sourceRecordRef",
+     "type": "registry_reference",
+     "required": false,
+     "validation": [
+      {
+       "rule": "reference_exists",
+       "params": {}
+      }
+     ],
+     "values_source": "civicos.finance.records",
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Record it is based on (a receivable, a commitment or a payable)"
+     },
+     "error_text": {
+      "en": {
+       "reference_exists": "There is no record with that reference."
+      }
+     },
+     "country_decision": null
+    }
+   ],
+   "section": {
+    "en": "The forecast"
+   }
+  },
+  {
+   "id": "cash_forecast.outflows",
+   "type": "group",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Outflows"
+   },
+   "error_text": {
+    "en": {
+     "required": "Add at least one entry to outflows."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "items": [
+    {
+     "id": "sourceCategory",
+     "type": "choice",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "value_in_source",
+       "params": {}
+      }
+     ],
+     "values_source": "civicos.finance.cash_outflow_categories",
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Category"
+     },
+     "error_text": {
+      "en": {
+       "required": "Select category.",
+       "value_in_source": "Choose one of the listed values for category."
+      }
+     },
+     "country_decision": "country.treasury.cash: approved cash categories (none ship)."
+    },
+    {
+     "id": "expectedAmount",
+     "type": "money",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "NONNEGATIVE",
+       "params": {}
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Expected amount"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter expected amount.",
+       "NONNEGATIVE": "The amount cannot be below zero."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "expectedDate",
+     "type": "date",
+     "required": false,
+     "validation": [],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Expected date (for a date-specific forecast)"
+     },
+     "country_decision": null
+    },
+    {
+     "id": "sourceRecordRef",
+     "type": "registry_reference",
+     "required": false,
+     "validation": [
+      {
+       "rule": "reference_exists",
+       "params": {}
+      }
+     ],
+     "values_source": "civicos.finance.records",
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Record it is based on (a receivable, a commitment or a payable)"
+     },
+     "error_text": {
+      "en": {
+       "reference_exists": "There is no record with that reference."
+      }
+     },
+     "country_decision": null
+    }
+   ],
+   "section": {
+    "en": "The forecast"
+   }
+  },
+  {
+   "id": "cash_forecast.assumptions",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "min": 1,
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Assumptions"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter assumptions.",
+     "length": "Assumptions must be between 1 and 4000 characters."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The forecast"
+   }
+  },
+  {
+   "id": "cash_forecast.confidence_basis",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.finance.forecast_basis",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Basis of the forecast"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select basis of the forecast.",
+     "value_in_source": "Choose one of the listed values for basis of the forecast."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The forecast"
+   }
+  },
+  {
+   "id": "cash_forecast.previous_version_ref",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The forecast it revises"
+   },
+   "error_text": {
+    "en": {
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The forecast"
+   }
+  },
+  {
+   "id": "cash_forecast.variance_explanation",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Why it differs from the previous forecast"
+   },
+   "hint": {
+    "en": "Required when the variance is above the threshold the nation sets."
+   },
+   "error_text": {
+    "en": {
+     "length": "Why it differs from the previous forecast must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The forecast"
+   }
+  },
+  {
+   "id": "cash_forecast.supporting_evidence",
+   "type": "document",
+   "required": false,
+   "validation": [
+    {
+     "rule": "evidence_requirement_in_approved_package",
+     "params": {}
+    },
+    {
+     "rule": "malware_scan_passed",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.documents.secure_store",
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "forecast",
+     "when": "under_the_approved_reporting_procedure"
+    }
+   ],
+   "label": {
+    "en": "Supporting evidence"
+   },
+   "error_text": {
+    "en": {
+     "evidence_requirement_in_approved_package": "This evidence is not included in the approved procedure.",
+     "malware_scan_passed": "The file could not be accepted safely."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "The forecast"
+   }
+  },
+  {
+   "id": "cash_forecast.recorded_by",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "actor_has_role",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Submitted by"
+   },
+   "hint": {
+    "en": "The signed-in official; never typed."
+   },
+   "country_decision": null
+  },
+  {
+   "id": "cash_forecast.recorded_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Recorded at"
+   },
+   "hint": {
+    "en": "Recorded by the platform."
+   },
+   "country_decision": null
+  }
+ ]
+}

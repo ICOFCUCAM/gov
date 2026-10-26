@@ -1,0 +1,329 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "exec.presidency.correspondence.referral",
+ "record_type": "exec.correspondence",
+ "form_version": 1,
+ "procedure_package_id": "exec.correspondence",
+ "legal_basis": [],
+ "country_decisions": [
+  "country.exec.correspondence: the constitutional role and petition powers of the office, the subjects it may handle, routing rules, whether anonymous petitions are accepted, records retention and any special procedure for constitutional complaints (none ship).",
+  "country.exec.records: retention, confidentiality, disclosure and access restrictions for executive-office and Cabinet records (records owner and legal and privacy reviewers)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+  "id": "exec.presidency.correspondence.referral",
+  "part": 2,
+  "section": "2.1",
+  "line": 1853,
+  "batch": 8
+ },
+ "library": {
+  "title": "Refer correspondence to the responsible authority",
+  "intro": "Record that a petition is referred to the institution responsible for its subject, with the reasons and what is shared. The submitter is told where it went.",
+  "owner": "cabinetOffice",
+  "filled_by": "An official of the executive office who can sign there.",
+  "authority": "The office the nation names for the cabinetOffice slot under Who is responsible (authorityFor('cabinetOffice')); where the head of state's office keeps its own correspondence, the nation names that office; never a ministry by name, and holding an office grants no power.",
+  "procedure": {
+   "key": "exec.correspondence",
+   "stage": "routed",
+   "action": "refer",
+   "document": "referral"
+  },
+  "lists": {},
+  "policies": {
+   "access.read_rule": "cabinetReadScope() in lib/auth/roles.ts: officials of the office that keeps the record; a restricted case only to its assignee and signatories; every read of personal data in the access log",
+   "access.others": "No other institution reads these records; a referral or an assigned action carries only what its own record names"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "no-identity-demand",
+    "what": "No identity proof is asked merely because the petition is addressed to the executive office: the submitter gives only the contact channel needed for a reply; evidence is optional unless the approved procedure requires it; a restriction on submission, referral, disclosure or retention needs a cited legal basis",
+    "why": "The field series Part 2 §2.1: the office must not require proof of identity merely because a petition is addressed to the head of state.",
+    "rule": "Field series Part 2 §2.1 Department A; CLAUDE.md forms: forms are built to a higher standard than the catalogue where we can"
+   },
+   {
+    "id": "restricted-case",
+    "what": "The petition and the requested outcome are restricted, stricter than the catalogue's \"personal where applicable\": the case runs under the restricted exec.correspondence procedure (assignee and signatories only), every read in the access log",
+    "why": "A petition can carry anything about a person; the class is set by the strictest content it may hold.",
+    "rule": "CLAUDE.md Government operating model: restricted cases go to their assignee and supervisors; every read of personal data goes to the access log"
+   },
+   {
+    "id": "officer-from-sign-in",
+    "what": "The official who records it comes from the signed-in session, never typed; their authority is the power the procedure step needs and the role roles.ts gives them",
+    "why": "Who acted is the verified signed-in official.",
+    "rule": "CLAUDE.md Who acted: withOfficial() replaces any name in the request"
+   },
+   {
+    "id": "referral-case",
+    "what": "A referral to another institution is a case of its own (lib/casework/referral.ts), sharing only what the record names; the receiving institution decides under its own powers",
+    "why": "Referrals between institutions are cases; information leaves only for an approved purpose.",
+    "rule": "CLAUDE.md Government operating model: referrals between institutions are cases (lib/casework/referral.ts)"
+   },
+   {
+    "id": "no-amounts-typed",
+    "what": "No threshold, approval tier or limit, payment calendar, fiscal period, variance threshold, forecast horizon, quorum or deadline is typed: each is a named nation value (an approved rule in lib/law/rules.ts or a country rule set) checked by a binding rule, recorded as not performed and a publication blocker until the nation approves it; categories, purposes, outcomes and types the law decides are nation lists that ship empty",
+    "why": "The field series Part 2: fiscal calendars, official values, budget authority and statutory deadlines are configured by each nation and approved by its authorized officials.",
+    "rule": "CLAUDE.md Government operating model: rates, bands and tariffs come only from lib/law/rules.ts; never type a statutory rate, penalty or deadline into code or seed data"
+   },
+   {
+    "id": "config-impact",
+    "what": "Changing a country configuration does not generate an impact assessment of the forms and open procedure packages it touches: the publication gates re-read the rules and lists in force each time they run, and a procedure version keeps what it was approved with until a new version is approved",
+    "why": "No impact-assessment record exists on the platform yet (integration register 20.11).",
+    "rule": "CLAUDE.md Integration register: a stand-in is listed with what connecting it for real takes"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 1853,
+    "quotes": [
+     "exec.presidency.correspondence.referral",
+     "Refer correspondence to the responsible authority",
+     "Authorized office officer",
+     "Referral",
+     "Referral to an authorized institution"
+    ],
+    "met_by": {
+     "fields": [
+      "referral.institution",
+      "referral.reasons"
+     ],
+     "procedure": "refer",
+     "deviation": "referral-case"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 1865,
+    "quotes": [
+     "Evidence and legal basis: evidence is optional unless a specific, approved procedure requires it.",
+     "The Presidency must not require proof of identity merely because a petition is addressed to the Head of State.",
+     "Any restriction on submission, referral, public disclosure or retention requires an approved legal basis."
+    ],
+    "met_by": {
+     "deviation": "no-identity-demand",
+     "country_decision": "country.exec.correspondence"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 1867,
+    "quotes": [
+     "Country decisions: constitutional role and petition powers; subjects the Presidency may handle; routing rules; whether anonymous petitions are accepted; records retention; any special procedure for constitutional complaints."
+    ],
+    "met_by": {
+     "country_decision": "country.exec.correspondence"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md",
+    "line": 1869,
+    "quotes": [
+     "Channels: self-service, assisted, print, postal intake; offline capture for authorized offices."
+    ],
+    "met_by": {
+     "deviation": "scanning",
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts.ts",
+      "how": "The same questions in self-service, assisted and print; a postal or paper submission is transcribed by an official and the case records it"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "correspondence.case_ref",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "case_exists_and_is_open",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The case"
+   },
+   "hint": {
+    "en": "The open case of the procedure this record belongs to."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the case.",
+     "case_exists_and_is_open": "Select an open case of this procedure."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "referral.institution",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "institution_active",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.institutions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Institution it is referred to"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter institution it is referred to.",
+     "reference_exists": "There is no record with that reference."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "referral.reasons",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "min": 1,
+      "max": 10000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Why that institution is responsible"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter why that institution is responsible.",
+     "length": "Why that institution is responsible must be between 1 and 10000 characters."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "referral.shared",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "min": 1,
+      "max": 2000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "What is shared with it"
+   },
+   "hint": {
+    "en": "Only what the receiving institution needs to answer."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter what is shared with it.",
+     "length": "What is shared with it must be between 1 and 2000 characters."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "referral.recorded_by",
+   "type": "identifier_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "actor_has_role",
+     "params": {}
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Recorded by"
+   },
+   "hint": {
+    "en": "The signed-in official; never typed."
+   },
+   "country_decision": null
+  },
+  {
+   "id": "referral.recorded_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Recorded at"
+   },
+   "hint": {
+    "en": "Recorded by the platform."
+   },
+   "country_decision": null
+  }
+ ]
+}

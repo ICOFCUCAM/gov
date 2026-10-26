@@ -26,6 +26,7 @@ import { getTaxpayer } from '@/lib/tax/register';
 import { getProfessional, professions } from '@/lib/professions/register';
 import { productByReference } from '@/lib/health/products/register';
 import { getProgramme } from '@/lib/health/programmes/register';
+import { getAppropriation } from '@/lib/finance/register';
 import { getMinistry, listMinistries, institutionBounds } from '@/lib/data/store';
 import { locales } from '@/lib/i18n/config';
 import { STANDARD_SOURCES } from './library/catalogue';
@@ -126,6 +127,8 @@ function existsNow(register: string | undefined, ref: string, active = false): b
     case 'product': { const p = productByReference(ref); return !!p && (!active || p.state === 'authorised'); }
     // Active: established (not suspended or closed).
     case 'programme': { const p = getProgramme(ref); return !!p && (!active || p.state === 'established'); }
+    // Plan step I5: an appropriation of the finance register (APP-… or fin:APP-…); active: released for commitment.
+    case 'appropriation': { const a = getAppropriation(ref); return !!a && (!active || a.state === 'released'); }
     default: return null;
   }
 }

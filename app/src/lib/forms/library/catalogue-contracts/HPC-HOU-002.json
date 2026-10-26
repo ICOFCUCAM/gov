@@ -1,0 +1,581 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "HPC-HOU-002",
+ "record_type": "housing.application",
+ "form_version": 1,
+ "procedure_package_id": "housing.application",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-DAT-001: retention and disclosure of the case and its personal data."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+  "id": "HPC-HOU-002",
+  "part": 20,
+  "section": "20.1",
+  "line": 980,
+  "batch": 10
+ },
+ "library": {
+  "title": "Apply for public or subsidised housing",
+  "intro": "Apply for a home under a housing programme. Your application is assessed against the programme's approved eligibility criteria and priority rules, and a home is allocated by an official with reasons.",
+  "owner": "housing",
+  "filled_by": "The applicant or someone helping them; an official at an office.",
+  "authority": "Filed with the housing authority the nation names for its housing slot (shipped empty).",
+  "procedure": {
+   "key": "housing.application",
+   "stage": "received",
+   "action": "accept",
+   "document": "application"
+  },
+  "lists": {
+   "housing.current_situations": {
+    "values": [
+     {
+      "value": "homeless",
+      "label": "Homeless now"
+     },
+     {
+      "value": "temporary-accommodation",
+      "label": "In temporary accommodation"
+     },
+     {
+      "value": "overcrowded",
+      "label": "Overcrowded"
+     },
+     {
+      "value": "unaffordable",
+      "label": "Cannot afford the rent"
+     },
+     {
+      "value": "unsuitable",
+      "label": "The home is unsuitable"
+     },
+     {
+      "value": "other",
+      "label": "Other"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "slot-owner",
+    "what": "The competent body is the institution the nation names for its slot of the deployment profile (landRegistry, buildingControl, housing, vehicleRegistration, roadAuthority, transportRegulator), shipped empty; who holds each power over a decision comes from the permit authority registry, proposed and unapproved",
+    "why": "Authority comes from the deployment profile and the approved mappings, never a ministry by name; a production installation refuses a power no approved mapping covers.",
+    "rule": "CLAUDE.md Government operating model: authorityFor(); lib/permits/decisions.ts (plan I7)"
+   },
+   {
+    "id": "programme-terms",
+    "what": "Eligibility criteria and priority factors with their points are the programme's terms, approved by two officials citing the law, each version kept with its digest; an officer records each criterion met or not with its evidence, and eligibility and points follow from the terms in force",
+    "why": "Housing allocation uses transparent, approved eligibility and priority rules; none ship.",
+    "rule": "lib/housing/register.ts readTerms(), termsDigest(); lib/housing/procedures.ts housing.assess"
+   },
+   {
+    "id": "no-health-detail",
+    "what": "Accessibility needs are what the home must have, never a medical detail; income and household evidence stay documents of the case",
+    "why": "No patient or clinical field anywhere (CLAUDE.md Health).",
+    "rule": "lib/forms/scope.ts; lib/housing/register.ts (no income figures or health details kept)"
+   },
+   {
+    "id": "two-officials",
+    "what": "Every registration and decision is proposed by one official and confirmed by a different person; the official who verified or reviewed does not decide",
+    "why": "Catalogue Part 8 §3.3 and Part 9 §5: dual control by distinct authorised individuals.",
+    "rule": "lib/casework/engine.ts act() (fourEyes, distinctFrom); lib/data/dual-control.ts dualControlRefusal()"
+   },
+   {
+    "id": "no-ai-decision",
+    "what": "No step is decided by a model, a score or a map: officials decide with reasons",
+    "why": "AI never makes a legally material decision.",
+    "rule": "CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 980,
+    "quotes": [
+     "HPC-HOU-002",
+     "Public or subsidized housing application"
+    ],
+    "met_by": {
+     "fields": [
+      "application.programme"
+     ],
+     "procedure": "accept"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1008,
+    "quotes": [
+     "\"form_id\": \"HPC-HOU-002\""
+    ],
+    "met_by": {
+     "fields": [
+      "application.applicant"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1009,
+    "quotes": [
+     "\"title\": \"Public or Subsidized Housing Application\""
+    ],
+    "met_by": {
+     "fields": [
+      "application.programme"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1010,
+    "quotes": [
+     "\"fields\": ["
+    ],
+    "met_by": {
+     "fields": [
+      "application.applicant"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1011,
+    "quotes": [
+     "{\"key\": \"applicant_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "application.applicant"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1012,
+    "quotes": [
+     "{\"key\": \"household_id\", \"type\": \"entity_reference\", \"required\": false}"
+    ],
+    "met_by": {
+     "fields": [
+      "application.household"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1013,
+    "quotes": [
+     "{\"key\": \"housing_program_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "application.programme"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1014,
+    "quotes": [
+     "{\"key\": \"preferred_localities\", \"type\": \"array\", \"required\": false, \"items_type\": \"geo_reference\"}"
+    ],
+    "met_by": {
+     "fields": [
+      "application.localities"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1015,
+    "quotes": [
+     "{\"key\": \"household_composition_reference\", \"type\": \"document_reference\", \"required\": false}"
+    ],
+    "met_by": {
+     "fields": [
+      "application.household_composition"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1016,
+    "quotes": [
+     "{\"key\": \"income_assessment_reference\", \"type\": \"document_reference\", \"required\": false, \"classification\": \"restricted\"}"
+    ],
+    "met_by": {
+     "fields": [
+      "application.income_assessment"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1017,
+    "quotes": [
+     "{\"key\": \"accessibility_requirements\", \"type\": \"restricted_structured_data\", \"required\": false}"
+    ],
+    "met_by": {
+     "fields": [
+      "application.accessibility"
+     ],
+     "deviation": "no-health-detail"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1018,
+    "quotes": [
+     "{\"key\": \"current_housing_situation\", \"type\": \"enum\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "application.situation"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1019,
+    "quotes": [
+     "{\"key\": \"declaration_accuracy\", \"type\": \"boolean\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "application.accuracy"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "application.applicant",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.person",
+   "personal_data_class": "personal",
+   "evidence": [],
+   "label": {
+    "en": "The applicant (their reference in the civil register, where they have one)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the applicant (their reference in the civil register, where they have one).",
+     "reference_exists": "There is no record with that reference in the register."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "You"
+   }
+  },
+  {
+   "id": "application.household",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 80
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Household (its reference, where the register keeps one)"
+   },
+   "error_text": {
+    "en": {
+     "length": "Household (its reference, where the register keeps one) is too long."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your household"
+   }
+  },
+  {
+   "id": "application.programme",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "housing.registry.programmes",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Housing programme"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter housing programme.",
+     "reference_exists": "There is no record with that reference in the register."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The programme"
+   }
+  },
+  {
+   "id": "application.localities",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.nation.regions",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Preferred localities"
+   },
+   "error_text": {
+    "en": {
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "The programme"
+   }
+  },
+  {
+   "id": "application.household_composition",
+   "type": "document",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "eligibility-evidence",
+     "when": "when_the_form_asks_for_it"
+    }
+   ],
+   "label": {
+    "en": "Household composition (who lives with you)"
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Your household"
+   }
+  },
+  {
+   "id": "application.income_assessment",
+   "type": "document",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "eligibility-evidence",
+     "when": "when_the_form_asks_for_it"
+    }
+   ],
+   "label": {
+    "en": "Income assessment (restricted)"
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Your household"
+   }
+  },
+  {
+   "id": "application.accessibility",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 2000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "What the home must have to be accessible (no medical details)"
+   },
+   "error_text": {
+    "en": {
+     "length": "What the home must have to be accessible (no medical details) is too long."
+    }
+   },
+   "hint": {
+    "en": "Say what the home needs (step-free access, a ground floor, wider doors). Do not give medical details."
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your household"
+   }
+  },
+  {
+   "id": "application.situation",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "housing.current_situations",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Where your household lives now"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter where your household lives now.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Your household"
+   }
+  },
+  {
+   "id": "application.accuracy",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "must_be_true",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "I confirm that what I have said is accurate"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter i confirm that what I have said is accurate.",
+     "must_be_true": "Confirm this to continue."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "application.form",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "application",
+     "when": "when_the_form_asks_for_it"
+    }
+   ],
+   "label": {
+    "en": "The application as made"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the application as made."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "application.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

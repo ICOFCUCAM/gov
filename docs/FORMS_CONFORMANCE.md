@@ -1297,3 +1297,298 @@ DPIA records are not built (`processor-register`, integration register 20.88).
 | The person kept apart and restricted; no suspect; no voter registration form | `catalogue-contracts.test.ts` "keeps the person who raised a matter restricted and apart from the case…" |
 | Audit finding and the response beside it | `catalogue-contracts.test.ts` "records an audit finding by criteria, condition, cause, effect, evidence and recommendation…" |
 | The procedures behind them | `lib/oversight/oversight.test.ts`, `app/api/oversight/route.test.ts` |
+
+## 16. Catalogue contracts, batch 8: executive office, Cabinet, treasury and budget (26 October 2026)
+
+The owner's assignment for plan step I5 (the economic group) asked for the
+catalogue forms the new procedures carry. Fifty-seven forms of the field
+series Part 2 (`docs/forms-catalogue/FIELD-SERIES-PARTS-01-02.md`), which were
+`contract_missing`, now have a CivicOS contract (`contract: given (CivicOS
+library)`, `form_status: contract_draft`), with `batch: 8` in their
+`catalogue` block: §2.1 Department A (official correspondence and petitions,
+7), §2.2 Department A (Cabinet agenda and decisions, 11; the paper itself is
+the catalogue's own contract), §2.4 Department A (payments, 10; the
+instruction is the catalogue's own) and Department B (cash forecasting, 7),
+§2.5 Department A (budget preparation, 11; the bid is the catalogue's own and
+the two capital-project forms wait with public investment) and Department B
+(budget execution, 11). The format, loader, gates and test are batch 1's
+(§8). The conformance test holds the lines each form answers: Part 1's shared
+rules and the supplement's conventions and gates, as for every batch; Part 2's
+implementation rules (lines 1838–1843, the shared group `econ8`); and its own
+row and department lines: the submission or specific fields (§2.1 lines
+1857–1864, §2.4 B lines 2273–2282, §2.5 B lines 2475–2486), the evidence and
+channel lines (1865, 1869), the controls (the Cabinet's 2027 and 1897, the
+payment's universal control 2262, the budget's 2460) and the country
+decisions (1867, the payment contract's 2254–2257, 2283, the bid contract's
+2452–2455, 2487).
+
+Forty-three are linked by identity to the I5 reference procedures
+(`lib/finance/procedures.ts`, `lib/cabinet/procedures.ts`); fourteen name the
+procedure they wait for (an agenda register, a payment refund, dispute or
+correction, a cash position or liquidity case, a correspondence complaint,
+variance, underspend, overrun, year-end and correction reports). Owners are
+the slots `finance` and `cabinetOffice`, shipped empty; the spending
+institution is named on each record, never a ministry by name.
+
+| Catalogue form | Title | Owner | Fields | Belongs to | Deviations (besides the five every batch-8 form shares) |
+|---|---|---|---|---|---|
+| budget.allocation.approve | Approve a budget allocation | finance | 7 | `budget.bid`, stage `pending-approval`, step `allocate` | decision-in-engine, officer-from-sign-in |
+| budget.allocation.notify | Notify an institution of its approved allocation | finance | 4 | `budget.bid`, stage `allocated` | delivery-not-recorded, officer-from-sign-in |
+| budget.allocation.propose | Propose a budget allocation | finance | 5 | `budget.bid`, stage `negotiation`, step `propose` | officer-from-sign-in, stated-amount |
+| budget.bid.justification | Supply missing budget justification | finance | 5 | `budget.bid`, stage `awaiting-justification`, step `justification-received`, document `justification` | officer-from-sign-in |
+| budget.bid.revise | Revise a budget request | finance | 6 | `budget.bid`, stage `review`, step `revise` | officer-from-sign-in, stated-amount |
+| budget.bid.withdraw | Withdraw a budget request | finance | 4 | `budget.bid`, stage `review`, step `withdraw` | officer-from-sign-in |
+| budget.ceiling.approve | Approve an institutional budget ceiling | finance | 7 | `budget.ceiling`, stage `pending-approval`, step `approve` | decision-in-engine, officer-from-sign-in |
+| budget.ceiling.propose | Propose an institutional budget ceiling | finance | 7 | `budget.ceiling`, stage `proposed`, step `propose` | officer-from-sign-in, stated-amount |
+| budget.circular.issue | Prepare and issue a budget call circular | finance | 6 | `budget.circular`, stage `drafted`, step `propose`, document `circular` | officer-from-sign-in |
+| budget.execution.commitment | Register a proposed financial commitment | finance | 13 | `finance.commitment`, stage `proposed`, step `check`, document `commitment-request` | officer-from-sign-in, stated-amount, balance-computed |
+| budget.execution.commitment.approve | Approve or refuse a commitment | finance | 7 | `finance.commitment`, stage `pending-approval`, step `approve` | decision-in-engine, officer-from-sign-in |
+| budget.execution.correction | Correct a submitted execution report | finance | 12 | waits: Execution report correction | correction-not-built, officer-from-sign-in, stated-amount, balance-computed |
+| budget.execution.overrun.report | Report a forecast or actual overrun | finance | 12 | waits: Overrun case | report-not-built, officer-from-sign-in, stated-amount, balance-computed |
+| budget.execution.reallocation.approve | Approve or refuse a reallocation | finance | 8 | `budget.revision`, stage `pending-approval`, step `approve` | decision-in-engine, officer-from-sign-in |
+| budget.execution.reallocation.request | Request a budget reallocation | finance | 14 | `budget.revision`, stage `requested`, step `check`, document `revision-request` | officer-from-sign-in, stated-amount, balance-computed |
+| budget.execution.supplementary.request | Request supplementary funding | finance | 13 | `budget.revision`, stage `requested`, step `check`, document `revision-request` | officer-from-sign-in, stated-amount, balance-computed |
+| budget.execution.underspend.report | Report expected underspending | finance | 12 | waits: Underspend report | report-not-built, officer-from-sign-in, stated-amount, balance-computed |
+| budget.execution.variance.report | Report a material budget variance | finance | 12 | waits: Variance report | report-not-built, officer-from-sign-in, stated-amount, balance-computed |
+| budget.execution.virement | Request an authorized transfer between budget lines | finance | 14 | `budget.revision`, stage `requested`, step `check`, document `revision-request` | officer-from-sign-in, stated-amount, balance-computed |
+| budget.execution.year_end | Submit year-end budget closure information | finance | 12 | waits: Year-end closure | year_end-not-built, officer-from-sign-in, stated-amount, balance-computed |
+| budget.negotiation.record | Record a budget negotiation outcome | finance | 5 | `budget.bid`, stage `review`, step `record-negotiation` | officer-from-sign-in, stated-amount |
+| budget.programme.costing | Submit programme costing | finance | 7 | `budget.bid`, stage `submitted`, document `costing` | officer-from-sign-in, stated-amount |
+| exec.cabinet.action.close | Confirm completion of a Cabinet action | cabinetOffice | 7 | `cabinet.decision`, stage `implementation` | cabinet-rules, officer-from-sign-in |
+| exec.cabinet.action.update | Report progress on a Cabinet action | cabinetOffice | 5 | `cabinet.decision`, stage `implementation` | cabinet-rules, officer-from-sign-in |
+| exec.cabinet.agenda.approve | Approve the Cabinet agenda | cabinetOffice | 5 | waits: Agenda approval | cabinet-rules, agenda-not-built, officer-from-sign-in |
+| exec.cabinet.agenda.propose | Propose an item for a Cabinet meeting | cabinetOffice | 5 | waits: Agenda item | cabinet-rules, agenda-not-built, officer-from-sign-in |
+| exec.cabinet.decision.action_assign | Assign an approved decision action | cabinetOffice | 4 | `cabinet.decision`, stage `notified`, step `assign-actions` | cabinet-rules, officer-from-sign-in, request-not-instruction |
+| exec.cabinet.decision.correct | Correct a Cabinet decision record | cabinetOffice | 7 | `cabinet.decision`, stage `decided`, step `correct` | cabinet-rules, decision-in-engine, officer-from-sign-in |
+| exec.cabinet.decision.distribution | Record controlled distribution of a decision | cabinetOffice | 6 | `cabinet.decision`, stage `decided`, step `publish` | cabinet-rules, officer-from-sign-in |
+| exec.cabinet.decision.record | Record a Cabinet decision | cabinetOffice | 15 | `cabinet.decision`, stage `circulated`, step `record-decision`, document `minutes` | cabinet-rules, decision-in-engine, officer-from-sign-in |
+| exec.cabinet.paper.fiscal_review | Record fiscal implications review | cabinetOffice | 8 | `cabinet.decision`, stage `legal-reviewed`, step `fiscal-review` | cabinet-rules, officer-from-sign-in, distinct-reviewers |
+| exec.cabinet.paper.legal_review | Record legal and authority review | cabinetOffice | 7 | `cabinet.decision`, stage `validation`, step `legal-review` | cabinet-rules, officer-from-sign-in |
+| exec.cabinet.paper.revise | Revise a Cabinet paper | cabinetOffice | 13 | `cabinet.decision`, stage `returned`, step `resubmit`, document `paper` | cabinet-rules |
+| exec.presidency.correspondence.complaint | Complain about the handling of a petition | cabinetOffice | 4 and contact | waits: Service complaint review of the executive office | no-identity-demand, restricted-case, complaint-not-built |
+| exec.presidency.correspondence.decision | Record the official response or routing decision | cabinetOffice | 8 | `exec.correspondence`, stage `pending-approval`, step `respond`, document `response-letter` | no-identity-demand, restricted-case, decision-in-engine, officer-from-sign-in |
+| exec.presidency.correspondence.notice | Notify the submitter of the outcome | cabinetOffice | 5 | `exec.correspondence`, stage `responded`, document `response-letter` | no-identity-demand, restricted-case, delivery-not-recorded, officer-from-sign-in |
+| exec.presidency.correspondence.referral | Refer correspondence to the responsible authority | cabinetOffice | 6 | `exec.correspondence`, stage `routed`, step `refer`, document `referral` | no-identity-demand, restricted-case, officer-from-sign-in, referral-case |
+| exec.presidency.correspondence.submit | Send an official petition or correspondence | cabinetOffice | 9 and contact, representation | `exec.correspondence`, stage `received`, step `acknowledge`, document `correspondence` | no-identity-demand, restricted-case |
+| exec.presidency.correspondence.supplement | Add information to an existing petition | cabinetOffice | 4 and representation | `exec.correspondence`, stage `acknowledged`, document `correspondence` | no-identity-demand, restricted-case |
+| exec.presidency.correspondence.withdraw | Withdraw a petition | cabinetOffice | 3 and representation | `exec.correspondence`, stage `received`, step `withdraw` | no-identity-demand, restricted-case |
+| treasury.cash_forecast.close | Close a forecasting period | finance | 4 | `treasury.cash-forecast`, stage `reviewed`, step `close` | officer-from-sign-in |
+| treasury.cash_forecast.review | Review forecast assumptions and variance | finance | 5 | `treasury.cash-forecast`, stage `recorded`, step `review` | officer-from-sign-in |
+| treasury.cash_forecast.revise | Revise a cash forecast | finance | 12 | `treasury.cash-forecast`, stage `submitted`, step `record`, document `forecast` | officer-from-sign-in, stated-amount |
+| treasury.cash_forecast.submit | Submit an institutional cash forecast | finance | 12 | `treasury.cash-forecast`, stage `submitted`, step `record`, document `forecast` | officer-from-sign-in, stated-amount |
+| treasury.cash_position.report | Report an authorized cash position | finance | 6 | waits: Cash position report | report-not-built, officer-from-sign-in, stated-amount |
+| treasury.liquidity.response | Propose a liquidity response | finance | 6 | waits: Liquidity response | response-not-built, officer-from-sign-in, stated-amount |
+| treasury.liquidity.shortfall | Report an expected liquidity shortfall | finance | 6 | waits: Liquidity shortfall case | shortfall-not-built, officer-from-sign-in, stated-amount |
+| treasury.payment.approve | Approve or refuse a payment | finance | 8 | `treasury.payment`, stage `pending-approval`, step `approve` | decision-in-engine, officer-from-sign-in, separation-by-person |
+| treasury.payment.cancel_request | Request cancellation of a payment | finance | 4 | `treasury.payment`, stage `instructed`, step `cancel` | officer-from-sign-in, separation-by-person |
+| treasury.payment.correction | Correct payment metadata | finance | 5 | waits: Correction of payment metadata | correction-not-built, officer-from-sign-in, separation-by-person |
+| treasury.payment.dispute | Dispute a payment or reconciliation result | finance | 5 | waits: Payment dispute | dispute-not-built, officer-from-sign-in, separation-by-person |
+| treasury.payment.execute | Record execution by the payment system | finance | 7 | `treasury.payment`, stage `approved`, step `execute`, document `bank-confirmation` | officer-from-sign-in, stated-amount, separation-by-person |
+| treasury.payment.reconcile | Reconcile payment against the treasury ledger | finance | 6 | `treasury.payment`, stage `executed`, step `reconcile`, document `statement` | officer-from-sign-in, stated-amount, separation-by-person |
+| treasury.payment.refund | Request or record a refund | finance | 6 | waits: Refund of a government payment | refund-not-built, officer-from-sign-in, stated-amount, separation-by-person |
+| treasury.payment.reject | Record a rejected or failed payment | finance | 5 | `treasury.payment`, stage `approved`, step `fail` | officer-from-sign-in, separation-by-person |
+| treasury.payment.supporting_evidence | Supply missing payment evidence | finance | 5 | `treasury.payment`, stage `returned`, step `resubmit`, document `payment-evidence` | officer-from-sign-in, separation-by-person |
+| treasury.payment.verify | Record payment verification | finance | 5 | `treasury.payment`, stage `instructed`, step `verify` | officer-from-sign-in, separation-by-person |
+
+The five deviations every batch-8 form shares are `no-amounts-typed` (no
+threshold, approval tier or limit, calendar, period, quorum or deadline typed:
+each is the nation's approved rule or country rule set, a binding rule until
+then), `config-impact`, `minimisation`, `evidence-requirement` and `scanning`.
+
+**Separation of duties by person.** The payment forms follow the procedure's
+steps: the verifier is not the official who instructed, the two approvers are
+neither, execution is recorded by none of them and reconciliation by none of
+the three (`distinctFrom` through `dualControlRefusal()`, comparing persons);
+the platform minimum of two officials applies to every payment approval and
+every payee account change (`lib/casework/dual-control-policy.ts`). The
+approval tier is read from the approved `treasury.payment.approval-tiers`
+rule (a `tiers` rule kind) and never typed; production refuses an approval
+without it.
+
+**Amounts.** An amount a person states (a request, a forecast, a proposed
+ceiling or allocation, a bank's confirmation) is money with its currency,
+named in the form's `amounts.stated` policy; the amount that binds is the one
+the sealed decision and the register record. The current amount and available
+balance of an appropriation are never asked: they are computed from the
+register on every read (`balance-computed`).
+
+**Cabinet.** A decision records its legal category, the law cited and the
+actions it authorises; quorum and the vote are checked against the Cabinet
+rules the nation adopts (`cabinet-rules`); an action for an institution the
+whole government may not instruct is a request (`request-not-instruction`).
+Petitions are restricted (stricter than the catalogue's "personal where
+applicable") and ask no identity proof merely because they are addressed to
+the executive (`no-identity-demand`).
+
+**Batch 5's procurement forms.** ADM-PRC-018 (requisition), ADM-PRC-019
+(evaluation) and ADM-PRC-020 (order) are linked to the institution's own
+procurement templates (`proc.plan`, step `record`; `proc.tender`, steps
+`evaluate` and `sign-contract`), deviation `procurement-procedure` in place of
+`procedure-not-built`. The Part 3 procurement forms (125 rows) are not written
+in this batch.
+
+| Check | Where |
+|---|---|
+| Each contract quotes and meets every piece of its lines; typed, classed, registered rules only; nothing a law decides set; three channels; contract draft | `catalogue-contracts.test.ts` (per form) |
+| Links by identity; owners are slots | `catalogue-contracts.test.ts` "links batch 8 to the I5 procedures by identity…" |
+| Payments separated by person, approved by two | `catalogue-contracts.test.ts` "separates every payment stage by person…"; `lib/finance/finance.test.ts` |
+| No threshold, tier or calendar typed; balances computed | `catalogue-contracts.test.ts` "types in no threshold, tier, limit or calendar…" |
+| Cabinet actions within powers; petitions restricted | `catalogue-contracts.test.ts` "keeps Cabinet actions within each institution's powers…"; `lib/cabinet/cabinet.test.ts` |
+| Procurement links of batch 5 | `catalogue-contracts.test.ts` "links payroll input, review and correction…"; `lib/procurement/procurement.test.ts` |
+
+## 17. Catalogue contracts, batch 9: human services (26 October 2026)
+
+Plan step I6 (human services) gave the forms of its first areas a CivicOS
+contract: 96 forms that were `contract_missing` are now `contract: given
+(CivicOS library)`, `form_status: contract_draft`, with `batch: 9` in their
+`catalogue` block. They are the field series Part 4 identity (IDN-*, §3.1, 22
+forms), passport and travel document (PAS-APP-*, §5.1, 18) and citizenship
+(NAT-APP-*, §6.1, 12) forms of `docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md`,
+and the supplement's Part 14 labour (LAB-EMP-*, 20) and Part 15 social
+protection (SOC-BEN-*, 24) forms. None is excluded or held for legal review by
+the scope (`docs/requirements/form-scope.json`). The format, loader, gates and
+test are batch 1's (§8).
+
+The conformance test holds the lines each form answers:
+
+- Part 1's shared rules and the supplement's conventions and gates, as for
+  every batch.
+- The shared group `human`: the specification's separate institutional
+  records and the rule that a workflow confers no legal power (lines 1106,
+  1197), and the field series' rules that a submission is not a decision, that
+  a failed check or missing document is no ground for refusal, and that no
+  plausible default is activated (lines 1406, 1771, 1817).
+- Each family's lines:
+  - IDN: the specification's identity authority (1128) and Part 4 §3's credential, civil link, access, verification and biometric rules (1498, 1536, 1543, 1545, 1555).
+  - PAS: the specification's passport line (1491) and §5's issuance, access, loss and refusal rules (1636, 1665, 1667, 1669).
+  - NAT: §6's competent authority and evidence rules (1671, 1686, 1688).
+  - LAB: the specification's labour mandate and complaint rules (1152, 1593).
+  - SOC: the specification's social protection mandate and benefit rules (1158, 1652, 1656–1662) and the supplement's mandatory safeguards (500).
+- Its own row.
+- For the forms whose JSON contract the supplement gives (§14.2: LAB-EMP-001, 003, 004, 005, 008, 009, 010, 011, 016, 020; §15.2: SOC-BEN-001, 002, 003, 004, 010, 015, 018, 019, 020): the envelope line and every line of that contract, field by field.
+- For the other labour forms: the supplement's line that their contracts must be added before production (340).
+
+| Family | Forms | Linked to | Waiting |
+|---|---|---|---|
+| IDN | 22 | `identity.enrolment` (REG-001 … 005), `identity.credential` (CARD-001, 002, 004, 005), `identity.credential-status` (CARD-003, 006, 007), `identity.resolution` (VER-003, SEC-001 … 003) | VER-001 and 002 are answered by the `identity.verify` exchange (no case is opened). ACC-001 … 004 (data access, correction, disclosure, access review) wait for their procedures. |
+| PAS | 18 | `passport.application` (001 … 005, 008 … 013, 018), `passport.status` (006, 007, 014, 017), `passport.review` (016) | 015 is answered by the `travel-document.status` exchange. |
+| NAT | 12 | `citizenship.application` (001 … 007, 010, 012) | 008, 009 and 011 (correction, review, status verification) |
+| LAB | 20 | employer and employment registration, vacancy, jobseeker, inspection, complaint, injury, mediation, notice (001 … 015, 020) | 016 … 019 (apprenticeships, training, programmes, labour-market returns) |
+| SOC | 24 | registration, household, benefit (002, 004, 009, 010, 011, 012, 014), reassessment (005, 006, 017), suspension (007), payment (018), overpayment (019), appeal (020) | 008, 013, 015, 016, 021 … 024 (emergency assistance, referrals, social-work records, safeguarding, providers, programme reporting) |
+
+Every contract shares seven deviations:
+
+- `minimisation`, `evidence-requirement` and `scanning`, as every batch.
+- `no-score`: no field scores a person, household, credential, employer or application.
+- `authority-slot`: the owner is the institution the nation names for the `identity`, `travelDocuments`, `citizenship`, `labour` or `socialProtection` slot, shipped empty, with no stand-in.
+- `procedure-not-built`, on a form waiting for its procedure.
+- `no-biometric`, on every identity and passport form: a photograph is an image document, and no template, match or biometric field exists. CFG-IDN-004 needs the nation's law and an independent legal review first.
+
+Others belong to particular forms:
+
+- `stated-amount`: a remuneration, a claimed wage or a salary range is the person's figure in minor units, never calculated money.
+- `signed-by-session`: the inspector's signature is the signed-in official's act.
+- `medical-sealed`: an injury's medical evidence is a sealed document reference only.
+- `maker-checker`: a payment instruction's maker and approver are the officials on the `prepare` and `approve` steps, a different person approving (`distinctFrom`).
+
+**Money only by an approved rule.** A passport fee is a `money` field of the
+platform's own (`derived_from_approved_rule`), calculated by the approved
+schedule `passports.fees` (the new `fixed-amounts` rule kind) and named as a
+nation value of kind `fee`. A benefit's means, amount and overpayment are
+numbers the programme's approved rule (`social.<programme>`, kind
+`means-tested`) calculates; the rule version is an officer field
+(`approved_rule_active_at_calculation`) and the assessment can be re-run
+(acceptance P2-07). Validity periods, renewal windows, notice, reporting and
+appeal periods are named and unset (`certificate_validity_from_rule`,
+`renewal_window_from_rule` are binding).
+
+**No refusal from a failed check.** The identity, passport, labour and social
+protection procedures hold a case whose identity or status check cannot be
+made; refusal is not open from the held stage (acceptance P2-08). A lost or
+stolen report is a report, never proof of fraud; a complaint stays an
+allegation until findings support it; a possible duplicate identity is a flag
+an official determines with reasons.
+
+| Check | Where |
+|---|---|
+| Each contract quotes and meets every piece of its lines; typed, classed, registered rules only; nothing a law decides set; three channels; contract draft | `catalogue-contracts.test.ts` (per form) |
+| No biometric, score or clinical field; medical evidence a sealed document | `catalogue-contracts.test.ts` "keeps human services free of biometrics, scores and clinical fields…" |
+| Links, exchanges, fee and rule version, maker and checker | `catalogue-contracts.test.ts` "links the human services forms to their procedures, the verification exchanges and the approved rules" |
+| The procedures behind them | `lib/identity/identity.test.ts`, `lib/passports/passports.test.ts`, `lib/citizenship/citizenship.test.ts`, `lib/labour/labour.test.ts`, `lib/social/social.test.ts` |
+
+## 18. Catalogue contracts, batch 10: territory and infrastructure (26 October 2026)
+
+Plan step I7 wrote the contracts of the forms its procedures carry: land
+dealings and disputes (catalogue Part 8 §3), housing, planning and building
+control (the supplement's Part 20), local and regional government (Part 19)
+and transport (Part 9). Thirty-six forms of `docs/forms-catalogue/PARTS-08-11.md`
+and the supplement, which were `contract_missing` (eight of them `given`, their
+JSON contract in §19.2 or §20.2, now written in the canonical format line by
+line), have a CivicOS contract with `batch: 10` in their `catalogue` block.
+The format, loader, gates and test are batch 1's (§8). The conformance test
+(`lib/forms/catalogue-contracts.test.ts`, source `F` added for Parts 8–11)
+holds the lines each form answers: Part 1's shared rules and the supplement's
+conventions and gates, as for every batch; the shared group of its family
+(`land`: Part 8 lines 24, 30, 31, 91, 118, 132, 134–142, 144, 461, 472, 479 and
+the specification's lines 2424 and 2449; `hpc`: the supplement's line 1082;
+`lrg`: line 974 and the specification's line 2522; `trn`: Part 9 lines 525,
+685, 729, 766, 767, 846 and 1003); and its own lines (its row, its JSON
+contract where the supplement gives one, its register and the
+specification's records and controls, `FORM_10` in the test).
+
+| Catalogue form | Title | Fields | Belongs to | Owner (slot) | Deviations (besides minimisation, evidence-requirement and scanning) |
+|---|---|---|---|---|---|
+| HPC-BLD-014 | Apply for a building permit | 10 and the declaration | `building.permit`, stage `received`, step `validate`, document `design-documents` | buildingControl | slot-owner, rules-version, distinct-states, two-officials, no-ai-decision |
+| HPC-BLD-015 | Submit building plans | 4 | `building.permit`, stage `plan-review`, step `submit-plans`, document `design-documents` | buildingControl | slot-owner, rules-version, distinct-states, two-officials, no-ai-decision |
+| HPC-BLD-016 | Record a structural or technical review | 5 | `building.permit`, stage `plan-review`, step `technical-review`, document `technical-review` | buildingControl | slot-owner, rules-version, distinct-states, two-officials, no-ai-decision |
+| HPC-BLD-017 | Notify the start of construction | 4 | `building.permit`, stage `permitted`, step `commence`, document `commencement-notice` | buildingControl | slot-owner, rules-version, distinct-states, two-officials, no-ai-decision |
+| HPC-BLD-018 | Record a building inspection | 10 | `building.permit`, stage `construction`, step `inspect`, document `inspection-evidence` | buildingControl | slot-owner, rules-version, distinct-states, two-officials, no-ai-decision |
+| HPC-BLD-019 | Record a stop-work or corrective action order | 5 | `building.permit`, stage `construction`, step `stop-work` | buildingControl | slot-owner, rules-version, distinct-states, two-officials, no-ai-decision |
+| HPC-BLD-020 | Apply for an occupancy or completion certificate | 7 and the declaration | `building.permit`, stage `construction`, step `complete`, document `completion-documents` | buildingControl | slot-owner, rules-version, distinct-states, two-officials, no-ai-decision |
+| HPC-HOU-001 | Register a housing programme | 7 | `housing.programme`, stage `received`, step `check`, document `programme-instrument` | housing | slot-owner, programme-terms, no-health-detail, two-officials, no-ai-decision |
+| HPC-HOU-002 | Apply for public or subsidised housing | 11 | `housing.application`, stage `received`, step `accept`, document `application` | housing | slot-owner, programme-terms, no-health-detail, two-officials, no-ai-decision |
+| HPC-HOU-003 | Assess housing eligibility | 7 | `housing.application`, stage `assessment`, step `assess-eligible` | housing | slot-owner, programme-terms, no-health-detail, two-officials, no-ai-decision |
+| HPC-HOU-004 | Record a housing allocation decision | 5 | `housing.application`, stage `waiting`, step `allocate` | housing | slot-owner, programme-terms, no-health-detail, two-officials, no-ai-decision |
+| HPC-PLN-009 | Apply for planning permission | 10 and the declaration | `building.planning`, stage `received`, step `validate`, document `site-plan` | buildingControl | slot-owner, rules-version, distinct-states, two-officials, no-ai-decision |
+| HPC-PLN-012 | Refer a planning application for an environmental or heritage opinion | 5 | `building.planning`, stage `consultation`, step `close-consultation`, document `referral-response` | buildingControl | slot-owner, rules-version, distinct-states, two-officials, no-ai-decision |
+| HPC-PLN-013 | Make a representation or objection on a planning application | 5 and the declaration | `building.planning`, stage `consultation`, step `close-consultation`, document `representation` | buildingControl | slot-owner, rules-version, distinct-states, two-officials, no-ai-decision |
+| LND-REG-005 | Refer a boundary dispute | 8 and the declaration | `land.dispute`, stage `lodged`, step `register`, document `dispute-submission` | landRegistry | slot-owner, rights-on-parcel, two-officials, dispute-holds, nation-lists |
+| LND-REG-007 | Transfer a registered interest in land | 17 and the declaration | `land.transfer`, stage `lodged`, step `lodge`, document `instrument` | landRegistry | slot-owner, rights-on-parcel, two-officials, dispute-holds, nation-lists |
+| LND-REG-008 | Register or amend a lease | 14 and the declaration | `land.encumbrance`, stage `lodged`, step `lodge`, document `instrument` | landRegistry | slot-owner, rights-on-parcel, two-officials, dispute-holds, nation-lists |
+| LND-REG-009 | Register a mortgage or other encumbrance | 14 and the declaration | `land.encumbrance`, stage `lodged`, step `lodge`, document `instrument` | landRegistry | slot-owner, rights-on-parcel, two-officials, dispute-holds, nation-lists |
+| LND-REG-010 | Discharge a mortgage | 10 and the declaration | `land.discharge`, stage `lodged`, step `lodge`, document `instrument` | landRegistry | slot-owner, rights-on-parcel, two-officials, dispute-holds, nation-lists |
+| LND-REG-011 | Register an easement or right of way | 14 and the declaration | `land.encumbrance`, stage `lodged`, step `lodge`, document `instrument` | landRegistry | slot-owner, rights-on-parcel, two-officials, dispute-holds, nation-lists |
+| LND-REG-012 | Register an interest on succession (inheritance) | 14 and the declaration | `land.transfer`, stage `lodged`, step `lodge`, document `succession-evidence` | landRegistry | slot-owner, rights-on-parcel, two-officials, dispute-holds, nation-lists |
+| LND-REG-016 | Correct a land record | 13 and the declaration | `land.correction`, stage `lodged`, step `lodge`, document `instrument` | landRegistry | slot-owner, rights-on-parcel, two-officials, dispute-holds, nation-lists |
+| LND-REG-017 | Report a duplicate or conflicting title | 8 and the declaration | `land.dispute`, stage `lodged`, step `register`, document `dispute-submission` | landRegistry | slot-owner, rights-on-parcel, two-officials, dispute-holds, nation-lists |
+| LND-REG-020 | Register a land transaction restriction (caveat) | 14 and the declaration | `land.encumbrance`, stage `lodged`, step `lodge`, document `instrument` | landRegistry | slot-owner, rights-on-parcel, two-officials, dispute-holds, nation-lists |
+| LND-REG-021 | Discharge a restriction or caveat | 10 and the declaration | `land.discharge`, stage `lodged`, step `lodge`, document `instrument` | landRegistry | slot-owner, rights-on-parcel, two-officials, dispute-holds, nation-lists |
+| LND-REG-022 | Object to a land registration | 8 and the declaration | `land.dispute`, stage `lodged`, step `register`, document `dispute-submission` | landRegistry | slot-owner, rights-on-parcel, two-officials, dispute-holds, nation-lists |
+| LRG-FIN-008 | Submit a local budget | 10 | `lg.budget`, stage `draft`, step `submit`, document `budget-document` | institution | institution-owned, two-officials, no-ai-decision, whole-minor-units |
+| LRG-ORG-004 | File a council meeting agenda and papers | 5 | `lg.resolution`, stage `moved`, step `record`, document `agenda` | institution | institution-owned, two-officials, no-ai-decision |
+| LRG-ORG-005 | Record a council resolution | 12 | `lg.resolution`, stage `moved`, step `record`, document `agenda` | institution | institution-owned, two-officials, no-ai-decision, quorum-rules |
+| LRG-SVC-013 | Request a local public service | 8 and the declaration | `lg.service`, stage `received`, step `triage`, document `evidence` | institution | institution-owned, two-officials, no-ai-decision, place-from-map |
+| LRG-SVC-014 | Make a local complaint or grievance | 8 and the declaration | `lg.complaint`, stage `received`, step `triage`, document `evidence` | institution | institution-owned, two-officials, no-ai-decision, place-from-map |
+| TRN-DRV-001 | Apply for a driving licence | 6 and the declaration | `transport.driving-licence`, stage `received`, step `check`, document `identity-evidence` | vehicleRegistration | slot-owner, separate-records, two-officials, no-ai-decision, nation-lists, medical-reference-only |
+| TRN-OPS-001 | Register a transport operator | 7 and the declaration | `transport.operator-licence`, stage `received`, step `check`, document `insurance-evidence` | transportRegulator | slot-owner, separate-records, two-officials, no-ai-decision, nation-lists |
+| TRN-ROAD-002 | Apply for a road excavation permit | 8 and the declaration | `transport.road-works`, stage `received`, step `check`, document `traffic-management-plan` | roadAuthority | slot-owner, separate-records, two-officials, no-ai-decision, nation-lists, place-from-map |
+| TRN-VEH-001 | Register a vehicle | 8 and the declaration | `transport.vehicle-registration`, stage `received`, step `check`, document `ownership-evidence` | vehicleRegistration | slot-owner, separate-records, two-officials, no-ai-decision, nation-lists |
+| TRN-VEH-002 | Change a vehicle's keeper | 4 and the declaration | `transport.vehicle-transfer`, stage `received`, step `check`, document `transfer-instrument` | vehicleRegistration | slot-owner, separate-records, two-officials, no-ai-decision, nation-lists |
+
+Owners are the slots the nation names (`landRegistry`, `buildingControl`,
+`housing`, `vehicleRegistration`, `roadAuthority`, `transportRegulator`, all
+shipped empty) or, for the five local-government forms, each local government
+itself (`institution`: the `lg.*` templates a subnational institution adopts as
+`lg.<template>.<institution>`; `procedure-link.ts` finds them adopted). Nothing
+a law decides is set: categories, uses, classes and checklists are configured
+lists or rules that ship empty; the other lists are marked proposed; no fee,
+day count or period. Medical fitness to drive is a sealed document's
+reference only; accessibility needs say what a home must have, never a
+medical detail.
+
+Left for later batches: the other land forms (LND-REG-001 … 004, 006, 013 …
+015, 018, 019 and the community-land forms), HPC-HOU-005 … 008, HPC-PLN-010
+and 011, HPC-BLD-021 and 022, HPC-REG-023 and 024, the Part 19 forms not
+listed above, the other transport forms (licence renewals, vehicle
+inspection, road reports, maritime and aviation) and every environment form
+(integration register 21.79).

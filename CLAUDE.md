@@ -87,6 +87,19 @@ What has been built is locked. Work only upgrades it toward the vision in
   `immigration.status` exchange service, never the file. Do not add asylum,
   border enforcement or any risk score without the safeguards of directions
   §15 and an independent legal review.
+- Human services (plan I6): identity (`lib/identity/`), travel documents
+  (`lib/passports/`), citizenship (`lib/citizenship/`), labour (`lib/labour/`)
+  and social protection (`lib/social/`) change only in their procedures'
+  effects, each kept by the body named for its slot (`travelDocuments`,
+  `citizenship`, `labour`, `socialProtection` ship empty) and read only by it
+  (`canReadIdentity()` …, every read logged); others learn a result through
+  `identity.verify`, `travel-document.status` or `employer.standing`. A
+  possible duplicate identity is a flag an official determines with reasons;
+  no biometric field or template; a passport fee only from the approved
+  `passports.fees` schedule and a benefit only from its programme's approved
+  rule (version sealed, calculation reproducible); a check that cannot be made
+  holds the case, never refuses it; no score ever cuts support; an injury's
+  medical evidence is a sealed document only.
 - Police (`lib/police/`) is intake and referral only: classification cites
   the law, no field records a suspect or a finding. Courts (`lib/courts/`)
   are worked only by the judiciary; the public cause list
@@ -261,6 +274,37 @@ What has been built is locked. Work only upgrades it toward the vision in
   The audit chain (`/api/audit`) is read only under `canReadAuditChain()`, logged;
   refusals (`refusal()`, `readRefusal()`, the middleware's 403) are logged as
   reference and rule (`lib/records/refusal-log.ts`).
+- Budget, treasury, procurement and the Cabinet office (plan I5): public
+  finance (`lib/finance/`, the `finance` slot) releases an appropriation only
+  as cited from the laws register and by two officials; a commitment never
+  exceeds the available balance, computed at each read and never stored;
+  payments are instructed, verified, approved by two officials (tier from the
+  approved `treasury.payment.approval-tiers` rule; production refuses
+  without one), executed and reconciled once, each step by a different
+  person; payee accounts are sealed, shown masked and changed by two
+  officials. Procurement (`lib/procurement/`) is each institution's own
+  (`proc.<template>.<institution>`): methods from the approved
+  `procurement.method-thresholds` rule, bids sealed until two committee
+  members open them, interests declared and managed before evaluation,
+  evaluation with reasons and no deciding score, award by officials who did
+  not evaluate, complaints to the independent `procurementReview` slot. The
+  Cabinet's records (`lib/cabinet/`, the `cabinetOffice` slot) follow only
+  the Cabinet rules adopted through `policy-change.ts` (constitutional part
+  `cabinetRules`, none ships); an action for an institution the whole
+  government may not instruct is a request.
+- Territory and infrastructure (plan I7): rights on a parcel change only
+  through the land registry's decided cases (`lib/land/procedures.ts`,
+  `applyRightsChange()`, two officials, every version with its effective
+  date); a registered dispute holds the interest until a decision, a recorded
+  court order or a withdrawal, never on its own. Building control rules and
+  each council's quorum rules come only through `policy-change.ts`, housing
+  programme terms only through the `housing.programme` decision (none ship);
+  each decision records the version it applied;
+  planning permission, building approval, construction and occupancy stay
+  separate records, decided on the published parcel, never a map. Local
+  governments (standing `subnational`) adopt the `lg.*` templates as their
+  own; transport keeps vehicles, licences (medical fitness only as a sealed
+  document's reference), road works and operators apart.
 
 ## Constitutional architecture
 
@@ -303,7 +347,9 @@ What has been built is locked. Work only upgrades it toward the vision in
   devices regulation, 21 forms; batch 3, taxpayer registration and account,
   29 forms; batch 4, public-health programme forms, 2 forms; batch 5,
   internal administration, 40 forms; batch 6, tax services, 95 forms;
-  batch 7, independent oversight, 7 forms: owner 2026-10-21), as library
+  batch 7, independent oversight, 7 forms; batch 8, executive office,
+  Cabinet, treasury and budget, 57 forms; batch 9, human services, 96 forms;
+  batch 10, territory and infrastructure, 36 forms: owner 2026-10-21), as library
   drafts in `lib/forms/library/catalogue-contracts/`, each matched to one
   register row, never for an excluded form, regenerated into the register.
 - Every requirement of that specification is a row of
