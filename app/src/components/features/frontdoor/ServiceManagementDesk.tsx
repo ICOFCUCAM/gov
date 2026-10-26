@@ -13,6 +13,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Section } from '@/components/ui/DataSystem';
 import { Button } from '@/components/ui/Button';
+import { LoadingState } from '@/components/ui/States';
 import { SignalTag } from '@/components/ui/SignalTag';
 import type { Signal } from '@/lib/twin/signal';
 
@@ -60,7 +61,7 @@ export function ServiceManagementDesk() {
 
   return (
     <div className="space-y-5 p-4">
-      <h1 className="text-xl font-semibold">Service management</h1>
+      <h2 className="text-xl font-semibold">Service management</h2>
       <p className="max-w-3xl text-sm text-ink-muted">How each service performs, worked out from its cases when you ask (never typed in or generated), the objectives each service is held to and the targets the nation sets for them (none ships), reports frozen with their fingerprint and validated by a second official, disruptions, changes and architecture exceptions. Services themselves are kept in the <Link className="underline" href="/gov/services">Service catalogue</Link>.</p>
       {msg ? <p role="status" className="text-sm">{msg}</p> : null}
       <Section title="Performance" meta="computed from the records">
@@ -148,7 +149,7 @@ export function ServiceManagementDesk() {
             <Button variant="secondary" onClick={() => post({ op: 'dashboard', institution: f.bInst, title: f.title, purpose: f.purpose, sources: (f.sources ?? '').split('\n'), access: f.access, limitations: f.limitations ?? '' }, 'Registered: a different official publishes it.')}>Register a dashboard</Button>
           </Section>
         </>
-      ) : null}
+      ) : msg ? null : <LoadingState label="Loading service management" />}
     </div>
   );
 }

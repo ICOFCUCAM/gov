@@ -15,6 +15,8 @@ export const CUSTODY: { step: CustodyStep; label: string; who: string }[] = [
   { step: 'handed-over', label: 'Handed over', who: 'Publisher' },
   { step: 'received', label: 'Received', who: 'Nation' },
   { step: 'seal-verified', label: 'Seal verified', who: 'Nation' },
+  // Plan I9 (P5-15): the signed statement and every file read from the media (scripts/verify-update-media.mjs).
+  { step: 'contents-verified', label: 'Contents verified', who: 'Nation' },
 ];
 
 export function CustodyChain({ s }: { s: MediaShipment }) {
@@ -169,7 +171,7 @@ function Media({ d, link, onDone }: { d: Data; link?: string; onDone: () => void
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <span className="font-mono text-[11.5px] text-[#f4e4bd]">{s.mediaId}</span>
             <span className="min-w-0 flex-1 text-[13.5px] font-light text-white/70">{s.contents.length} files · {fmtBytes(s.contents.reduce((a, c) => a + c.sizeBytes, 0))}</span>
-            {s.state === 'seal-broken' ? <Chip tone="#f1938f" solid>Do not use — seal mismatch</Chip> : s.state === 'seal-verified' ? <Chip tone="#9be7c4" solid>Verified · ready to load</Chip> : <Chip tone="#f4d58d">In custody</Chip>}
+            {s.state === 'seal-broken' ? <Chip tone="#f1938f" solid>Do not use — seal mismatch</Chip> : s.state === 'contents-rejected' ? <Chip tone="#f1938f" solid>Do not use — contents do not verify</Chip> : s.state === 'contents-verified' || (s.state === 'seal-verified' && !s.signed) ? <Chip tone="#9be7c4" solid>Verified · ready to load</Chip> : s.state === 'seal-verified' ? <Chip tone="#f4d58d">Seal verified · verify the signed contents</Chip> : <Chip tone="#f4d58d">In custody</Chip>}
           </div>
           <CustodyChain s={s} />
           {s.state === 'handed-over' ? (
@@ -221,7 +223,7 @@ export function PublisherMedia() {
             <span className="font-mono text-[11.5px] text-[#f4e4bd]">{s.mediaId}</span>
             <span className="text-[12px] text-[#d9c398]/80">{names[s.nationId] ?? s.nationId}</span>
             <span className="min-w-0 flex-1 text-[12.5px] font-light text-night-muted">seal {s.sealId} · {s.contents.length} files</span>
-            <Chip tone={s.state === 'seal-broken' ? '#f1938f' : s.state === 'seal-verified' ? '#9be7c4' : '#f4d58d'}>{s.state}</Chip>
+            <Chip tone={s.state === 'seal-broken' || s.state === 'contents-rejected' ? '#f1938f' : s.state === 'seal-verified' || s.state === 'contents-verified' ? '#9be7c4' : '#f4d58d'}>{s.state}</Chip>
           </div>
           <CustodyChain s={s} />
           {s.state === 'sealed' ? (

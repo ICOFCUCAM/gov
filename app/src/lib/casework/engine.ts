@@ -109,6 +109,15 @@ export function lapseProposals(now = new Date()): string[] {
 }
 
 export function registerDecisionGuard(name: string, fn: DecisionGuard): void { (gg.__caseDecisionGuards ??= new Map()).set(name, fn); }
+/**
+ * Called after a decision is sealed and its step recorded (plan I9: events
+ * emitted from the decisions that cause them, lib/federation/emit.ts). A
+ * listener never changes the case or the decision and never undoes it: its
+ * errors are swallowed (it records its own outcome).
+ */
+export type DecisionListener = (decision: SignedDecision, c: Case, now: Date) => Promise<void> | void;
+const gl = globalThis as unknown as { __caseDecisionListeners?: Map<string, DecisionListener> };
+export function registerDecisionListener(name: string, fn: DecisionListener): void { (gl.__caseDecisionListeners ??= new Map()).set(name, fn); }
 function guardDecision(c: Case, a: ActionSpec, pkg: CasePackage, now: Date, citations: Citation[]): { error: string } | { authority?: DecisionAuthority } {
   let authority: DecisionAuthority | undefined;
   for (const g of gg.__caseDecisionGuards?.values() ?? []) {
@@ -538,6 +547,7 @@ export async function act(caseId: string, input: ActInput, actor: Actor, now = n
   c.version += 1;
   audit(actor, decision ? 'case.decide' : 'case.stage', c, `${a.key}: ${from} → ${a.to}${decision ? ` · decision ${decision.id} · ${decision.sha256.slice(0, 12)}` : ''}${confirmedBy ? ` · confirmed by ${confirmedBy.name}` : ''}${delegation ? ` · by ${decidedBy.name} under delegation ${delegation.id} from ${delegation.delegator.name}` : ''}`);
   for (const r of results) if (r.after) await r.after(decision, clone(c));
+  if (decision) for (const fn of gl.__caseDecisionListeners?.values() ?? []) { try { await fn(decision, clone(c), now); } catch { /* a listener never undoes a decision */ } }
   return { case: clone(c), ...(decision ? { decision } : {}) };
 }
 

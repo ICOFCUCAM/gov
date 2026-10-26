@@ -12,6 +12,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Section } from '@/components/ui/DataSystem';
 import { Button } from '@/components/ui/Button';
+import { LoadingState } from '@/components/ui/States';
 import { SignalTag } from '@/components/ui/SignalTag';
 
 type Json = Record<string, unknown>;
@@ -55,7 +56,7 @@ export function ServiceCatalogueDesk() {
 
   return (
     <div className="space-y-5 p-4">
-      <h1 className="text-xl font-semibold">Service catalogue</h1>
+      <h2 className="text-xl font-semibold">Service catalogue</h2>
       <p className="max-w-3xl text-sm text-ink-muted">Every service the government offers, as a record: who owns it, the law it rests on, the procedure and forms that carry it, its fee (only as a rule in <Link className="underline" href="/gov/law/rules">Rates and tariffs</Link>, never an amount), channels and languages. What the public sees at <Link className="underline" href="/services">/services</Link> is only the published version, and its status is worked out from the records each time: a service whose procedure is not approved never shows as active.</p>
       {msg ? <p role="status" className="text-sm">{msg}</p> : null}
       {data ? (
@@ -131,7 +132,7 @@ export function ServiceCatalogueDesk() {
             <p className="text-xs text-ink-muted"><Link className="underline" href="/gov/law/procedures">Procedures</Link> · <Link className="underline" href="/gov/services/management">Service management</Link> · <Link className="underline" href="/gov/records">Records management</Link></p>
           </Section>
         </>
-      ) : null}
+      ) : msg ? null : <LoadingState label="Loading the service catalogue" />}
     </div>
   );
 }

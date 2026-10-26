@@ -13,6 +13,8 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { Section } from '@/components/ui/DataSystem';
+import { SignalTag } from '@/components/ui/SignalTag';
+import { LoadingState } from '@/components/ui/States';
 import { ServicesPanel, money, day } from './ServicesPanel';
 
 type Who = { id?: string; name: string };
@@ -41,7 +43,7 @@ function TenderCard({ t, name }: { t: Tender; name: (id: string) => string }) {
   const v = t.versions[t.versions.length - 1]!;
   return (
     <li className="rounded border border-line p-2 text-xs">
-      <p><span className="font-medium">{t.ref}</span>{t.sample ? <span className="ml-1 rounded border border-line px-1 text-[10px] uppercase">Sample</span> : null} · <span className="font-medium">{t.state}</span> · {t.title} · {name(t.institution)} · plan item {t.planItem} · {t.method}</p>
+      <p><span className="font-medium">{t.ref}</span>{t.sample ? <SignalTag kind="sample" source="a demonstration record" className="ml-1" /> : null} · <span className="font-medium">{t.state}</span> · {t.title} · {name(t.institution)} · plan item {t.planItem} · {t.method}</p>
       <p className="text-ink-muted">Version {v.n} · submissions closed at {v.deadline.slice(0, 16).replace('T', ' ')} · criteria {v.criteria.map(c => `${c.id} (${c.kind}${c.weight ? `, weight ${c.weight}` : ''})`).join(', ')} · criteria hash {v.criteriaDigest.slice(0, 12)}</p>
       <p className="mt-1 font-medium">Bids</p>
       <ul>
@@ -77,7 +79,7 @@ export function ProcurementDesk() {
   const name = (id: string) => v?.names[id] ?? id;
   return (
     <div className="space-y-5 p-4">
-      <h1 className="text-xl font-semibold">Procurement</h1>
+      <h2 className="text-xl font-semibold">Procurement</h2>
       <p className="max-w-3xl text-sm text-ink-muted">
         Each institution&apos;s own procurement, under procedures it adopts and a second official approves: a plan item funded from its budget, a tender published
         once and changed only by an addendum before the deadline, bids sealed until two committee members open them together, an evaluation by members who
@@ -85,6 +87,7 @@ export function ProcurementDesk() {
         institution that decided. Changes are case steps: <Link className="underline" href="/gov/work/cases/open">Cases</Link>.
       </p>
       {msg ? <p role="alert" className="text-sm text-alert">{msg}</p> : null}
+      {!v && !msg ? <LoadingState label="Loading procurement" /> : null}
       {v ? <p className="text-sm">Review body: {v.reviewBody ? <strong>{v.reviewBody.name}</strong> : <span className="text-alert">not named yet</span>} · method thresholds: {v.rules.methodThresholds}</p> : null}
       {v ? (
         <Section title="Tenders" meta={`${v.tenders.length} recorded`}>

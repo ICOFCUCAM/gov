@@ -20,7 +20,9 @@
 //                   officials; the archive records its own receipt (GOV-REC-010)
 //   rec.migration   a migration's plan (source count and manifest), its approval, its
 //                   reconciliation against the target computed from the platform's own
-//                   records, and its closure (GOV-REC-017, GOV-REC-018)
+//                   records, and its closure (GOV-REC-017, GOV-REC-018); since plan I9 the
+//                   plan may carry a per-record manifest (source, transformations, target),
+//                   each record verified at every reconciliation (acceptance P5-06)
 //
 // No class, period or disposition ships: a schedule is the nation's law,
 // entered with its citation in the approving case. Nothing is disposed of
@@ -38,8 +40,9 @@ import { documentsOfClass, getDocument, disposeDocument } from '@/lib/records/do
 import { listCases } from '@/lib/casework/engine';
 import {
   approveSchedule, placeHold, attachHoldDecision, releaseHold, registerIncoming, listForDisposal, recordDisposal, transferToArchive, planMigration, approveMigration, reconcileMigration, closeMigration,
-  scheduleOf, getClass, holdCovering, incomingOf, disposalOfCase, listDigest, type ListedItem, type Schedule, type Trigger, type Disposition,
+  scheduleOf, getClass, holdCovering, incomingOf, disposalOfCase, migrationOfCase, listDigest, type ListedItem, type VerificationStatus, type Schedule, type Trigger, type Disposition,
 } from './register';
+import { parseManifest, verifyRecords, type TargetRecord } from './migration-manifest';
 import type { Case, CasePackage, FieldSpec } from '@/lib/casework/types';
 
 type Ref = Omit<CasePackage, 'state' | 'createdAt' | 'author' | 'authorId' | 'approvedBy' | 'approvedAt'>;
@@ -206,14 +209,25 @@ registerEffect('rec.migration.plan', (ctx: EffectContext) => {
   const kind = str(c.fields.targetKind, 20) as 'documents' | 'cases' | 'external';
   if (!['documents', 'cases', 'external'].includes(kind)) return { error: 'The records land as documents of a class, cases of a procedure, or in an external system' };
   if (kind === 'cases' && !activePackage(str(c.fields.targetRef, 80))) return { error: 'Name a procedure in force that the cases are loaded under (its key)' };
-  const m = planMigration({ institution: c.owner, case: c.ref, source: { system: str(c.fields.sourceSystem, 200), count: int(c.fields.sourceCount), manifest: str(c.fields.sourceManifest, 64).toLowerCase() }, target: { system: str(c.fields.targetSystem, 200), kind, ...(str(c.fields.targetRef, 80) ? { ref: str(c.fields.targetRef, 80) } : {}) }, ...sample(c) }, ctx.actor.name);
-  return 'error' in m ? m : { facts: { migration: m.id, sourceCount: m.source.count } };
+  // Plan I9 (acceptance P5-06): a per-record manifest, when given, is the plan's own evidence of each record's source and transformations.
+  const given = c.fields.recordManifest !== undefined && c.fields.recordManifest !== null && c.fields.recordManifest !== '' && !(Array.isArray(c.fields.recordManifest) && !c.fields.recordManifest.length);
+  const records = given ? parseManifest(c.fields.recordManifest, kind) : undefined;
+  if (records && 'error' in records) return records;
+  const m = planMigration({ institution: c.owner, case: c.ref, source: { system: str(c.fields.sourceSystem, 200), count: int(c.fields.sourceCount), manifest: str(c.fields.sourceManifest, 64).toLowerCase() }, target: { system: str(c.fields.targetSystem, 200), kind, ...(str(c.fields.targetRef, 80) ? { ref: str(c.fields.targetRef, 80) } : {}) }, ...(records ? { records } : {}), ...sample(c) }, ctx.actor.name);
+  return 'error' in m ? m : { facts: { migration: m.id, sourceCount: m.source.count, ...(m.manifest ? { recordManifest: m.manifest.digest } : {}) } };
 });
 
 registerEffect('rec.migration.approve', (ctx: EffectContext) => {
   const m = approveMigration(ctx.case.ref, officialsOf(ctx), ctx.now.toISOString(), ctx.actor.name);
   return 'error' in m ? m : { facts: { migration: m.id, approved: true } };
 });
+
+/** A target record as the platform holds it: a document (its class and its content as loaded) or a case (its procedure). */
+function targetRecord(kind: 'documents' | 'cases', id: string): TargetRecord | undefined {
+  if (kind === 'documents') { const d = getDocument(id); return d ? { owner: d.institution, group: d.retention, sha256: d.versions[0]?.sha256 } : undefined; }
+  const x = getCase(id);
+  return x ? { owner: x.owner, group: x.package.key, sha256: sha(`${x.id}:${x.ref}`) } : undefined;
+}
 
 registerEffect('rec.migration.reconcile', (ctx: EffectContext) => {
   const c = ctx.case;
@@ -222,8 +236,18 @@ registerEffect('rec.migration.reconcile', (ctx: EffectContext) => {
   const count = computed ? computed.count : int(c.fields.targetCount);
   const manifest = computed ? computed.manifest : str(c.fields.targetManifest, 64).toLowerCase();
   if (!computed && (!Number.isInteger(count) || !/^[0-9a-f]{64}$/.test(manifest))) return { error: 'For an external target, give its count and its manifest SHA-256' };
-  const m = reconcileMigration(c.ref, { count, manifest, computed: !!computed, discrepancies: str(c.fields.discrepancies, 4000), corrective: str(c.fields.correctiveActions, 4000), by: ctx.actor.name, at: ctx.now.toISOString() });
-  return 'error' in m ? m : { facts: { migration: m.id, targetCount: count, matched: m.reconciliation!.at(-1)!.matched } };
+  // Plan I9 (P5-06): each record of a per-record manifest verified against the platform's own records, its status kept.
+  const planned = migrationOfCase(c.ref);
+  let perRecord: { perRecord: { status: VerificationStatus; detail?: string }[]; unexpected: number } | undefined;
+  if (planned?.records) {
+    const kind = planned.target.kind, ref = planned.target.ref;
+    const under = kind === 'documents' && ref ? documentsOfClass(c.owner, ref).map(d => d.id) : kind === 'cases' && ref ? listCases({ owner: c.owner, procedure: ref, limit: 5000 }).filter(x => x.source === 'imported').map(x => x.id) : [];
+    perRecord = verifyRecords(planned.records, { institution: c.owner, kind, ...(ref ? { ref } : {}) }, id => (kind === 'external' ? undefined : targetRecord(kind, id)), under);
+  }
+  const m = reconcileMigration(c.ref, { count, manifest, computed: !!computed, discrepancies: str(c.fields.discrepancies, 4000), corrective: str(c.fields.correctiveActions, 4000), by: ctx.actor.name, at: ctx.now.toISOString(), ...(perRecord ?? {}) });
+  if ('error' in m) return m;
+  const last = m.reconciliation!.at(-1)!;
+  return { facts: { migration: m.id, targetCount: count, matched: last.matched, ...(last.records ? { verified: last.records.verified, hashDiffers: last.records.mismatched, missing: last.records.missing, unexpected: last.records.unexpected } : {}) } };
 });
 
 registerEffect('rec.migration.close', (ctx: EffectContext) => {
@@ -336,6 +360,18 @@ export const RECORDKEEPING_PROCEDURES: (Ref & { forms: string[] })[] = [
       f('targetManifest', 'SHA-256 of an external target\'s manifest (computed by the platform for its own records)', 'text', { audience: 'officer' }),
       f('discrepancies', 'Discrepancies found', 'longtext', { audience: 'officer' }),
       f('correctiveActions', 'Corrective actions', 'longtext', { audience: 'officer' }),
+      // Plan I9 (acceptance P5-06): each record's source, transformations and target, verified at every reconciliation.
+      {
+        key: 'recordManifest', label: 'Per-record manifest (one item per record: source id, source SHA-256, transformations, target id, target SHA-256)', type: 'group', multiple: true, textLines: true, personalDataClass: 'administrative',
+        hint: 'Transformations are named steps of the plan, in order: step[:rule][@version], separated by ;. Give the items as lines with | between the columns if you prefer. The source count and manifest are this manifest\'s own.',
+        items: [
+          { key: 'sourceId', label: 'Id in the source system', type: 'text', personalDataClass: 'administrative' },
+          { key: 'sourceSha256', label: 'SHA-256 of the record as extracted', type: 'text', personalDataClass: 'administrative' },
+          { key: 'transformations', label: 'Transformations, in order', type: 'text', personalDataClass: 'administrative' },
+          { key: 'targetId', label: 'Id where it landed', type: 'text', personalDataClass: 'administrative' },
+          { key: 'targetSha256', label: 'SHA-256 it has where it landed (a document\'s content as loaded)', type: 'text', personalDataClass: 'administrative' },
+        ] as FieldSpec[],
+      },
     ],
     documents: [{ class: 'migration-plan', label: 'The migration plan and its validation rules', required: true }],
     stages: [{ key: 'drafted', label: 'Drafted' }, { key: 'planned', label: 'Plan recorded' }, { key: 'approved', label: 'Approved' }, { key: 'reconciled', label: 'Reconciled' }, { key: 'closed', label: 'Closed', terminal: true }, { key: 'abandoned', label: 'Abandoned', terminal: true }],

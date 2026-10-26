@@ -81,7 +81,7 @@ export function SecurityResilienceDesk() {
   const pending = data?.classificationChanges.pending;
   return (
     <div className="space-y-4 p-4">
-      <h1 className="text-xl font-semibold">Cyber and resilience</h1>
+      <h2 className="text-xl font-semibold">Cyber and resilience</h2>
       <p className="max-w-3xl text-sm text-ink-muted">
         National cyber incidents, vulnerability coordination, supplier security, security exceptions and exercises; critical infrastructure designations,
         dependencies, risk assessments and resilience plans; clearance decisions; national security directives and cross-domain transfers. Each is kept by the

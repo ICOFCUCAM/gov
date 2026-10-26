@@ -321,7 +321,23 @@ What has been built is locked. Work only upgrades it toward the vision in
   institutions are cases of the receiving institution's `xi.*` procedures,
   never orders unless an approved `instruct` relationship covers them. The
   institution export carries `configuration.json` (evidence, never adopted)
-  and `verification.json`; `build:openapi` also writes `api-contract.json`.
+  and `verification.json`; `build:openapi` also writes `api-contract.json`. A
+  sealed decision emits `case.status.changed` (and `permit.issued` or
+  `permit.revoked` under a mapping) through `registerDecisionListener()`
+  (`lib/federation/emit.ts`) only where an approved exchange relationship
+  covers the type; a listener never changes or undoes a decision. Releases,
+  update media and provenance are signed DSSE/in-toto statements
+  (`lib/updates/release-signing.ts`, `CIVICOS_RELEASE_SIGNING_KEY`; a
+  development-key signature never verifies in production); a nation trusts
+  only publisher keys two of its officials confirmed (`lib/data/release-trust.ts`)
+  and media releases count as mirrored only after `contents-verified`
+  (`scripts/verify-update-media.mjs`). Key-management and privileged
+  operations are reviewed afterwards by an auditor or the data-protection
+  authority, never by one who took them (`lib/keys/key-review.ts`). The
+  installation's recovery objectives, residency, administrator access,
+  network zones and exit are the deployment record (`lib/ops/deployment-record.ts`,
+  through `policy-change.ts`, shipped empty), read by backups and hosting;
+  never type such values elsewhere.
 - Digital front door and records (plan I13): a public service is a record
   of the catalogue (`lib/frontdoor/catalogue.ts`), proposed by one official
   of the owning institution and published by a different one who can sign
@@ -343,7 +359,9 @@ What has been built is locked. Work only upgrades it toward the vision in
   deletes a record; transfers go to the `archives` slot (none ships);
   migrations are reconciled by count and SHA-256. Service-level targets are
   only the nation's, and performance is computed from cases with signal
-  markers (`service-management.ts`).
+  markers (`service-management.ts`). A migration plan may carry a per-record
+  manifest (source id and hash, transformations, target); each
+  reconciliation verifies every record and keeps its status (`provenanceOf()`).
 - Security governance and resilience (plan I12, `lib/security/`) is metadata
   only. The nation's classification scheme and the installation's declared
   accreditation are one country rule set (`classification.ts`, through
@@ -358,7 +376,10 @@ What has been built is locked. Work only upgrades it toward the vision in
   officials, unapproved mappings). A security record is read only under
   `securityAccessRefusal()`: need to know, a stated purpose, the action and,
   for a marked record, a valid clearance at its level, each checked on its
-  own; a clearance alone grants nothing; every attempt is logged. National
+  own; a clearance alone grants nothing; every attempt is logged.
+  `ci.incident`, `ci.disruption`, `ci.exception` and `ci.release` concern a
+  designation the keeping authority made; a release goes only to a named
+  registered institution, never to the public (indicators only). National
   security directives (`directives.ts`, slot `nationalSecurity`) stay apart
   from the general directives register and reach an independent institution
   only as a request. Never add an intelligence register, a source,
@@ -752,6 +773,23 @@ What has been built is locked. Work only upgrades it toward the vision in
   unset). Approved values reach the twin only through `lib/indicators/twin.ts`: the internal source
   and `indicator.` metrics take computed runs only (`lib/twin/computed.ts`). A changed computation is
   a new method version in `methods.ts`; a generated panel moves to computed or stays folded.
+- Workspace design system (plan I10): type, spacing, control and focus
+  tokens sit beside the colours in `lib/theme/tokens.ts` (`TYPE_SCALE`,
+  `SPACE_SCALE`, `CONTROL`, `FOCUS`, the `WORKSPACE` ground). Console code
+  takes text sizes from the scale (`text-2xs` … `text-3xl`), never
+  `text-[Npx]`; `type-scale.test.ts` lists the files held to it (a file joins
+  `CHECKED` when it moves) and each exception's reason. States (loading,
+  empty, refused, out of date …) use the shared components in
+  `components/ui/States.tsx` from the catalogue `lib/ui/states.ts`: a word and
+  a shape, never colour alone, never an invented "last update"; a new state
+  joins the catalogue and the gallery (`/gov/help/states`,
+  `component-states.test.ts`). A page rule in `console-nav.ts` is tied to its
+  route in `PAGE_GROUNDS`, and `console-nav-permission.test.ts` walks the menu
+  for every kind of official. A screen under `CommandShell` has no h1 of its
+  own (the frame gives it); the console audit (`audit-console.mjs`) checks
+  reading order and focus. Usability and screen-reader sessions are recorded
+  only in `docs/USABILITY_TESTING.md`; automated runs are labelled automated
+  and never counted as sessions with people.
 - The console menu is `lib/nav/console-nav.ts` (plain language, about 30
   entries; related pages are tabs of one item). A new console page joins an
   item as a tab (with `was` if it replaces an earlier name) instead of

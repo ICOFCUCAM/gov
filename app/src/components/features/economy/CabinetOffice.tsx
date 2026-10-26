@@ -13,6 +13,8 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { Section } from '@/components/ui/DataSystem';
+import { SignalTag } from '@/components/ui/SignalTag';
+import { LoadingState } from '@/components/ui/States';
 import { ServicesPanel, day } from './ServicesPanel';
 
 type Who = { id?: string; name: string };
@@ -37,7 +39,7 @@ function DecisionCard({ d, name }: { d: Decision; name: (id: string) => string }
   const v = d.versions[d.versions.length - 1]!;
   return (
     <li className="rounded border border-line p-2 text-xs">
-      <p><span className="font-medium">{d.ref}</span>{d.sample ? <span className="ml-1 rounded border border-line px-1 text-[10px] uppercase">Sample</span> : null} · {d.title} · paper {d.submission} · {d.legalCategory} · {d.classification}</p>
+      <p><span className="font-medium">{d.ref}</span>{d.sample ? <SignalTag kind="sample" source="a demonstration record" className="ml-1" /> : null} · {d.title} · paper {d.submission} · {d.legalCategory} · {d.classification}</p>
       <blockquote className="my-1 border-s-2 border-line ps-2">{v.text}</blockquote>
       <p>Meeting {d.meetingDate} · {'notAdopted' in d.vote ? <span className="text-alert">{d.vote.notAdopted} (a demonstration only)</span>
         : <>{d.vote.present} of {d.vote.members} members present, quorum {d.vote.quorum} · {d.vote.rule}{d.vote.consensus ? ' · by consensus' : ` · for ${d.vote.for}, against ${d.vote.against}, abstaining ${d.vote.abstain ?? 0}`} · rules version {d.vote.rulesVersion}</>}</p>
@@ -57,7 +59,7 @@ export function CabinetOffice() {
   const r = v?.rules;
   return (
     <div className="space-y-5 p-4">
-      <h1 className="text-xl font-semibold">Cabinet office</h1>
+      <h2 className="text-xl font-semibold">Cabinet office</h2>
       <p className="max-w-3xl text-sm text-ink-muted">
         Cabinet papers reviewed for law and cost by different officials and circulated; decisions recorded with the meeting&apos;s quorum and vote under the
         nation&apos;s own rules, authenticated by a second official and corrected only by a new version; actions assigned to institutions without transferring
@@ -65,6 +67,7 @@ export function CabinetOffice() {
         response list who has not answered: <Link className="underline" href="/gov/directives">Directives</Link>.
       </p>
       {msg ? <p role="alert" className="text-sm text-alert">{msg}</p> : null}
+      {!v && !msg ? <LoadingState label="Loading the Cabinet office" /> : null}
       {v ? (
         <p className="text-sm">Kept by {v.office ? <strong>{v.office.name}</strong> : <span className="text-alert">no cabinet office named yet</span>} · Cabinet rules: {r?.version ? `${r.members} members, quorum ${r.quorum?.numerator}/${r.quorum?.denominator}, ${r.rule}${r.qualified ? ` ${r.qualified.numerator}/${r.qualified.denominator}` : ''} (version ${r.version})` : 'not adopted (ship unset)'}{v.ruleChanges.pending ? ` · a change by ${v.ruleChanges.pending.by} waits for a second official` : ''}</p>
       ) : null}

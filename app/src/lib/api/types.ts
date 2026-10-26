@@ -523,7 +523,7 @@ export interface BackupStatusView {
   key: { provider: string; ready: boolean };
   mode: 'snapshot' | 'postgres';
   policy: { daily: number; weekly: number; monthly: number; preRestoreDays: number; intervalMinutes: number; rpoMinutes: number; rtoMinutes: number; updatedBy?: string; updatedAt?: string };
-  rpo: { targetMinutes: number; newestVerifiedAt: string | null; ageMinutes: number | null; met: boolean };
+  rpo: { targetMinutes: number; newestVerifiedAt: string | null; ageMinutes: number | null; met: boolean; source?: 'deployment-record' | 'backup-policy'; version?: number };
   rtoMinutes: number;
   proposals: { id: string; backupId: string; by: string; at: string; expiresAt: string; warning: { text: string } }[];
   restores: { id: string; backupId: string; proposedBy: string; confirmedBy: string; at: string; safetyBackupId: string }[];
@@ -2075,6 +2075,8 @@ export interface LocalMirror {
   lastSync?: { at: ISODate; by: string; releaseIds: string[]; bytes: number };
   /** Releases whose artifacts are in the mirror. */
   mirrored: string[];
+  /** Plan I9 (acceptance P5-15): releases whose signed statement and artifacts this nation verified, with the key that signed. */
+  verified?: Record<string, { at: ISODate; by: string; keyId: string; files: number }>;
 }
 export interface SyncItem {
   releaseId: string;
@@ -2096,7 +2098,7 @@ export interface SyncManifest {
   transferBytes: number;
   savedBytes: number;
 }
-export type CustodyStep = 'sealed' | 'handed-over' | 'received' | 'seal-verified';
+export type CustodyStep = 'sealed' | 'handed-over' | 'received' | 'seal-verified' | 'contents-verified';
 export interface MediaShipment {
   mediaId: string;
   nationId: string;
@@ -2104,8 +2106,15 @@ export interface MediaShipment {
   /** Contents written to the media: file names and checksums. */
   contents: { filename: string; sha256: string; sizeBytes: number }[];
   sealId: string;
-  state: CustodyStep | 'seal-broken';
-  chain: { step: CustodyStep; at: ISODate; by: string; to?: string; note?: string; sealId?: string; ok?: boolean; auditSeq?: number }[];
+  state: CustodyStep | 'seal-broken' | 'contents-rejected';
+  chain: { step: CustodyStep; at: ISODate; by: string; to?: string; note?: string; sealId?: string; ok?: boolean; auditSeq?: number; problems?: string[] }[];
+  /**
+   * Plan I9 (acceptance P5-15): the publisher's signed statement of the files
+   * written to the media (DSSE envelope over an in-toto statement), also
+   * written to the media as media-manifest.intoto.json. Shipments sealed before
+   * it carry none and keep the seal check alone.
+   */
+  signed?: { envelope: { payloadType: string; payload: string; signatures: { keyid: string; sig: string }[] }; keyId: string; production: boolean; signedAt: ISODate };
 }
 
 // ── Update Center: release communication ──────────────────────────────

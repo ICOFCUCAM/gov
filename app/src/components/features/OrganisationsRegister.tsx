@@ -62,7 +62,7 @@ export function OrganisationsRegister() {
 
   return (
     <div className="space-y-4 p-4">
-      <h1 className="text-xl font-semibold">Organisations</h1>
+      <h2 className="text-xl font-semibold">Organisations</h2>
       <p className="max-w-3xl text-sm text-ink-muted">Companies, associations, universities, pharmacies and other organisations, and their standing in each register the government keeps. Registrations, licences and accreditations, and their renewal, suspension and revocation, are made through <Link className="underline" href="/gov/work/cases/open">cases</Link> under approved <Link className="underline" href="/gov/law/procedures">procedures</Link>, decided by two officials. Anyone can check a public register at <Link className="underline" href="/registers">/registers</Link>.</p>
       {msg ? <p role="status" className="text-sm">{msg}</p> : null}
 

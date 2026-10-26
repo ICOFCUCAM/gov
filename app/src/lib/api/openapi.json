@@ -884,6 +884,277 @@
         "x-source": "src/app/api/ai/advisory/route.ts"
       }
     },
+    "/api/audit/key-reviews": {
+      "get": {
+        "tags": [
+          "audit"
+        ],
+        "operationId": "get_audit_key_reviews",
+        "summary": "GET /api/audit/key-reviews",
+        "description": "/api/audit/key-reviews — independent review of key-management and privileged operations (plan I9; acceptance P5-12, P6-07; lib/keys/key-review.ts). GET: the key operations in the audit chain (each with the review that covered it), the reviews recorded and what waits for review. POST { outcome: 'no-concerns' | 'concerns', findings, through? }: record a review of every key operation not yet reviewed (up to `through`, the head by default). Both only for an auditor or an official of the data-protection authority (canReadAuditChain()), never one who took an operation reviewed; every read is written to the access log, the review to the audit chain. Listed in ANY_ROLE (lib/auth/roles.ts) because the reviewer is an auditor, whom the general rule keeps from changing records; this route decides.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "object",
+                      "properties": {
+                        "unreviewed": {
+                          "type": "number"
+                        },
+                        "oldest": {
+                          "type": "string"
+                        },
+                        "lastReview": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "outcome": {
+                              "type": "string",
+                              "enum": [
+                                "concerns",
+                                "no-concerns"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "at",
+                            "outcome"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "unreviewed"
+                      ]
+                    },
+                    "operations": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "seq": {
+                            "type": "number"
+                          },
+                          "hash": {
+                            "type": "string"
+                          },
+                          "action": {
+                            "type": "string"
+                          },
+                          "actor": {
+                            "type": "string"
+                          },
+                          "at": {
+                            "type": "string"
+                          },
+                          "resource": {
+                            "type": "string"
+                          },
+                          "outcome": {
+                            "type": "string"
+                          },
+                          "review": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "seq",
+                          "hash",
+                          "action",
+                          "actor",
+                          "at",
+                          "resource",
+                          "outcome"
+                        ]
+                      }
+                    },
+                    "reviews": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/KeyReview"
+                      }
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "operations",
+                    "reviews"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "status": {
+                        "unreviewed": 1,
+                        "oldest": "string",
+                        "lastReview": {
+                          "id": "ID-0001",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "outcome": "concerns"
+                        }
+                      },
+                      "operations": [
+                        {
+                          "seq": 1,
+                          "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                          "action": "string",
+                          "actor": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "resource": "string",
+                          "outcome": "string"
+                        }
+                      ],
+                      "reviews": [
+                        {
+                          "id": "ID-0001",
+                          "reviewer": {
+                            "by": "A. Official",
+                            "capacity": "auditor"
+                          },
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "entries": [
+                            {}
+                          ],
+                          "through": 1,
+                          "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                          "chain": {
+                            "ok": true
+                          },
+                          "outcome": "concerns",
+                          "findings": "string"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/audit/key-reviews/route.ts"
+      },
+      "post": {
+        "tags": [
+          "audit"
+        ],
+        "operationId": "post_audit_key_reviews",
+        "summary": "POST /api/audit/key-reviews",
+        "description": "/api/audit/key-reviews — independent review of key-management and privileged operations (plan I9; acceptance P5-12, P6-07; lib/keys/key-review.ts). GET: the key operations in the audit chain (each with the review that covered it), the reviews recorded and what waits for review. POST { outcome: 'no-concerns' | 'concerns', findings, through? }: record a review of every key operation not yet reviewed (up to `through`, the head by default). Both only for an auditor or an official of the data-protection authority (canReadAuditChain()), never one who took an operation reviewed; every read is written to the access log, the review to the audit chain. Listed in ANY_ROLE (lib/auth/roles.ts) because the reviewer is an auditor, whom the general rule keeps from changing records; this route decides.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {}
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "review": {
+                      "$ref": "#/components/schemas/KeyReview"
+                    }
+                  },
+                  "required": [
+                    "review"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "review": {
+                        "id": "ID-0001",
+                        "reviewer": {
+                          "by": "A. Official",
+                          "capacity": "auditor"
+                        },
+                        "at": "2026-01-15T09:30:00.000Z",
+                        "entries": [
+                          {
+                            "seq": 1,
+                            "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                            "action": "string",
+                            "actor": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z"
+                          }
+                        ],
+                        "through": 1,
+                        "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                        "chain": {
+                          "ok": true
+                        },
+                        "outcome": "concerns",
+                        "findings": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "any-role",
+        "x-source": "src/app/api/audit/key-reviews/route.ts"
+      }
+    },
     "/api/audit/proof": {
       "get": {
         "tags": [
@@ -1229,9 +1500,9 @@
                       "signed": {
                         "ok": true,
                         "head": {
-                          "at": "2026-01-15T09:30:00.000Z",
                           "seq": 1,
                           "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                          "at": "2026-01-15T09:30:00.000Z",
                           "keyId": "ID-0001",
                           "production": true
                         },
@@ -2028,6 +2299,38 @@
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "navigation": {
+                      "type": "object",
+                      "properties": {
+                        "dataProtection": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "string"
+                            }
+                          ]
+                        },
+                        "permitHolders": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "pilot": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "dataProtection",
+                        "permitHolders",
+                        "pilot"
+                      ]
+                    },
                     "official": {
                       "anyOf": [
                         {
@@ -2248,6 +2551,15 @@
                   "schema": {
                     "summary": "Generated from the schema",
                     "value": {
+                      "navigation": {
+                        "dataProtection": "string",
+                        "permitHolders": [
+                          "string"
+                        ],
+                        "pilot": [
+                          "string"
+                        ]
+                      },
                       "official": {
                         "standing": "customary-or-religious",
                         "institutionName": "Example",
@@ -2655,13 +2967,6 @@
                         "role": "administrator",
                         "attributes": {},
                         "institution": "string",
-                        "email": "official@example.gov",
-                        "office": "string",
-                        "createdAt": "2026-01-15T09:30:00.000Z",
-                        "createdBy": "A. Official",
-                        "disabled": true,
-                        "lastSignIn": "string",
-                        "passwordChangedAt": "2026-01-15T09:30:00.000Z",
                         "identity": {
                           "issuer": "string",
                           "claim": "string",
@@ -2669,6 +2974,13 @@
                           "linkedAt": "2026-01-15T09:30:00.000Z",
                           "linkedBy": "A. Official"
                         },
+                        "email": "official@example.gov",
+                        "office": "string",
+                        "createdAt": "2026-01-15T09:30:00.000Z",
+                        "createdBy": "A. Official",
+                        "disabled": true,
+                        "lastSignIn": "string",
+                        "passwordChangedAt": "2026-01-15T09:30:00.000Z",
                         "noPassword": true,
                         "demo": true,
                         "twoStepSince": "string",
@@ -3422,13 +3734,6 @@
                         "role": "administrator",
                         "attributes": {},
                         "institution": "string",
-                        "email": "official@example.gov",
-                        "office": "string",
-                        "createdAt": "2026-01-15T09:30:00.000Z",
-                        "createdBy": "A. Official",
-                        "disabled": true,
-                        "lastSignIn": "string",
-                        "passwordChangedAt": "2026-01-15T09:30:00.000Z",
                         "identity": {
                           "issuer": "string",
                           "claim": "string",
@@ -3436,6 +3741,13 @@
                           "linkedAt": "2026-01-15T09:30:00.000Z",
                           "linkedBy": "A. Official"
                         },
+                        "email": "official@example.gov",
+                        "office": "string",
+                        "createdAt": "2026-01-15T09:30:00.000Z",
+                        "createdBy": "A. Official",
+                        "disabled": true,
+                        "lastSignIn": "string",
+                        "passwordChangedAt": "2026-01-15T09:30:00.000Z",
                         "noPassword": true,
                         "demo": true,
                         "twoStepSince": "string",
@@ -56986,6 +57298,999 @@
         "x-source": "src/app/api/platform/config/route.ts"
       }
     },
+    "/api/platform/deployment-record": {
+      "get": {
+        "tags": [
+          "platform"
+        ],
+        "operationId": "get_platform_deployment_record",
+        "summary": "GET /api/platform/deployment-record",
+        "description": "/api/platform/deployment-record — the installation's deployment record (plan I9; specification Part 5 I; lib/ops/deployment-record.ts): recovery objectives, data residency, administrator access, network zones and exit terms, shipped empty. GET: the record in force (each part null until adopted), its version and the change waiting, with every earlier version. POST (administrators, under /api/platform): { op: 'propose', recovery?, residency?, administratorAccess?, networkZones?, exit?, legalBasis: [{ instrument, eId }] } { op: 'confirm' } a different official confirms; in force from now { op: 'withdraw', reason }",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "record": {
+                      "type": "object",
+                      "properties": {
+                        "recovery": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "rpoMinutes": {
+                                  "type": "number"
+                                },
+                                "rtoMinutes": {
+                                  "type": "number"
+                                },
+                                "drLocation": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "rpoMinutes",
+                                "rtoMinutes",
+                                "drLocation"
+                              ]
+                            }
+                          ]
+                        },
+                        "residency": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "rule": {
+                                  "type": "string",
+                                  "enum": [
+                                    "in-country",
+                                    "none",
+                                    "regional"
+                                  ]
+                                },
+                                "locations": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "statement": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "rule",
+                                "locations",
+                                "statement"
+                              ]
+                            }
+                          ]
+                        },
+                        "administratorAccess": {
+                          "anyOf": [
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "party": {
+                                    "type": "string"
+                                  },
+                                  "access": {
+                                    "type": "string",
+                                    "enum": [
+                                      "break-glass",
+                                      "none",
+                                      "operations",
+                                      "support"
+                                    ]
+                                  },
+                                  "conditions": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "party",
+                                  "access",
+                                  "conditions"
+                                ]
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "networkZones": {
+                          "anyOf": [
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "key": {
+                                    "type": "string"
+                                  },
+                                  "label": {
+                                    "type": "string"
+                                  },
+                                  "purpose": {
+                                    "type": "string"
+                                  },
+                                  "exposure": {
+                                    "type": "string",
+                                    "enum": [
+                                      "internal",
+                                      "isolated",
+                                      "public",
+                                      "restricted"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "key",
+                                  "label",
+                                  "purpose",
+                                  "exposure"
+                                ]
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "exit": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "exportFormat": {
+                                  "type": "string"
+                                },
+                                "noticeDays": {
+                                  "anyOf": [
+                                    {
+                                      "type": "null"
+                                    },
+                                    {
+                                      "type": "number"
+                                    }
+                                  ]
+                                },
+                                "steps": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "dataReturn": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "exportFormat",
+                                "noticeDays",
+                                "steps",
+                                "dataReturn"
+                              ]
+                            }
+                          ]
+                        },
+                        "version": {
+                          "type": "number"
+                        },
+                        "at": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "recovery",
+                        "residency",
+                        "administratorAccess",
+                        "networkZones",
+                        "exit",
+                        "version"
+                      ]
+                    },
+                    "changes": {
+                      "type": "object",
+                      "properties": {
+                        "pending": {
+                          "type": "object",
+                          "properties": {
+                            "values": {
+                              "$ref": "#/components/schemas/DeploymentRecordValues"
+                            },
+                            "basis": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Citation"
+                              }
+                            },
+                            "by": {
+                              "type": "string"
+                            },
+                            "byId": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "confirmed": {
+                              "type": "object",
+                              "properties": {
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "independence": {
+                                  "type": "string",
+                                  "enum": [
+                                    "accounts-only",
+                                    "identity-provider",
+                                    "unverified"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "by",
+                                "at",
+                                "independence"
+                              ]
+                            },
+                            "expiresAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "values",
+                            "basis",
+                            "by",
+                            "at",
+                            "expiresAt"
+                          ],
+                          "description": "A proposal waiting for its second official."
+                        },
+                        "history": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "values": {
+                                "$ref": "#/components/schemas/DeploymentRecordValues"
+                              },
+                              "basis": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/Citation"
+                                }
+                              },
+                              "by": {
+                                "type": "string"
+                              },
+                              "byId": {
+                                "type": "string"
+                              },
+                              "at": {
+                                "type": "string"
+                              },
+                              "confirmed": {
+                                "type": "object",
+                                "properties": {
+                                  "by": {
+                                    "type": "string"
+                                  },
+                                  "byId": {
+                                    "type": "string"
+                                  },
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "independence": {
+                                    "type": "string",
+                                    "enum": [
+                                      "accounts-only",
+                                      "identity-provider",
+                                      "unverified"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "by",
+                                  "at",
+                                  "independence"
+                                ]
+                              },
+                              "outcome": {
+                                "type": "string",
+                                "enum": [
+                                  "adopted",
+                                  "lapsed",
+                                  "withdrawn"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "values",
+                              "basis",
+                              "by",
+                              "at",
+                              "outcome"
+                            ]
+                          },
+                          "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "record",
+                    "changes"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "record": {
+                        "recovery": {
+                          "rpoMinutes": 1,
+                          "rtoMinutes": 1,
+                          "drLocation": "string"
+                        },
+                        "residency": {
+                          "rule": "in-country",
+                          "locations": [
+                            "string"
+                          ],
+                          "statement": "string"
+                        },
+                        "administratorAccess": [
+                          {
+                            "party": "string",
+                            "access": "break-glass",
+                            "conditions": "string"
+                          }
+                        ],
+                        "networkZones": [
+                          {
+                            "key": "string",
+                            "label": "Example",
+                            "purpose": "string",
+                            "exposure": "internal"
+                          }
+                        ],
+                        "exit": {
+                          "exportFormat": "string",
+                          "noticeDays": 1,
+                          "steps": [
+                            "string"
+                          ],
+                          "dataReturn": "string"
+                        },
+                        "version": 1,
+                        "at": "2026-01-15T09:30:00.000Z"
+                      },
+                      "changes": {
+                        "pending": {
+                          "values": {
+                            "recovery": {},
+                            "residency": {},
+                            "administratorAccess": [],
+                            "networkZones": [],
+                            "exit": {}
+                          },
+                          "basis": [
+                            {}
+                          ],
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "expiresAt": "2026-01-15T09:30:00.000Z"
+                        },
+                        "history": [
+                          {
+                            "values": {},
+                            "basis": [],
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "outcome": "adopted"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/platform/deployment-record/route.ts"
+      },
+      "post": {
+        "tags": [
+          "platform"
+        ],
+        "operationId": "post_platform_deployment_record",
+        "summary": "POST /api/platform/deployment-record",
+        "description": "/api/platform/deployment-record — the installation's deployment record (plan I9; specification Part 5 I; lib/ops/deployment-record.ts): recovery objectives, data residency, administrator access, network zones and exit terms, shipped empty. GET: the record in force (each part null until adopted), its version and the change waiting, with every earlier version. POST (administrators, under /api/platform): { op: 'propose', recovery?, residency?, administratorAccess?, networkZones?, exit?, legalBasis: [{ instrument, eId }] } { op: 'confirm' } a different official confirms; in force from now { op: 'withdraw', reason }",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {}
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "error": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "error"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "ok": {
+                              "type": "boolean",
+                              "const": true
+                            }
+                          },
+                          "required": [
+                            "ok"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "values": {
+                              "$ref": "#/components/schemas/DeploymentRecordValues"
+                            },
+                            "basis": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Citation"
+                              }
+                            },
+                            "by": {
+                              "type": "string"
+                            },
+                            "byId": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "confirmed": {
+                              "type": "object",
+                              "properties": {
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "independence": {
+                                  "type": "string",
+                                  "enum": [
+                                    "accounts-only",
+                                    "identity-provider",
+                                    "unverified"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "by",
+                                "at",
+                                "independence"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "values",
+                            "basis",
+                            "by",
+                            "at"
+                          ]
+                        }
+                      ]
+                    },
+                    "record": {
+                      "type": "object",
+                      "properties": {
+                        "recovery": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "rpoMinutes": {
+                                  "type": "number"
+                                },
+                                "rtoMinutes": {
+                                  "type": "number"
+                                },
+                                "drLocation": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "rpoMinutes",
+                                "rtoMinutes",
+                                "drLocation"
+                              ]
+                            }
+                          ]
+                        },
+                        "residency": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "rule": {
+                                  "type": "string",
+                                  "enum": [
+                                    "in-country",
+                                    "none",
+                                    "regional"
+                                  ]
+                                },
+                                "locations": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "statement": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "rule",
+                                "locations",
+                                "statement"
+                              ]
+                            }
+                          ]
+                        },
+                        "administratorAccess": {
+                          "anyOf": [
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "party": {
+                                    "type": "string"
+                                  },
+                                  "access": {
+                                    "type": "string",
+                                    "enum": [
+                                      "break-glass",
+                                      "none",
+                                      "operations",
+                                      "support"
+                                    ]
+                                  },
+                                  "conditions": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "party",
+                                  "access",
+                                  "conditions"
+                                ]
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "networkZones": {
+                          "anyOf": [
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "key": {
+                                    "type": "string"
+                                  },
+                                  "label": {
+                                    "type": "string"
+                                  },
+                                  "purpose": {
+                                    "type": "string"
+                                  },
+                                  "exposure": {
+                                    "type": "string",
+                                    "enum": [
+                                      "internal",
+                                      "isolated",
+                                      "public",
+                                      "restricted"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "key",
+                                  "label",
+                                  "purpose",
+                                  "exposure"
+                                ]
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "exit": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "exportFormat": {
+                                  "type": "string"
+                                },
+                                "noticeDays": {
+                                  "anyOf": [
+                                    {
+                                      "type": "null"
+                                    },
+                                    {
+                                      "type": "number"
+                                    }
+                                  ]
+                                },
+                                "steps": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "dataReturn": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "exportFormat",
+                                "noticeDays",
+                                "steps",
+                                "dataReturn"
+                              ]
+                            }
+                          ]
+                        },
+                        "version": {
+                          "type": "number"
+                        },
+                        "at": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "recovery",
+                        "residency",
+                        "administratorAccess",
+                        "networkZones",
+                        "exit",
+                        "version"
+                      ]
+                    },
+                    "changes": {
+                      "type": "object",
+                      "properties": {
+                        "pending": {
+                          "type": "object",
+                          "properties": {
+                            "values": {
+                              "$ref": "#/components/schemas/DeploymentRecordValues"
+                            },
+                            "basis": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Citation"
+                              }
+                            },
+                            "by": {
+                              "type": "string"
+                            },
+                            "byId": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "confirmed": {
+                              "type": "object",
+                              "properties": {
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "independence": {
+                                  "type": "string",
+                                  "enum": [
+                                    "accounts-only",
+                                    "identity-provider",
+                                    "unverified"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "by",
+                                "at",
+                                "independence"
+                              ]
+                            },
+                            "expiresAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "values",
+                            "basis",
+                            "by",
+                            "at",
+                            "expiresAt"
+                          ],
+                          "description": "A proposal waiting for its second official."
+                        },
+                        "history": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "values": {
+                                "$ref": "#/components/schemas/DeploymentRecordValues"
+                              },
+                              "basis": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/Citation"
+                                }
+                              },
+                              "by": {
+                                "type": "string"
+                              },
+                              "byId": {
+                                "type": "string"
+                              },
+                              "at": {
+                                "type": "string"
+                              },
+                              "confirmed": {
+                                "type": "object",
+                                "properties": {
+                                  "by": {
+                                    "type": "string"
+                                  },
+                                  "byId": {
+                                    "type": "string"
+                                  },
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "independence": {
+                                    "type": "string",
+                                    "enum": [
+                                      "accounts-only",
+                                      "identity-provider",
+                                      "unverified"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "by",
+                                  "at",
+                                  "independence"
+                                ]
+                              },
+                              "outcome": {
+                                "type": "string",
+                                "enum": [
+                                  "adopted",
+                                  "lapsed",
+                                  "withdrawn"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "values",
+                              "basis",
+                              "by",
+                              "at",
+                              "outcome"
+                            ]
+                          },
+                          "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "result",
+                    "record",
+                    "changes"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "result": {
+                        "error": "Text"
+                      },
+                      "record": {
+                        "recovery": {
+                          "rpoMinutes": 1,
+                          "rtoMinutes": 1,
+                          "drLocation": "string"
+                        },
+                        "residency": {
+                          "rule": "in-country",
+                          "locations": [
+                            "string"
+                          ],
+                          "statement": "string"
+                        },
+                        "administratorAccess": [
+                          {
+                            "party": "string",
+                            "access": "break-glass",
+                            "conditions": "string"
+                          }
+                        ],
+                        "networkZones": [
+                          {
+                            "key": "string",
+                            "label": "Example",
+                            "purpose": "string",
+                            "exposure": "internal"
+                          }
+                        ],
+                        "exit": {
+                          "exportFormat": "string",
+                          "noticeDays": 1,
+                          "steps": [
+                            "string"
+                          ],
+                          "dataReturn": "string"
+                        },
+                        "version": 1,
+                        "at": "2026-01-15T09:30:00.000Z"
+                      },
+                      "changes": {
+                        "pending": {
+                          "values": {
+                            "recovery": {},
+                            "residency": {},
+                            "administratorAccess": [],
+                            "networkZones": [],
+                            "exit": {}
+                          },
+                          "basis": [
+                            {}
+                          ],
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "expiresAt": "2026-01-15T09:30:00.000Z"
+                        },
+                        "history": [
+                          {
+                            "values": {},
+                            "basis": [],
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "outcome": "adopted"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/platform/deployment-record/route.ts"
+      }
+    },
     "/api/platform/deployments/{id}/advance": {
       "post": {
         "tags": [
@@ -64119,10 +65424,18 @@
         ],
         "operationId": "get_records_management",
         "summary": "GET /api/records-management",
-        "description": "/api/records-management — records management (plan step I13, lib/recordkeeping). GET ?institution=<id>: the institution's record classes with every schedule version, legal holds (who, why, scope, release), registered incoming items, disposals (the listed items with their hashes, what was destroyed or skipped, the certificate), transfers and migrations; the transfers sent to it when it is the archive the nation names; which records procedures it adopted. Read by the institution's own officials and those within reach, and auditors (canReadAdministration()); every read is written to the access log. Schedules, holds, disposals, transfers and migrations move only through decided cases (/api/cases). POST (signed-in officials): { op: 'adopt', institution } an administrator or one who can sign there drafts the institution's own rec.* procedures (a second official approves) { op: 'acknowledge-transfer', transfer, manifest, receipt } an official of the archive the nation names records its receipt of the exact manifest sent",
+        "description": "/api/records-management — records management (plan step I13, lib/recordkeeping). GET ?institution=<id>: the institution's record classes with every schedule version, legal holds (who, why, scope, release), registered incoming items, disposals (the listed items with their hashes, what was destroyed or skipped, the certificate), transfers and migrations; the transfers sent to it when it is the archive the nation names; which records procedures it adopted. ?record=<id> (plan I9, acceptance P5-06): where one migrated record came from, its transformations and the status of every reconciliation (provenanceOf()). Read by the institution's own officials and those within reach, and auditors (canReadAdministration()); every read is written to the access log. Schedules, holds, disposals, transfers and migrations move only through decided cases (/api/cases). POST (signed-in officials): { op: 'adopt', institution } an administrator or one who can sign there drafts the institution's own rec.* procedures (a second official approves) { op: 'acknowledge-transfer', transfer, manifest, receipt } an official of the archive the nation names records its receipt of the exact manifest sent",
         "parameters": [
           {
             "name": "institution",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "record",
             "in": "query",
             "required": false,
             "schema": {
@@ -64316,6 +65629,117 @@
                         "platformRules",
                         "institutions",
                         "counts"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "provenance": {
+                          "type": "object",
+                          "properties": {
+                            "migration": {
+                              "type": "string"
+                            },
+                            "case": {
+                              "type": "string"
+                            },
+                            "sourceSystem": {
+                              "type": "string"
+                            },
+                            "targetSystem": {
+                              "type": "string"
+                            },
+                            "record": {
+                              "$ref": "#/components/schemas/MigratedRecord"
+                            },
+                            "status": {
+                              "type": "string",
+                              "enum": [
+                                "hash-mismatch",
+                                "missing",
+                                "not-verifiable-here",
+                                "not-yet-verified",
+                                "verified"
+                              ]
+                            },
+                            "closed": {
+                              "type": "object",
+                              "properties": {
+                                "by": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "name": {
+                                        "type": "string"
+                                      },
+                                      "id": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "name"
+                                    ]
+                                  }
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "outcome": {
+                                  "type": "string",
+                                  "enum": [
+                                    "accepted-with-corrections",
+                                    "reconciled"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "by",
+                                "at",
+                                "outcome"
+                              ]
+                            },
+                            "sample": {
+                              "type": "boolean",
+                              "const": true
+                            }
+                          },
+                          "required": [
+                            "migration",
+                            "case",
+                            "sourceSystem",
+                            "targetSystem",
+                            "record",
+                            "status"
+                          ]
+                        },
+                        "labels": {
+                          "type": "object",
+                          "properties": {
+                            "hash-mismatch": {
+                              "type": "string"
+                            },
+                            "missing": {
+                              "type": "string"
+                            },
+                            "not-verifiable-here": {
+                              "type": "string"
+                            },
+                            "verified": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "hash-mismatch",
+                            "missing",
+                            "not-verifiable-here",
+                            "verified"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "provenance",
+                        "labels"
                       ]
                     },
                     {
@@ -64739,7 +66163,7 @@
         ],
         "operationId": "post_records_management",
         "summary": "POST /api/records-management",
-        "description": "/api/records-management — records management (plan step I13, lib/recordkeeping). GET ?institution=<id>: the institution's record classes with every schedule version, legal holds (who, why, scope, release), registered incoming items, disposals (the listed items with their hashes, what was destroyed or skipped, the certificate), transfers and migrations; the transfers sent to it when it is the archive the nation names; which records procedures it adopted. Read by the institution's own officials and those within reach, and auditors (canReadAdministration()); every read is written to the access log. Schedules, holds, disposals, transfers and migrations move only through decided cases (/api/cases). POST (signed-in officials): { op: 'adopt', institution } an administrator or one who can sign there drafts the institution's own rec.* procedures (a second official approves) { op: 'acknowledge-transfer', transfer, manifest, receipt } an official of the archive the nation names records its receipt of the exact manifest sent",
+        "description": "/api/records-management — records management (plan step I13, lib/recordkeeping). GET ?institution=<id>: the institution's record classes with every schedule version, legal holds (who, why, scope, release), registered incoming items, disposals (the listed items with their hashes, what was destroyed or skipped, the certificate), transfers and migrations; the transfers sent to it when it is the archive the nation names; which records procedures it adopted. ?record=<id> (plan I9, acceptance P5-06): where one migrated record came from, its transformations and the status of every reconciliation (provenanceOf()). Read by the institution's own officials and those within reach, and auditors (canReadAdministration()); every read is written to the access log. Schedules, holds, disposals, transfers and migrations move only through decided cases (/api/cases). POST (signed-in officials): { op: 'adopt', institution } an administrator or one who can sign there drafts the institution's own rec.* procedures (a second official approves) { op: 'acknowledge-transfer', transfer, manifest, receipt } an official of the archive the nation names records its receipt of the exact manifest sent",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -69782,7 +71206,7 @@
         ],
         "operationId": "get_releases_mirror",
         "summary": "GET /api/releases/mirror",
-        "description": "/api/releases/mirror — this nation's local mirror, its sync manifest (what to fetch, with deltas) and physical media in transit (GET; download=1 returns the manifest as a file). POST: register the mirror, record a sync, or take a custody step on received media (received, seal-verified).",
+        "description": "/api/releases/mirror — this nation's local mirror, its sync manifest (what to fetch, with deltas) and physical media in transit (GET; download=1 returns the manifest as a file). POST: register the mirror, record a sync, or take a custody step on received media (received, seal-verified, contents-verified). Plan I9 (acceptance P5-15), signed releases and verified media: GET ?statement=<releaseId> the publisher's signed statement of a release (DSSE, in-toto), as a file GET ?media=<mediaId> the signed statement written to a shipment of media (media-manifest.intoto.json) POST { action: 'trust-key', publicKeyPem, checkedWith } one official proposes trusting a publisher key POST { action: 'confirm-key', id } a different official confirms it POST { action: 'revoke-key', id, reason } one official withdraws or revokes it at once POST { action: 'verify-release', releaseId, envelope, files: [{ filename, sha256 }] } POST { action: 'custody', mediaId, step: 'contents-verified', envelope, files: [{ filename, sha256 }] }",
         "parameters": [
           {
             "name": "download",
@@ -69794,6 +71218,22 @@
           },
           {
             "name": "link",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "media",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "statement",
             "in": "query",
             "required": false,
             "schema": {
@@ -69842,13 +71282,20 @@
                       "items": {
                         "$ref": "#/components/schemas/MediaShipment"
                       }
+                    },
+                    "publisherKeys": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PublisherKey_releasetrust"
+                      }
                     }
                   },
                   "required": [
                     "deliveryMode",
                     "mirror",
                     "manifest",
-                    "media"
+                    "media",
+                    "publisherKeys"
                   ]
                 },
                 "examples": {
@@ -69872,7 +71319,15 @@
                         },
                         "mirrored": [
                           "string"
-                        ]
+                        ],
+                        "verified": {
+                          "key": {
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "by": "A. Official",
+                            "keyId": "ID-0001",
+                            "files": 1
+                          }
+                        }
                       },
                       "manifest": {
                         "nationId": "ID-0001",
@@ -69903,10 +71358,24 @@
                             {}
                           ],
                           "sealId": "ID-0001",
-                          "state": "handed-over",
+                          "state": "contents-rejected",
                           "chain": [
                             {}
                           ]
+                        }
+                      ],
+                      "publisherKeys": [
+                        {
+                          "id": "ID-0001",
+                          "nationId": "ID-0001",
+                          "keyId": "ID-0001",
+                          "publicKeyPem": "string",
+                          "checkedWith": "string",
+                          "state": "lapsed",
+                          "proposed": {
+                            "by": "A. Official",
+                            "at": "2026-01-15T09:30:00.000Z"
+                          }
                         }
                       ]
                     }
@@ -69939,7 +71408,7 @@
         ],
         "operationId": "post_releases_mirror",
         "summary": "POST /api/releases/mirror",
-        "description": "/api/releases/mirror — this nation's local mirror, its sync manifest (what to fetch, with deltas) and physical media in transit (GET; download=1 returns the manifest as a file). POST: register the mirror, record a sync, or take a custody step on received media (received, seal-verified).",
+        "description": "/api/releases/mirror — this nation's local mirror, its sync manifest (what to fetch, with deltas) and physical media in transit (GET; download=1 returns the manifest as a file). POST: register the mirror, record a sync, or take a custody step on received media (received, seal-verified, contents-verified). Plan I9 (acceptance P5-15), signed releases and verified media: GET ?statement=<releaseId> the publisher's signed statement of a release (DSSE, in-toto), as a file GET ?media=<mediaId> the signed statement written to a shipment of media (media-manifest.intoto.json) POST { action: 'trust-key', publicKeyPem, checkedWith } one official proposes trusting a publisher key POST { action: 'confirm-key', id } a different official confirms it POST { action: 'revoke-key', id, reason } one official withdraws or revokes it at once POST { action: 'verify-release', releaseId, envelope, files: [{ filename, sha256 }] } POST { action: 'custody', mediaId, step: 'contents-verified', envelope, files: [{ filename, sha256 }] }",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -69966,6 +71435,9 @@
                       "type": "string"
                     }
                   },
+                  "releaseId": {
+                    "type": "string"
+                  },
                   "mediaId": {
                     "type": "string"
                   },
@@ -69977,7 +71449,21 @@
                   },
                   "note": {
                     "type": "string"
-                  }
+                  },
+                  "id": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  },
+                  "publicKeyPem": {
+                    "type": "string"
+                  },
+                  "checkedWith": {
+                    "type": "string"
+                  },
+                  "envelope": {},
+                  "files": {}
                 }
               },
               "examples": {
@@ -69991,10 +71477,17 @@
                     "releaseIds": [
                       "ID-0001"
                     ],
+                    "releaseId": "ID-0001",
                     "mediaId": "ID-0001",
                     "step": "string",
                     "sealId": "ID-0001",
-                    "note": "Text"
+                    "note": "Text",
+                    "id": "ID-0001",
+                    "reason": "Text",
+                    "publicKeyPem": "string",
+                    "checkedWith": "string",
+                    "envelope": null,
+                    "files": null
                   }
                 }
               }
@@ -70020,6 +71513,27 @@
                         },
                         {
                           "$ref": "#/components/schemas/MediaShipment"
+                        },
+                        {
+                          "$ref": "#/components/schemas/PublisherKey_releasetrust"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "verified": {
+                              "type": "boolean"
+                            },
+                            "problems": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "required": [
+                            "verified",
+                            "problems"
+                          ]
                         }
                       ]
                     }
@@ -70050,7 +71564,15 @@
                         },
                         "mirrored": [
                           "string"
-                        ]
+                        ],
+                        "verified": {
+                          "key": {
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "by": "A. Official",
+                            "keyId": "ID-0001",
+                            "files": 1
+                          }
+                        }
                       }
                     }
                   }
@@ -71787,7 +73309,7 @@
                             {}
                           ],
                           "sealId": "ID-0001",
-                          "state": "handed-over",
+                          "state": "contents-rejected",
                           "chain": [
                             {}
                           ]
@@ -71887,14 +73409,24 @@
                           }
                         ],
                         "sealId": "ID-0001",
-                        "state": "handed-over",
+                        "state": "contents-rejected",
                         "chain": [
                           {
-                            "step": "handed-over",
+                            "step": "contents-verified",
                             "at": "2026-01-15T09:30:00.000Z",
                             "by": "A. Official"
                           }
-                        ]
+                        ],
+                        "signed": {
+                          "envelope": {
+                            "payloadType": "string",
+                            "payload": "string",
+                            "signatures": []
+                          },
+                          "keyId": "ID-0001",
+                          "production": true,
+                          "signedAt": "2026-01-15T09:30:00.000Z"
+                        }
                       }
                     }
                   }
@@ -77602,6 +79134,9 @@
                             "plan": {
                               "type": "number"
                             },
+                            "release": {
+                              "type": "number"
+                            },
                             "vulnerability": {
                               "type": "number"
                             },
@@ -77618,6 +79153,15 @@
                               "type": "number"
                             },
                             "clearance": {
+                              "type": "number"
+                            },
+                            "infra-incident": {
+                              "type": "number"
+                            },
+                            "disruption": {
+                              "type": "number"
+                            },
+                            "resilience-exception": {
                               "type": "number"
                             },
                             "marked": {
@@ -77637,12 +79181,16 @@
                             "incident",
                             "supplier",
                             "plan",
+                            "release",
                             "vulnerability",
                             "exception",
                             "exercise",
                             "designation",
                             "risk",
                             "clearance",
+                            "infra-incident",
+                            "disruption",
+                            "resilience-exception",
                             "marked",
                             "samples",
                             "expired"
@@ -77991,6 +79539,9 @@
                                 "designation": {
                                   "type": "string"
                                 },
+                                "disruption": {
+                                  "type": "string"
+                                },
                                 "exception": {
                                   "type": "string"
                                 },
@@ -78000,7 +79551,16 @@
                                 "incident": {
                                   "type": "string"
                                 },
+                                "infra-incident": {
+                                  "type": "string"
+                                },
                                 "plan": {
+                                  "type": "string"
+                                },
+                                "release": {
+                                  "type": "string"
+                                },
+                                "resilience-exception": {
                                   "type": "string"
                                 },
                                 "risk": {
@@ -78017,10 +79577,14 @@
                                 "clearance",
                                 "dependency",
                                 "designation",
+                                "disruption",
                                 "exception",
                                 "exercise",
                                 "incident",
+                                "infra-incident",
                                 "plan",
+                                "release",
+                                "resilience-exception",
                                 "risk",
                                 "supplier",
                                 "vulnerability"
@@ -78038,6 +79602,9 @@
                                 "designation": {
                                   "type": "string"
                                 },
+                                "disruption": {
+                                  "type": "string"
+                                },
                                 "exception": {
                                   "type": "string"
                                 },
@@ -78047,7 +79614,16 @@
                                 "incident": {
                                   "type": "string"
                                 },
+                                "infra-incident": {
+                                  "type": "string"
+                                },
                                 "plan": {
+                                  "type": "string"
+                                },
+                                "release": {
+                                  "type": "string"
+                                },
+                                "resilience-exception": {
                                   "type": "string"
                                 },
                                 "risk": {
@@ -78064,10 +79640,14 @@
                                 "clearance",
                                 "dependency",
                                 "designation",
+                                "disruption",
                                 "exception",
                                 "exercise",
                                 "incident",
+                                "infra-incident",
                                 "plan",
+                                "release",
+                                "resilience-exception",
                                 "risk",
                                 "supplier",
                                 "vulnerability"
@@ -96135,6 +97715,16 @@
               },
               "met": {
                 "type": "boolean"
+              },
+              "source": {
+                "type": "string",
+                "enum": [
+                  "backup-policy",
+                  "deployment-record"
+                ]
+              },
+              "version": {
+                "type": "number"
               }
             },
             "required": [
@@ -106545,6 +108135,192 @@
           }
         }
       },
+      "DeploymentRecordValues": {
+        "type": "object",
+        "properties": {
+          "recovery": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "rpoMinutes": {
+                    "type": "number"
+                  },
+                  "rtoMinutes": {
+                    "type": "number"
+                  },
+                  "drLocation": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "rpoMinutes",
+                  "rtoMinutes",
+                  "drLocation"
+                ]
+              }
+            ]
+          },
+          "residency": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "rule": {
+                    "type": "string",
+                    "enum": [
+                      "in-country",
+                      "none",
+                      "regional"
+                    ]
+                  },
+                  "locations": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "statement": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "rule",
+                  "locations",
+                  "statement"
+                ]
+              }
+            ]
+          },
+          "administratorAccess": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "party": {
+                      "type": "string"
+                    },
+                    "access": {
+                      "type": "string",
+                      "enum": [
+                        "break-glass",
+                        "none",
+                        "operations",
+                        "support"
+                      ]
+                    },
+                    "conditions": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "party",
+                    "access",
+                    "conditions"
+                  ]
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "networkZones": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "purpose": {
+                      "type": "string"
+                    },
+                    "exposure": {
+                      "type": "string",
+                      "enum": [
+                        "internal",
+                        "isolated",
+                        "public",
+                        "restricted"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "label",
+                    "purpose",
+                    "exposure"
+                  ]
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "exit": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "exportFormat": {
+                    "type": "string"
+                  },
+                  "noticeDays": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  },
+                  "steps": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "dataReturn": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "exportFormat",
+                  "noticeDays",
+                  "steps",
+                  "dataReturn"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "recovery",
+          "residency",
+          "administratorAccess",
+          "networkZones",
+          "exit"
+        ]
+      },
       "DerivedInputUsed": {
         "type": "object",
         "properties": {
@@ -107111,19 +108887,6 @@
           "number": {
             "type": "string"
           },
-          "sample": {
-            "type": "boolean",
-            "const": true
-          },
-          "state": {
-            "type": "string",
-            "enum": [
-              "decided",
-              "held",
-              "referred",
-              "withdrawn"
-            ]
-          },
           "outcome": {
             "type": "object",
             "properties": {
@@ -107158,6 +108921,19 @@
               "reasons",
               "at",
               "by"
+            ]
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "decided",
+              "held",
+              "referred",
+              "withdrawn"
             ]
           },
           "kind": {
@@ -117479,6 +119255,115 @@
           "detail"
         ]
       },
+      "KeyReview": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "reviewer": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "byId": {
+                "type": "string"
+              },
+              "institution": {
+                "type": "string"
+              },
+              "capacity": {
+                "type": "string",
+                "enum": [
+                  "auditor",
+                  "data-protection",
+                  "unverified"
+                ]
+              }
+            },
+            "required": [
+              "by",
+              "capacity"
+            ]
+          },
+          "at": {
+            "type": "string"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "seq": {
+                  "type": "number"
+                },
+                "hash": {
+                  "type": "string"
+                },
+                "action": {
+                  "type": "string"
+                },
+                "actor": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "seq",
+                "hash",
+                "action",
+                "actor",
+                "at"
+              ]
+            },
+            "description": "The operations it covers: sequence, hash, action and who took it."
+          },
+          "through": {
+            "type": "number"
+          },
+          "digest": {
+            "type": "string"
+          },
+          "chain": {
+            "type": "object",
+            "properties": {
+              "ok": {
+                "type": "boolean"
+              },
+              "brokenAtSeq": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "ok"
+            ]
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "concerns",
+              "no-concerns"
+            ]
+          },
+          "findings": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reviewer",
+          "at",
+          "entries",
+          "through",
+          "digest",
+          "chain",
+          "outcome",
+          "findings"
+        ]
+      },
       "KpiValue": {
         "type": "object",
         "properties": {
@@ -118656,6 +120541,33 @@
               "type": "string"
             },
             "description": "Releases whose artifacts are in the mirror."
+          },
+          "verified": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "at": {
+                  "type": "string"
+                },
+                "by": {
+                  "type": "string"
+                },
+                "keyId": {
+                  "type": "string"
+                },
+                "files": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "at",
+                "by",
+                "keyId",
+                "files"
+              ]
+            },
+            "description": "Plan I9 (acceptance P5-15): releases whose signed statement and artifacts this nation verified, with the key that signed."
           }
         },
         "required": [
@@ -118914,6 +120826,33 @@
           "evidence"
         ]
       },
+      "ManifestCounts": {
+        "type": "object",
+        "properties": {
+          "verified": {
+            "type": "number"
+          },
+          "mismatched": {
+            "type": "number"
+          },
+          "missing": {
+            "type": "number"
+          },
+          "notVerifiable": {
+            "type": "number"
+          },
+          "unexpected": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "verified",
+          "mismatched",
+          "missing",
+          "notVerifiable",
+          "unexpected"
+        ]
+      },
       "MeansTest": {
         "description": "means-tested: what is due for assessed means M (minor units) and a household of N members: nothing when M is at or above `limitMinor`; otherwise baseMinor + perMemberMinor x (N - 1) - taperRate% x M, never below zero.",
         "type": "object",
@@ -118982,6 +120921,8 @@
           "state": {
             "type": "string",
             "enum": [
+              "contents-rejected",
+              "contents-verified",
               "handed-over",
               "received",
               "seal-broken",
@@ -118997,6 +120938,7 @@
                 "step": {
                   "type": "string",
                   "enum": [
+                    "contents-verified",
                     "handed-over",
                     "received",
                     "seal-verified",
@@ -119023,6 +120965,12 @@
                 },
                 "auditSeq": {
                   "type": "number"
+                },
+                "problems": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
                 }
               },
               "required": [
@@ -119031,6 +120979,61 @@
                 "by"
               ]
             }
+          },
+          "signed": {
+            "type": "object",
+            "properties": {
+              "envelope": {
+                "type": "object",
+                "properties": {
+                  "payloadType": {
+                    "type": "string"
+                  },
+                  "payload": {
+                    "type": "string"
+                  },
+                  "signatures": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "keyid": {
+                          "type": "string"
+                        },
+                        "sig": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "keyid",
+                        "sig"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "payloadType",
+                  "payload",
+                  "signatures"
+                ]
+              },
+              "keyId": {
+                "type": "string"
+              },
+              "production": {
+                "type": "boolean"
+              },
+              "signedAt": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "envelope",
+              "keyId",
+              "production",
+              "signedAt"
+            ],
+            "description": "Plan I9 (acceptance P5-15): the publisher's signed statement of the files written to the media (DSSE envelope over an in-toto statement), also written to the media as media-manifest.intoto.json. Shipments sealed before it carry none and keep the seal check alone."
           }
         },
         "required": [
@@ -119416,6 +121419,93 @@
           }
         }
       },
+      "MigratedRecord": {
+        "description": "A record of a migration's per-record manifest (plan I9; acceptance P5-06 \"A migrated record retains its source, transformation history and verification status\"): where it came from (the source system's id and the SHA-256 of the record as extracted), every transformation it went through (named step, the mapping rule and its version), where it landed here, and the status every reconciliation found for it, oldest first. Kept with the migration; never changed after the plan, only verified again.",
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "sha256": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "sha256"
+            ]
+          },
+          "transformations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Transformation"
+            }
+          },
+          "target": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "case",
+                  "document",
+                  "external"
+                ]
+              },
+              "id": {
+                "type": "string"
+              },
+              "sha256": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "id"
+            ]
+          },
+          "verification": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "hash-mismatch",
+                    "missing",
+                    "not-verifiable-here",
+                    "verified"
+                  ]
+                },
+                "at": {
+                  "type": "string"
+                },
+                "reconciliation": {
+                  "type": "number"
+                },
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "status",
+                "at",
+                "reconciliation"
+              ]
+            }
+          }
+        },
+        "required": [
+          "source",
+          "transformations",
+          "target",
+          "verification"
+        ]
+      },
       "Migration": {
         "type": "object",
         "properties": {
@@ -119469,6 +121559,36 @@
               "system",
               "kind"
             ]
+          },
+          "manifest": {
+            "type": "object",
+            "properties": {
+              "count": {
+                "type": "number"
+              },
+              "sourceDigest": {
+                "type": "string"
+              },
+              "targetDigest": {
+                "type": "string"
+              },
+              "digest": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "count",
+              "sourceDigest",
+              "targetDigest",
+              "digest"
+            ],
+            "description": "The per-record manifest, when the plan carries one: its source digest is the plan's source manifest, its length the source count."
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MigratedRecord"
+            }
           },
           "approved": {
             "type": "object",
@@ -119527,6 +121647,9 @@
                 },
                 "at": {
                   "type": "string"
+                },
+                "records": {
+                  "$ref": "#/components/schemas/ManifestCounts"
                 }
               },
               "required": [
@@ -129692,28 +131815,6 @@
             "type": "string",
             "description": "Ministry id; absent for officials serving the whole government."
           },
-          "email": {
-            "type": "string"
-          },
-          "office": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string"
-          },
-          "createdBy": {
-            "type": "string"
-          },
-          "disabled": {
-            "type": "boolean"
-          },
-          "lastSignIn": {
-            "type": "string"
-          },
-          "passwordChangedAt": {
-            "type": "string",
-            "description": "When the password last changed: sessions issued before it no longer count."
-          },
           "identity": {
             "type": "object",
             "properties": {
@@ -129741,6 +131842,28 @@
               "linkedBy"
             ],
             "description": "The official's identity at the government's identity provider (lib/auth/oidc.ts), linked by an administrator or by a verified email."
+          },
+          "email": {
+            "type": "string"
+          },
+          "office": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "disabled": {
+            "type": "boolean"
+          },
+          "lastSignIn": {
+            "type": "string"
+          },
+          "passwordChangedAt": {
+            "type": "string",
+            "description": "When the password last changed: sessions issued before it no longer count."
           },
           "noPassword": {
             "type": "boolean",
@@ -131234,6 +133357,114 @@
           "demo"
         ]
       },
+      "PublisherKey_releasetrust": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "nationId": {
+            "type": "string"
+          },
+          "keyId": {
+            "type": "string"
+          },
+          "publicKeyPem": {
+            "type": "string"
+          },
+          "checkedWith": {
+            "type": "string",
+            "description": "How the fingerprint was checked with the publisher, out of band."
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "lapsed",
+              "proposed",
+              "retired",
+              "revoked",
+              "trusted",
+              "withdrawn"
+            ]
+          },
+          "proposed": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "byId": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "by",
+              "at"
+            ]
+          },
+          "confirmed": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "byId": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "independence": {
+                "type": "string",
+                "enum": [
+                  "accounts-only",
+                  "identity-provider",
+                  "unverified"
+                ]
+              }
+            },
+            "required": [
+              "by",
+              "at",
+              "independence"
+            ]
+          },
+          "retiredAt": {
+            "type": "string"
+          },
+          "revoked": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "by",
+              "at",
+              "reason"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "nationId",
+          "keyId",
+          "publicKeyPem",
+          "checkedWith",
+          "state",
+          "proposed"
+        ]
+      },
       "PublisherOverview": {
         "type": "object",
         "properties": {
@@ -131975,10 +134206,14 @@
               "clearance",
               "dependency",
               "designation",
+              "disruption",
               "exception",
               "exercise",
               "incident",
+              "infra-incident",
               "plan",
+              "release",
+              "resilience-exception",
               "risk",
               "supplier",
               "vulnerability"
@@ -134435,6 +136670,16 @@
           },
           "met": {
             "type": "boolean"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "backup-policy",
+              "deployment-record"
+            ]
+          },
+          "version": {
+            "type": "number"
           }
         },
         "required": [
@@ -136354,10 +138599,14 @@
               "clearance",
               "dependency",
               "designation",
+              "disruption",
               "exception",
               "exercise",
               "incident",
+              "infra-incident",
               "plan",
+              "release",
+              "resilience-exception",
               "risk",
               "supplier",
               "vulnerability"
@@ -136840,10 +139089,14 @@
               "clearance",
               "dependency",
               "designation",
+              "disruption",
               "exception",
               "exercise",
               "incident",
+              "infra-incident",
               "plan",
+              "release",
+              "resilience-exception",
               "risk",
               "supplier",
               "vulnerability"
@@ -138705,10 +140958,6 @@
           "head": {
             "type": "object",
             "properties": {
-              "at": {
-                "type": "string",
-                "description": "When the head was signed."
-              },
               "seq": {
                 "type": "number",
                 "description": "Sequence number of the chain entry that was the head."
@@ -138716,6 +140965,10 @@
               "hash": {
                 "type": "string",
                 "description": "That entry's hash."
+              },
+              "at": {
+                "type": "string",
+                "description": "When the head was signed."
               },
               "keyId": {
                 "type": "string"
@@ -138766,9 +141019,9 @@
               }
             },
             "required": [
-              "at",
               "seq",
               "hash",
+              "at",
               "keyId",
               "production"
             ],
@@ -145174,6 +147427,24 @@
           "items",
           "manifest",
           "authorised"
+        ]
+      },
+      "Transformation": {
+        "description": "One step a migrated record went through between the source and here (plan I9, acceptance P5-06).",
+        "type": "object",
+        "properties": {
+          "step": {
+            "type": "string"
+          },
+          "rule": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "step"
         ]
       },
       "TransitionRulesValues": {

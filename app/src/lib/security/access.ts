@@ -39,6 +39,10 @@ export const RECIPIENT_TERMS: Record<SecurityKind, string[]> = {
   risk: [],
   plan: ['essentialServices', 'exerciseSchedule'],
   clearance: [],
+  'infra-incident': ['designation', 'incidentType', 'serviceImpact', 'containmentActions', 'serviceStatus'],
+  disruption: ['designation', 'impact', 'period', 'restoration'],
+  'resilience-exception': ['designation', 'requirement', 'compensatingMeasures'],
+  release: ['purpose'],
 };
 
 type Viewer = (CaseScope & { label?: string }) | null;

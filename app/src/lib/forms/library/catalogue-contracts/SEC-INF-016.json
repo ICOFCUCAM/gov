@@ -3,6 +3,8 @@
  "form_id": "SEC-INF-016",
  "record_type": "security.critical_infrastructure",
  "form_version": 1,
+ "procedure_package_id": "ci.release",
+ "procedure_package_version": 1,
  "legal_basis": [],
  "country_decisions": [
   "CFG-SEC-003: classification levels and handling restrictions (the nation's scheme, adopted by two officials; ships empty).",
@@ -25,8 +27,11 @@
   "owner": "criticalInfrastructure",
   "filled_by": "An official asking for the release.",
   "authority": "The critical infrastructure authority the nation names (criticalInfrastructure slot, shipped empty).",
-  "procedure": null,
-  "intended": "An information release review procedure of the criticalInfrastructure slot (two officials, the public view only through approved indicators): not built; no case is opened (plan step I12)",
+  "procedure": {
+   "key": "ci.release",
+   "stage": "received",
+   "action": "register"
+  },
   "lists": {},
   "nation_values": [
    {
@@ -114,10 +119,7 @@
      "Controlled disclosure decision"
     ],
     "met_by": {
-     "platform": {
-      "file": "app/src/lib/security/procedures.ts",
-      "how": "An information release review procedure of the criticalInfrastructure slot (two officials, the public view only through approved indicators): not built; no case is opened (plan step I12)"
-     }
+     "procedure": "register"
     }
    }
   ]

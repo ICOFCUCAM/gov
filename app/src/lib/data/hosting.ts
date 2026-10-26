@@ -11,6 +11,7 @@
 // plan with data-export and no-lock-in guarantees. Every step is audited.
 // Isolation: callers pass the nation the server resolved (lib/updates/access).
 
+import { deploymentRecord, residencyRefusal } from '@/lib/ops/deployment-record';
 import type { HostingCenter, HostingEstimate, HostingPath, HostingQuestionnaire, HostingRequest, HostingStage, SubscribedNation } from '@/lib/api/types';
 import { recordAudit } from '@/lib/data/store/audit';
 import { pricing } from './security-store';
@@ -32,8 +33,14 @@ export function currentPath(n: SubscribedNation): HostingPath | undefined {
   return hdb().current[n.id] ?? (n.deliveryMode === 'saas' ? 'hosted' : undefined);
 }
 
+/** The questionnaire's starting answers, from the deployment record where it sets them (plan I9, lib/ops/deployment-record.ts). */
+function fromRecord(): Partial<HostingQuestionnaire> {
+  const r = deploymentRecord();
+  return { ...(r.residency ? { residency: r.residency.rule } : {}), ...(r.recovery ? { rtoHours: Math.max(1, Math.ceil(r.recovery.rtoMinutes / 60)), rpoMinutes: r.recovery.rpoMinutes } : {}) };
+}
+
 function clean(q: Partial<HostingQuestionnaire>): HostingQuestionnaire {
-  const d = defaultQuestionnaire();
+  const d = defaultQuestionnaire(fromRecord());
   const num = (v: unknown, fb: number) => (v === undefined || v === '' ? fb : Number(v));
   const caps = q.capabilities ?? d.capabilities!;
   return {
@@ -61,7 +68,7 @@ function estimateFor(n: SubscribedNation, path: HostingPath, q: HostingQuestionn
 /** Indicative comparison of the four paths, plus the nation's own requests. */
 export function hostingCenter(n: SubscribedNation): HostingCenter {
   const requests = hdb().requests.filter(r => r.nationId === n.id).sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
-  const basis = requests[0]?.questionnaire ?? defaultQuestionnaire({ activeUsers: Math.max(50_000, n.estate.endpoints * 200) });
+  const basis = requests[0]?.questionnaire ?? defaultQuestionnaire({ activeUsers: Math.max(50_000, n.estate.endpoints * 200), ...fromRecord() });
   const from = currentPath(n);
   const pr = pricing(n);
   return {
@@ -83,8 +90,11 @@ export function requestAssessment(n: SubscribedNation, input: { path?: string; q
   const by = (input.by ?? '').trim();
   if (!by || by.length > 80) return { error: 'Name the person making the request' };
   const raw = input.questionnaire ?? {};
-  const problems = validateQuestionnaire({ ...defaultQuestionnaire(), ...raw });
+  const problems = validateQuestionnaire({ ...defaultQuestionnaire(fromRecord()), ...raw });
   if (problems.length) return { error: problems.join('; ') };
+  // Plan I9: never a looser residency rule than the installation's deployment record.
+  const looser = residencyRefusal(raw.residency ?? fromRecord().residency);
+  if (looser) return { error: looser };
   const q = clean(raw);
   const path = input.path as HostingPath;
   const from = currentPath(n);

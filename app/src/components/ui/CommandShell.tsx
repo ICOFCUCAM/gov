@@ -21,7 +21,7 @@ import { subscribe as orchSubscribe, orchestrationStats, version as orchVersion 
 import type { SovereignProfile, NationalSnapshot, NationalCoordination, Ministry } from '@/lib/api/types';
 import { useHydrated, useRenderNow } from '@/lib/clock/render-now';
 import { usePathname } from 'next/navigation';
-import { HEADER_LINKS, locate, navFor } from '@/lib/nav/console-nav';
+import { HEADER_LINKS, locate, navFor, type NavContext } from '@/lib/nav/console-nav';
 import type { Scope } from '@/lib/auth/roles';
 import { ConsoleTabs } from '@/components/ui/ConsoleTabs';
 import { SkipLink } from '@/components/ui/SkipLink';
@@ -74,12 +74,17 @@ export function CommandShell({
   const [navOpen, setNavOpen] = React.useState(false);
   // The signed-in official's role and institution: the menu shows what they can use (plan I2, lib/nav/console-nav.ts navFor()).
   const [scope, setScope] = React.useState<Scope | null>(null);
+  // The institutions the read rules name (plan I10: the access log, permits and the pilot's exit gate show only to those the routes admit).
+  const [navCtx, setNavCtx] = React.useState<NavContext>({});
   React.useEffect(() => {
     fetch('/api/auth/official', { cache: 'no-store' }).then(r => (r.ok ? r.json() : null))
-      .then((j: { official?: { role?: Scope['role']; institution?: string } | null } | null) => { if (j?.official) setScope({ ...(j.official.role ? { role: j.official.role } : {}), ...(j.official.institution ? { institution: j.official.institution } : {}) }); })
+      .then((j: { official?: { role?: Scope['role']; institution?: string } | null; navigation?: NavContext } | null) => {
+        if (j?.official) setScope({ ...(j.official.role ? { role: j.official.role } : {}), ...(j.official.institution ? { institution: j.official.institution } : {}) });
+        if (j?.navigation) setNavCtx(j.navigation);
+      })
       .catch(() => undefined);
   }, []);
-  const NAV = navFor(scope);
+  const NAV = navFor(scope, navCtx);
   const hydrated = useHydrated();
 
   React.useEffect(() => {
@@ -162,7 +167,7 @@ export function CommandShell({
       <SkipLink />
       <CommandPalette items={cmd} accent={accent} searchFn={substrateSearchAsCommands} />
       {emergency ? (
-        <div className="flex shrink-0 items-center justify-between gap-3 px-4 py-1 text-[10px]"
+        <div className="flex shrink-0 items-center justify-between gap-3 px-4 py-1 text-2xs"
           style={{ backgroundColor: `color-mix(in srgb, ${TONE.alert} 16%, transparent)`, borderBottom: `1px solid ${TONE.alert}` }}>
           <span className="flex items-center gap-2 font-bold uppercase tracking-[0.2em]" style={{ color: TONE.alert }}>
             <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE.alert }} />
@@ -192,23 +197,23 @@ export function CommandShell({
         </div>
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
           {HEADER_LINKS.map(h => (
-            <Link key={h.href} href={h.href} className="focus-ring hidden h-8 items-center gap-1.5 rounded-[3px] border border-line px-2.5 text-[12px] text-ink-soft no-underline hover:bg-surface-2 hover:text-ink sm:flex">
-              <span aria-hidden>⌕</span>{h.label}<kbd className="ms-1 hidden rounded-[2px] border border-line px-1 font-mono text-[10px] text-ink-muted xl:inline">⌘K</kbd>
+            <Link key={h.href} href={h.href} className="focus-ring hidden h-8 items-center gap-1.5 rounded-[3px] border border-line px-2.5 text-xs text-ink-soft no-underline hover:bg-surface-2 hover:text-ink sm:flex">
+              <span aria-hidden>⌕</span>{h.label}<kbd className="ms-1 hidden rounded-[2px] border border-line px-1 font-mono text-2xs text-ink-muted xl:inline">⌘K</kbd>
             </Link>
           ))}
           <AccessibilityMenu compact />
-          <span className="hidden items-center gap-1.5 rounded-[3px] border px-2 py-1 text-[10px] sm:flex"
+          <span className="hidden items-center gap-1.5 rounded-[3px] border px-2 py-1 text-2xs sm:flex"
             style={{ borderColor: emergency ? TONE.alert : 'rgb(var(--c-line))', color: emergency ? TONE.alert : 'rgb(var(--c-ink-soft))' }}>
             <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[level] }} />
             {view.risk.v}
             <SignalTag kind={view.risk.kind} source={view.risk.src} className="!text-[7px]" />
           </span>
-          <span className="relative grid h-7 w-7 place-items-center rounded-[3px] border border-line text-[12px] text-ink-soft" title={`${incidents.length} active incidents`}>
+          <span className="relative grid h-7 w-7 place-items-center rounded-[3px] border border-line text-xs text-ink-soft" title={`${incidents.length} active incidents`}>
             ⌁
             {incidents.length ? <span className="absolute -right-1 -top-1 grid h-3.5 min-w-[14px] place-items-center rounded-full px-0.5 text-[8px] font-bold text-white" style={{ backgroundColor: TONE.alert }}>{incidents.length}</span> : null}
           </span>
           <span className="hidden font-mono text-xs tabular-nums text-ink-muted sm:inline">{new Date(now).toLocaleTimeString()}</span>
-          {secure ? <span className="hidden items-center gap-1.5 rounded-[3px] border border-line px-2 py-1 text-[10px] text-ink-soft min-[1440px]:flex"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE.ok }} /> Encrypted</span> : null}
+          {secure ? <span className="hidden items-center gap-1.5 rounded-[3px] border border-line px-2 py-1 text-2xs text-ink-soft min-[1440px]:flex"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE.ok }} /> Encrypted</span> : null}
           {/* On phones the official's menu sits at the top of the navigation drawer instead. */}
           <span className="hidden border-l border-line pl-3 sm:inline">
             <ExecutiveMenu accent={accent} />
@@ -223,7 +228,7 @@ export function CommandShell({
           <div className="space-y-2 border-b border-line px-3 py-2 sm:hidden">
             <ExecutiveMenu accent={accent} />
             {HEADER_LINKS.map(h => (
-              <Link key={h.href} href={h.href} onClick={() => setNavOpen(false)} className="focus-ring flex h-9 items-center gap-1.5 rounded-[3px] border border-line px-2.5 text-[13px] text-ink-soft no-underline hover:bg-surface-2 hover:text-ink">
+              <Link key={h.href} href={h.href} onClick={() => setNavOpen(false)} className="focus-ring flex h-9 items-center gap-1.5 rounded-[3px] border border-line px-2.5 text-compact text-ink-soft no-underline hover:bg-surface-2 hover:text-ink">
                 <span aria-hidden>⌕</span>{h.label}
               </Link>
             ))}
@@ -231,7 +236,7 @@ export function CommandShell({
           <div className="flex-1 overflow-y-auto py-1" onClick={() => setNavOpen(false)}>
             {NAV.map(grp => (
               <div key={grp.label} className="mb-1">
-                <div className="px-3 pb-1 pt-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-muted">{grp.label}</div>
+                <div className="px-3 pb-1 pt-2.5 text-2xs font-semibold uppercase tracking-[0.14em] text-ink-muted">{grp.label}</div>
                 {grp.items.map(it => {
                   const on = here?.item.key === it.key || (!here && it.key === active);
                   const n = railCount[it.key] ?? 0;
@@ -241,13 +246,13 @@ export function CommandShell({
                         on ? 'bg-surface-2 font-medium' : 'border-transparent text-ink-soft hover:bg-surface-2/50 hover:text-ink'
                       }`}
                       style={on ? { borderLeftColor: accent } : undefined}>
-                      <span aria-hidden className="relative grid h-5 w-5 shrink-0 place-items-center rounded-[3px] bg-surface-2 text-[10px] ring-1 ring-line"
+                      <span aria-hidden className="relative grid h-5 w-5 shrink-0 place-items-center rounded-[3px] bg-surface-2 text-2xs ring-1 ring-line"
                         style={on ? { color: accent } : { color: 'rgb(var(--c-ink-soft))' }}>
                         {it.icon}
                         {n > 0 ? <span className="absolute -right-1 -top-1 h-1.5 w-1.5 rounded-full" style={{ backgroundColor: n >= 4 ? TONE.alert : TONE.warn }} /> : null}
                       </span>
-                      <span className="min-w-0 flex-1 truncate text-[13px]" style={on ? { color: accent } : undefined}>{it.label}</span>
-                      {n > 0 ? <span className="shrink-0 rounded-[3px] px-1 text-[10px] font-bold tabular-nums" style={{ backgroundColor: `color-mix(in srgb, ${n >= 4 ? TONE.alert : TONE.warn} 14%, transparent)`, color: n >= 4 ? TONE.alert : TONE.warn }}>{n}</span> : null}
+                      <span className="min-w-0 flex-1 truncate text-compact" style={on ? { color: accent } : undefined}>{it.label}</span>
+                      {n > 0 ? <span className="shrink-0 rounded-[3px] px-1 text-2xs font-bold tabular-nums" style={{ backgroundColor: `color-mix(in srgb, ${n >= 4 ? TONE.alert : TONE.warn} 14%, transparent)`, color: n >= 4 ? TONE.alert : TONE.warn }}>{n}</span> : null}
                     </Link>
                   );
                 })}
@@ -258,16 +263,16 @@ export function CommandShell({
               if (dir.length === 0) return null;
               return (
                 <div className="mb-0.5">
-                  <div className="px-3 pb-1 pt-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-muted">Ministries · {dir.length}</div>
+                  <div className="px-3 pb-1 pt-2.5 text-2xs font-semibold uppercase tracking-[0.14em] text-ink-muted">Ministries · {dir.length}</div>
                   {dir.map(({ ministry: m, readiness: r }) => {
                     const c = r.deployable ? TONE.ok : TONE.warn;
                     return (
                       <Link key={m.id} href={`/gov/ministry/${m.id}`}
                         className="focus-ring flex items-center gap-2 border-l-2 border-transparent px-3 py-1 text-ink-muted no-underline transition-colors duration-150 hover:bg-surface-2/50 hover:text-ink">
-                        <span aria-hidden className="grid h-5 w-5 shrink-0 place-items-center rounded-[3px] bg-surface-2 text-[10px] ring-1 ring-line" style={{ color: c }}>▣</span>
+                        <span aria-hidden className="grid h-5 w-5 shrink-0 place-items-center rounded-[3px] bg-surface-2 text-2xs ring-1 ring-line" style={{ color: c }}>▣</span>
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-[12.5px]">{m.name}</span>
-                          <span className="block truncate text-[10px] text-ink-muted">{r.deployable ? 'Ready to operate' : 'Setting up'} · {r.total}% ready</span>
+                          <span className="block truncate text-compact">{m.name}</span>
+                          <span className="block truncate text-2xs text-ink-muted">{r.deployable ? 'Ready to operate' : 'Setting up'} · {r.total}% ready</span>
                         </span>
                         <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: c }} />
                       </Link>

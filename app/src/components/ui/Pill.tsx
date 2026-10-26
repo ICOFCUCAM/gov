@@ -9,9 +9,9 @@ export interface PillProps extends React.HTMLAttributes<HTMLSpanElement> {
 
 const toneClasses: Record<PillTone, string> = {
   neutral: 'bg-surface-2 text-ink-soft ring-1 ring-line',
-  ok: 'bg-ok/15 text-ok ring-1 ring-ok/30',
-  warn: 'bg-warn/15 text-warn ring-1 ring-warn/30',
-  alert: 'bg-alert/15 text-alert ring-1 ring-alert/30',
+  ok: 'bg-ok/10 text-ok ring-1 ring-ok/30',
+  warn: 'bg-warn/10 text-warn ring-1 ring-warn/30',
+  alert: 'bg-alert/10 text-alert ring-1 ring-alert/30',
 };
 
 export function Pill({ tone = 'neutral', className, ...props }: PillProps) {

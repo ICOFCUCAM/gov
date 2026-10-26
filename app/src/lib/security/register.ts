@@ -36,19 +36,24 @@ import { recordAccess } from '@/lib/records/access-log';
 import { accessBy } from '@/lib/records/access-by';
 import { roleOf, type CaseScope } from '@/lib/auth/roles';
 
-export type SecurityKind = 'incident' | 'vulnerability' | 'supplier' | 'exception' | 'exercise' | 'designation' | 'dependency' | 'risk' | 'plan' | 'clearance';
+export type SecurityKind = 'incident' | 'vulnerability' | 'supplier' | 'exception' | 'exercise' | 'designation' | 'dependency' | 'risk' | 'plan' | 'clearance'
+  // leftovers (plan I12): infrastructure incidents, essential service disruptions, resilience exceptions, information releases.
+  | 'infra-incident' | 'disruption' | 'resilience-exception' | 'release';
 export const KIND_LABEL: Record<SecurityKind, string> = {
   incident: 'National cyber incident', vulnerability: 'Vulnerability coordination', supplier: 'Supplier security assessment', exception: 'Security exception',
   exercise: 'Cyber exercise', designation: 'Critical infrastructure designation', dependency: 'Essential service dependency', risk: 'Critical infrastructure risk assessment',
   plan: 'Resilience plan', clearance: 'Security clearance (metadata)',
+  'infra-incident': 'Critical infrastructure incident', disruption: 'Essential service disruption', 'resilience-exception': 'Resilience exception', release: 'Release of critical infrastructure information',
 };
 /** The register each kind is a record of (catalogue Part 11 §9). */
 export const KIND_REGISTER: Record<SecurityKind, string> = {
   incident: 'REG-SEC-008', vulnerability: 'REG-SEC-009', supplier: 'REG-SEC-010', exception: 'REG-SEC-007', exercise: 'REG-SEC-013',
   designation: 'REG-SEC-011', dependency: 'REG-SEC-012', risk: 'REG-SEC-011', plan: 'REG-SEC-013', clearance: 'REG-SEC-005',
+  'infra-incident': 'REG-SEC-011', disruption: 'REG-SEC-011', 'resilience-exception': 'REG-SEC-007', release: 'REG-SEC-011',
 };
 const PREFIX: Record<SecurityKind, string> = {
   incident: 'CYI', vulnerability: 'VUL', supplier: 'SUP', exception: 'SEX', exercise: 'CEX', designation: 'CID', dependency: 'DEP', risk: 'RSK', plan: 'RPL', clearance: 'CLR',
+  'infra-incident': 'CII', disruption: 'DIS', 'resilience-exception': 'REX', release: 'REL',
 };
 /** The access-log register name of the security records. */
 export const SECURITY_REGISTER = 'security';
@@ -103,7 +108,7 @@ const today = (now: Date) => now.toISOString().slice(0, 10);
 
 /** A record's effective status: an exception or a clearance past its date reads as expired, never as current. */
 export function effectiveStatus(r: Pick<SecurityRecord, 'status' | 'validUntil' | 'kind'>, now = new Date()): string {
-  if ((r.kind === 'exception' || r.kind === 'clearance') && r.validUntil && ['approved', 'renewed', 'granted', 'varied'].includes(r.status) && r.validUntil < today(now)) return 'expired';
+  if ((r.kind === 'exception' || r.kind === 'clearance' || r.kind === 'resilience-exception') && r.validUntil && ['approved', 'renewed', 'granted', 'varied'].includes(r.status) && r.validUntil < today(now)) return 'expired';
   return r.status;
 }
 
@@ -192,6 +197,41 @@ export const securityRecordRaw = (number: string): SecurityRecord | undefined =>
 export const securityRecordOfCase = (caseId: string): SecurityRecord | undefined => { const r = db().records.find(x => x.case.id === caseId); return r ? clone(r) : undefined; };
 export const securityRecordsRaw = (filter: { kind?: SecurityKind; owner?: string } = {}): SecurityRecord[] =>
   db().records.filter(r => (!filter.kind || r.kind === filter.kind) && (!filter.owner || r.owner === filter.owner)).map(clone);
+
+/**
+ * One keeping institution's security registers as its portable export
+ * carries them (plan I9, integration register 25.16): an unmarked record in
+ * full (metadata only by construction), a marked record as a reference only
+ * (number, kind, register, case, status, dates): never its summary, terms,
+ * recipients or who needs to know it.
+ */
+export function portableSecurity(owner: string, now = new Date()): { records: SecurityRecord[]; references: (SecurityListing & { marking: 'marked' })[] } {
+  const mine = db().records.filter(r => r.owner === owner);
+  return {
+    records: mine.filter(r => !r.marking).map(clone),
+    references: mine.filter(r => !!r.marking).map(r => ({ ...listingOf(r, false, now), marking: 'marked' as const })),
+  };
+}
+
+/**
+ * The confirmed import of an institution's own export (lib/portability/import.ts:
+ * two officials, the export verified, none of its records already here): its
+ * unmarked records with their numbers and versions unchanged. A marked record
+ * travels as a reference only and is never restored here.
+ */
+export function restoreSecurityRecords(records: SecurityRecord[]): { restored: number } | { error: string } {
+  const d = db();
+  if (records.some(r => r.marking)) return { error: 'A marked security record is never carried by an export, so it is never imported' };
+  let n = 0;
+  for (const r of records) {
+    if (d.records.some(x => x.number === r.number)) continue;
+    d.records.push(clone(r));
+    const m = /^([A-Z]+)-\d{4}-(\d+)$/.exec(r.number);
+    if (m) d.seq[m[1]!] = Math.max(d.seq[m[1]!] ?? 0, Number(m[2]));
+    n++;
+  }
+  return { restored: n };
+}
 
 /** The clearance in force for an official account (granted, renewed or varied, not past its date), as the access rule needs it. */
 export function clearanceOf(officialId: string | undefined, now = new Date()): { number: string; level: string; validUntil: string } | null {

@@ -52,7 +52,7 @@ async function both(id: string, action: string, a: Actor, b: Actor, extra: Recor
 const ok = <T,>(r: T): Exclude<T, { error: unknown }> => { if (r && typeof r === 'object' && 'error' in r) throw new Error(String((r as { error: unknown }).error)); return r as Exclude<T, { error: unknown }>; };
 const LISTS: Record<string, string[]> = {
   'security.country.cyber_incident_categories': ['ransomware', 'service-disruption'], 'security.country.cyber_severity_scale': ['level-1', 'level-2', 'level-3'],
-  'security.country.infrastructure_sectors': ['energy', 'water'],
+  'security.country.infrastructure_sectors': ['energy', 'water'], 'security.country.infrastructure_incident_types': ['loss-of-supply', 'physical-damage'],
 };
 const nation = (p: Ref) => {
   const used = Object.keys(LISTS).filter(k => p.fields.some(f => f.valuesSource?.kind === 'configured' && f.valuesSource.list === k));
@@ -290,6 +290,61 @@ describe('security governance and resilience (I12)', () => {
     expect(securityRecordOfCase(risk.id)).toMatchObject({ status: 'accepted', validUntil: future(180) });
     // Only the keeping body works these cases: a ministry cannot.
     expect(await act(risk.id, { action: 'review', fields: { reviewNote: 'x' }, reason: 'x' }, min('m1', 'signatory'))).toHaveProperty('error');
+  });
+
+  // leftovers (plan I12): infrastructure incidents and disruptions, resilience exceptions, information release (SEC-INF-007, 009, 013, 016, CIP-INC-010).
+  it('works infrastructure incidents, disruptions, resilience exceptions and information releases: on a designation of the authority, two officials for every decision, a release only to a named institution', async () => {
+    const c = ok(openCase({ procedure: 'ci.designation', fields: { summary: 'Regional water treatment works', sector: 'water', service: 'Drinking water for the capital region', criteriaVersion: 'CI criteria 2026 v1' } }, cia('d1')));
+    await step(c.id, 'register', cia('d1'), { fields: { operator: MIN } });
+    doc(c.id, 'designation-assessment', cia('d1'));
+    await both(c.id, 'designate', cia('s1', 'signatory'), cia('s2', 'signatory'), { fields: { assessment: 'Meets criteria 1–3' }, reason: 'Critical to the region', citations: basis });
+    const des = securityRecordOfCase(c.id)!;
+
+    // An incident on designated infrastructure: only on a designation this authority made; no attribution field exists.
+    const inc = ok(openCase({ procedure: 'ci.incident', fields: { summary: 'Loss of supply at the works', designation: 'CID-NOT-THERE', occurredAt: '2026-10-20T06:00:00Z', serviceImpact: 'Two districts without water for six hours' } }, cia('i1')));
+    doc(inc.id, 'incident-notification', cia('i1'));
+    expect(await act(inc.id, { action: 'register' }, cia('i1'))).toMatchObject({ error: expect.stringMatching(/not a critical infrastructure designation of this authority/) });
+    await step(inc.id, 'register', cia('i1'), { fields: { designation: des.number } });
+    expect(securityRecordOfCase(inc.id)).toMatchObject({ kind: 'infra-incident', status: 'notified', number: expect.stringMatching(/^CII-/) });
+    await step(inc.id, 'triage', cia('i1'), { fields: { incidentType: 'loss-of-supply' }, reason: 'Pump failure reported by the operator' });
+    await step(inc.id, 'record-containment', cia('s1', 'signatory'), { fields: { containmentActions: 'Switched to the reserve pumps' }, reason: 'Approved by the duty officer' });
+    await step(inc.id, 'recover', cia('i1'), { fields: { serviceStatus: 'Normal supply', recoveryVerification: 'Pressure and quality sampled at both districts' }, reason: 'Restored' });
+    expect(await step(inc.id, 'close', cia('s1', 'signatory'), { fields: { correctiveActions: 'Second reserve pump by the operator' }, reason: 'Recovered and verified' })).toMatchObject({ pending: true });
+    expect(await act(inc.id, { action: 'close' }, cia('s1', 'signatory'))).toHaveProperty('error');
+    const closed = await step(inc.id, 'close', cia('s2', 'signatory'));
+    expect(getDecision(closed.decision!.id)!.content.officials.map(o => o.name)).toEqual(['Official s1', 'Official s2']);
+    expect(Object.keys(securityRecordOfCase(inc.id)!.terms).join(' ')).not.toMatch(/attribut|perpetrator|suspect|score/i);
+
+    // A disruption: reported, updated, restored, closed by two officials.
+    const dis = ok(openCase({ procedure: 'ci.disruption', fields: { summary: 'Reduced pressure in the east', designation: des.number, impact: 'Low pressure', period: { from: '2026-10-20', to: '2026-10-21' }, restoration: 'Valves being replaced' } }, cia('i1')));
+    await step(dis.id, 'register', cia('i1'));
+    await step(dis.id, 'update', cia('i1'), { fields: { restoration: 'Half the valves replaced' }, reason: 'Progress' });
+    await step(dis.id, 'restore', cia('i1'), { fields: { restoration: 'All valves replaced' }, reason: 'Restored' });
+    await both(dis.id, 'close', cia('s1', 'signatory'), cia('s2', 'signatory'), { reason: 'Restored and confirmed' });
+    expect(securityRecordOfCase(dis.id)).toMatchObject({ kind: 'disruption', status: 'closed' });
+
+    // A resilience exception: until a date two officials choose; read as expired after it.
+    const ex = ok(openCase({ procedure: 'ci.exception', fields: { summary: 'No second feed yet', designation: des.number, requirement: 'Two independent power feeds', justification: 'The second feed is under construction', compensatingMeasures: 'Generator on site, weekly test', requestedUntil: future(200) } }, cia('i1')));
+    doc(ex.id, 'exception-request', cia('i1'));
+    await step(ex.id, 'register', cia('i1'));
+    await both(ex.id, 'approve', cia('s1', 'signatory'), cia('s2', 'signatory'), { fields: { validUntil: future(180) }, reason: 'Compensating measures adequate' });
+    const rex = securityRecordOfCase(ex.id)!;
+    expect(rex).toMatchObject({ kind: 'resilience-exception', status: 'approved', validUntil: future(180) });
+    expect(effectiveStatus(rex, new Date(Date.now() + 200 * 86_400_000))).toBe('expired');
+
+    // An information release: never to the public; to a named institution, which then sees the recipient view only.
+    const rel = ok(openCase({ procedure: 'ci.release', fields: { summary: 'Incident summary for the water ministry', records: securityRecordOfCase(inc.id)!.number, purpose: 'Planning the second feed', withheld: 'Pump configuration and recovery procedure' } }, cia('i1')));
+    await step(rel.id, 'register', cia('i1'));
+    expect(await act(rel.id, { action: 'release', reason: 'Needed for planning' }, cia('s1', 'signatory'))).toMatchObject({ error: expect.stringMatching(/named institution|recipient/i) });
+    await step(rel.id, 'release', cia('s1', 'signatory'), { fields: { recipient: MIN }, reason: 'Needed for planning' });
+    const released = await step(rel.id, 'release', cia('s2', 'signatory'));
+    expect(released.case.stage).toBe('released');
+    const incRec = securityRecordOfCase(inc.id)!;
+    expect(incRec.recipients.map(r => r.institution)).toEqual([MIN]);
+    const rv = readSecurityRecord(incRec.number, viewer(min('m1', 'signatory')), { purpose: 'Planning the second feed', view: 'recipient' });
+    if ('error' in rv) throw new Error(rv.error);
+    expect(Object.keys(rv.record.terms).sort()).toEqual(['designation', 'incidentType', 'serviceImpact', 'containmentActions', 'serviceStatus'].filter(k => k in incRec.terms).sort());
+    expect(JSON.stringify(rv.record)).not.toMatch(/Second reserve pump|Pressure and quality sampled/);
   });
 
   it('refuses every security decision in production while no approved mapping covers it', async () => {

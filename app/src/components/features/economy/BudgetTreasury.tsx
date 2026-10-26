@@ -13,6 +13,8 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { Section } from '@/components/ui/DataSystem';
+import { SignalTag } from '@/components/ui/SignalTag';
+import { LoadingState } from '@/components/ui/States';
 import { ServicesPanel, money, day } from './ServicesPanel';
 
 type Who = { id?: string; name: string };
@@ -39,7 +41,7 @@ interface View {
 
 const th = 'px-2 py-1 text-left font-medium';
 const td = 'px-2 py-1 align-top';
-const Sample = ({ on }: { on?: true }) => (on ? <span className="ml-1 rounded border border-line px-1 text-[10px] uppercase">Sample</span> : null);
+const Sample = ({ on }: { on?: true }) => (on ? <SignalTag kind="sample" source="a demonstration record" className="ml-1" /> : null);
 const stepLine = (label: string, s?: Step, extra?: string) => (s ? <li><span className="font-medium">{label}</span> · {s.by.name} · {day(s.at)}{extra ? ` · ${extra}` : ''}</li> : <li className="text-ink-muted">{label} · not yet</li>);
 
 export function BudgetTreasury() {
@@ -51,7 +53,7 @@ export function BudgetTreasury() {
   const name = (id: string) => v?.names[id] ?? id;
   return (
     <div className="space-y-5 p-4">
-      <h1 className="text-xl font-semibold">Budget and treasury</h1>
+      <h2 className="text-xl font-semibold">Budget and treasury</h2>
       <p className="max-w-3xl text-sm text-ink-muted">
         The budget and the money it allows, as the finance register holds them: appropriations the law makes, released for commitment; commitments against
         what is available; payments verified, approved by two officials, executed with the bank&apos;s own reference and reconciled against the statement, each
@@ -59,6 +61,7 @@ export function BudgetTreasury() {
         page is read. Changes are steps of a case: <Link className="underline" href="/gov/work/cases/open">Cases</Link>.
       </p>
       {msg ? <p role="alert" className="text-sm text-alert">{msg}</p> : null}
+      {!v && !msg ? <LoadingState label="Loading budget and treasury" /> : null}
       {v ? (
         <p className="text-sm">
           Kept by {v.authority ? <strong>{v.authority.name}</strong> : <span className="text-alert">no finance authority named yet</span>} (<Link className="underline" href="/gov/configuration/responsible#who-is-responsible">Who is responsible</Link>) ·
