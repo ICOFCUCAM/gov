@@ -1,0 +1,342 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "LRG-SVC-014",
+ "record_type": "lg.complaint",
+ "form_version": 1,
+ "procedure_package_id": "lg.complaint",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-DAT-001: retention and disclosure of the case and its personal data."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+  "id": "LRG-SVC-014",
+  "part": 19,
+  "section": "19.1",
+  "line": 878,
+  "batch": 10
+ },
+ "library": {
+  "title": "Make a local complaint or grievance",
+  "intro": "Complain to your local government. The complaint is recorded with its place, examined and closed by an official who can sign, with reasons.",
+  "owner": "institution",
+  "filled_by": "Anyone; an official of the local government at an office.",
+  "authority": "Each local government's own: filed with the local government (an institution of standing subnational) that adopted the procedure; never the whole government's.",
+  "procedure": {
+   "key": "lg.complaint",
+   "stage": "received",
+   "action": "triage",
+   "document": "evidence"
+  },
+  "lists": {
+   "localgov.contact_channels": {
+    "values": [
+     {
+      "value": "email",
+      "label": "Email"
+     },
+     {
+      "value": "phone",
+      "label": "Telephone"
+     },
+     {
+      "value": "post",
+      "label": "Post"
+     },
+     {
+      "value": "in-person",
+      "label": "In person"
+     }
+    ],
+    "proposed": true
+   },
+   "localgov.urgencies": {
+    "values": [
+     {
+      "value": "routine",
+      "label": "Routine"
+     },
+     {
+      "value": "urgent",
+      "label": "Urgent"
+     },
+     {
+      "value": "emergency",
+      "label": "Emergency"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "institution-owned",
+    "what": "The owner is each local government itself (an institution of standing subnational): it adopts the procedure as its own (lg.<template>.<institution>), drafted by one of its officials and approved by another",
+    "why": "Local and regional authorities have their own institutional scope, records and delegated powers; the whole government reaches them only under an approved relationship.",
+    "rule": "lib/localgov/procedures.ts installLocalGovernmentProcedures(); lib/auth/roles.ts Boundaries.subnational"
+   },
+   {
+    "id": "two-officials",
+    "what": "Every registration and decision is proposed by one official and confirmed by a different person; the official who verified or reviewed does not decide",
+    "why": "Catalogue Part 8 §3.3 and Part 9 §5: dual control by distinct authorised individuals.",
+    "rule": "lib/casework/engine.ts act() (fourEyes, distinctFrom); lib/data/dual-control.ts dualControlRefusal()"
+   },
+   {
+    "id": "no-ai-decision",
+    "what": "No step is decided by a model, a score or a map: officials decide with reasons",
+    "why": "AI never makes a legally material decision.",
+    "rule": "CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   },
+   {
+    "id": "place-from-map",
+    "what": "A place is a position checked against the nation's map (region and district derived, never typed) or one of the nation's regions",
+    "why": "Maps draw only from recorded places.",
+    "rule": "lib/data/facilities.ts placePoint(); CLAUDE.md incident places"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 878,
+    "quotes": [
+     "LRG-SVC-014",
+     "Local complaint and grievance"
+    ],
+    "met_by": {
+     "fields": [
+      "service.code",
+      "service.description"
+     ],
+     "procedure": "triage"
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "service.requester",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.person",
+   "personal_data_class": "personal",
+   "evidence": [],
+   "label": {
+    "en": "You (your reference in the civil register), if you want a reply"
+   },
+   "error_text": {
+    "en": {
+     "reference_exists": "There is no record with that reference in the register."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "You"
+   }
+  },
+  {
+   "id": "service.code",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "localgov.local.services",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Service concerned"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter service concerned.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": "The local government's own list of services; none ship"
+  },
+  {
+   "id": "service.location",
+   "type": "place",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Where (a position on the map or a region)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter where (a position on the map or a region)."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "service.description",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 8000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "What happened, and what you ask"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter what happened, and what you ask.",
+     "length": "What happened, and what you ask is too long."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "service.evidence",
+   "type": "document",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "evidence",
+     "when": "when_the_form_asks_for_it"
+    }
+   ],
+   "label": {
+    "en": "Photographs or documents"
+   },
+   "country_decision": null,
+   "multiple": true
+  },
+  {
+   "id": "service.contact_channel",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "localgov.contact_channels",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "How to reply"
+   },
+   "error_text": {
+    "en": {
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "service.urgency",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "localgov.urgencies",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Urgency"
+   },
+   "error_text": {
+    "en": {
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "only": [
+    "declaration.text_version",
+    "declaration.confirmed",
+    "declaration.signed_at"
+   ],
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "service.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

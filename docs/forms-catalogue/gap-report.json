@@ -103,6 +103,42 @@
   "app/src/lib/forms/library/catalogue-contracts/HLT-PH-011.json": "cb88295ea187625fd5358dd3e81ddec7e7ea3a240fa46ce4c827b2a1f7d65219",
   "app/src/lib/forms/library/catalogue-contracts/HLT-PH-014.json": "f181f44183fec28302c16f76c793ced922f025f0a1757402af803b862cff56a7",
   "app/src/lib/forms/library/catalogue-contracts/HLT-PH-015.json": "acd15ff6e03ed58316fe44023af80ee787658d4c6fc83e9baf9179d4d799a046",
+  "app/src/lib/forms/library/catalogue-contracts/HPC-BLD-014.json": "56d3775ef6f4928a92ca6f28757c3e1f9b86403d5e123e759596938ba7335110",
+  "app/src/lib/forms/library/catalogue-contracts/HPC-BLD-015.json": "1c369cf6785d7b562250ec7419fa19e26c8f11867b5532a7d56897fe867f04f4",
+  "app/src/lib/forms/library/catalogue-contracts/HPC-BLD-016.json": "95f73f0df2164f82ccc50db9ddfda11ffcdbcac4de01dd3863108fc9aca65620",
+  "app/src/lib/forms/library/catalogue-contracts/HPC-BLD-017.json": "b93b91a0b6edf285f1b56c7f47b6e6062cfde026dddd7df594e37c1ff09f73aa",
+  "app/src/lib/forms/library/catalogue-contracts/HPC-BLD-018.json": "103328baf66b73e9421d37df00a4ea13199a668bcffe3433114419c05589a7ee",
+  "app/src/lib/forms/library/catalogue-contracts/HPC-BLD-019.json": "5813a5e78c3a2f19aeba1324830ec5996857b04b7300e52df6b7ecdad37d0746",
+  "app/src/lib/forms/library/catalogue-contracts/HPC-BLD-020.json": "6176cd40e5779326702d78a7cfed3de0ec3a173c7a0b8ddfe9ea11f4a1afd4c2",
+  "app/src/lib/forms/library/catalogue-contracts/HPC-HOU-001.json": "30ebec32b69a63002f4e9c3c65a108f44554663ec24c8de801955cad2f76d850",
+  "app/src/lib/forms/library/catalogue-contracts/HPC-HOU-002.json": "6a0a6395035ec9fe7be85ca37dda4715cdea518ac25dbfc769036482b6429677",
+  "app/src/lib/forms/library/catalogue-contracts/HPC-HOU-003.json": "52649a64acc8e63d1a28267ded24a6450899432a25751eaaadfd7363b34369ae",
+  "app/src/lib/forms/library/catalogue-contracts/HPC-HOU-004.json": "4fe324cf0930e197249cb5b9020e19f25704296955432841d71fc2b130d81ca9",
+  "app/src/lib/forms/library/catalogue-contracts/HPC-PLN-009.json": "d8947189d5e1287950cef94c3576958f4d2d5a28df32ef219aefac34673114ea",
+  "app/src/lib/forms/library/catalogue-contracts/HPC-PLN-012.json": "3329716689c18360e744abb68762c60e278e56f9404699d78d0b814937be065e",
+  "app/src/lib/forms/library/catalogue-contracts/HPC-PLN-013.json": "959b43e79b84d2d1fd510f8413daddb1bf2cebfcac2bf514bc875bcd2dd74600",
+  "app/src/lib/forms/library/catalogue-contracts/LND-REG-005.json": "62edc0bd842b6c9e921cd114a27411f713bbbc34764de7f2bc3b11612af7a1e5",
+  "app/src/lib/forms/library/catalogue-contracts/LND-REG-007.json": "f7283bcf2ea8cdcf3a6eb026100068e8e1f83e63af94756ee7bd439acfe6c60e",
+  "app/src/lib/forms/library/catalogue-contracts/LND-REG-008.json": "cb9743a1d575e90119718088db1405b281fbadf45de6de0c59b7369eebdbf6b5",
+  "app/src/lib/forms/library/catalogue-contracts/LND-REG-009.json": "56cd9588c39c60bf6aee2c5fe7c887e771075a1088d84f361b67f684cc814eda",
+  "app/src/lib/forms/library/catalogue-contracts/LND-REG-010.json": "a0bc0d7c0ebf7dc1a2e1ce931eafe84c6c1e91b6caf014968e3a2d34972842c5",
+  "app/src/lib/forms/library/catalogue-contracts/LND-REG-011.json": "5aecfeac75f17cb2bb7cb0d7d575809afba84185d8dc602a7d0eef464b40a08e",
+  "app/src/lib/forms/library/catalogue-contracts/LND-REG-012.json": "49a260f49b9da7bbf9b3404e09ea4a976bf23a338ee335a154bc2e6741c9dd10",
+  "app/src/lib/forms/library/catalogue-contracts/LND-REG-016.json": "b2191287b4f4329046ffdaa64fe9f0b32613c4ef843106d3349c152031339680",
+  "app/src/lib/forms/library/catalogue-contracts/LND-REG-017.json": "e0359802066902953f2d0b35cd29ff318d44453202b5ce090b6983007e7f2bde",
+  "app/src/lib/forms/library/catalogue-contracts/LND-REG-020.json": "0b8fcea964c26957be61cbc4cf5d5e4eb67fac01e07bfede9989171bce4775f3",
+  "app/src/lib/forms/library/catalogue-contracts/LND-REG-021.json": "655639de3f592c9c23cfd5bda06ab84b70788944c044bf92e4ca0531c0e31c88",
+  "app/src/lib/forms/library/catalogue-contracts/LND-REG-022.json": "826427bde83d2b5e5ec28ed6621021fc108333e8314128031445479256a98326",
+  "app/src/lib/forms/library/catalogue-contracts/LRG-FIN-008.json": "f289d5c42bbd85262bc07ea2188d881ab261e0d1978b6494f2ef48138707c685",
+  "app/src/lib/forms/library/catalogue-contracts/LRG-ORG-004.json": "9df56e916c263d5dc2433f782d47ff036db9fc9816cbae9b38e2cd7702236b86",
+  "app/src/lib/forms/library/catalogue-contracts/LRG-ORG-005.json": "0419c72894e0be1929206d598df4b38e7986de92cc1736a98f1623b02780fde4",
+  "app/src/lib/forms/library/catalogue-contracts/LRG-SVC-013.json": "7d1352c1ff50a4d4ff93baab2ac5413d9afbb00b442099d293ad43a9284c9bd9",
+  "app/src/lib/forms/library/catalogue-contracts/LRG-SVC-014.json": "140eaa7407f4ad9c82a1d2dd24204ba6c3f3311e8d0b28ad15188db2b51501c3",
+  "app/src/lib/forms/library/catalogue-contracts/TRN-DRV-001.json": "38b49afe3ba001635b3c8f6ce47a1dc3e5640cce6dcf5639d4d587d1c73f13d4",
+  "app/src/lib/forms/library/catalogue-contracts/TRN-OPS-001.json": "77fc627396f5d5e234fe2ae9831cdd2f5cae182cffdd92ffa9fb50ae47a847d9",
+  "app/src/lib/forms/library/catalogue-contracts/TRN-ROAD-002.json": "8839bdc25b3187472b46543ca48ccb9d4865a671975f134c80c79be413537f74",
+  "app/src/lib/forms/library/catalogue-contracts/TRN-VEH-001.json": "2c3498fefb5429331f6fbe564bdca4bd8c24341a1a548c8c941c6534563cb78c",
+  "app/src/lib/forms/library/catalogue-contracts/TRN-VEH-002.json": "f352bf65dae18f2a291e6875a52c3c5dc5601bc15493da9422c7f9530ae74cdf",
   "app/src/lib/forms/library/catalogue-contracts/tax.appeal.response.json": "3c9219a54f9f430a0b66519cb8d641c523958f1331ea261d6a9870869246f3d3",
   "app/src/lib/forms/library/catalogue-contracts/tax.appeal.submit.json": "bb7829a3409adfb0e6c2e3697f3e38438268f7c96e5e2491805cce95af526db2",
   "app/src/lib/forms/library/catalogue-contracts/tax.appeal.transmit.json": "04158448b47cd76d7022b8f3bc8a567c33c2bcba381b3e9b8bad3754ba5791eb",
@@ -273,8 +309,8 @@
   "Part 13 (supplement, Stage B contracts)": 10
  },
  "form_status": {
-  "contract_missing": 1511,
-  "contract_draft": 341,
+  "contract_missing": 1484,
+  "contract_draft": 368,
   "under_review": 91,
   "excluded": 128,
   "blocked": 1
@@ -296,10 +332,10 @@
    "LAB-EMP-001"
   ]
  },
- "forms_without_contract": 1715,
+ "forms_without_contract": 1688,
  "library_contracts": {
-  "total": 219,
-  "matched_to_one_form": 219,
+  "total": 255,
+  "matched_to_one_form": 255,
   "unmatched_or_ambiguous": [],
   "batches": [
    {
@@ -2329,6 +2365,338 @@
     "form_status": {
      "contract_draft": 7
     }
+   },
+   {
+    "batch": 10,
+    "contracts": [
+     {
+      "id": "HPC-BLD-014",
+      "identity": "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HPC-BLD-014@1",
+      "row": "HPC-BLD-014",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HPC-BLD-014.json",
+      "fields": 13,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HPC-BLD-015",
+      "identity": "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HPC-BLD-015@1",
+      "row": "HPC-BLD-015",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HPC-BLD-015.json",
+      "fields": 4,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HPC-BLD-016",
+      "identity": "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HPC-BLD-016@1",
+      "row": "HPC-BLD-016",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HPC-BLD-016.json",
+      "fields": 5,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HPC-BLD-017",
+      "identity": "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HPC-BLD-017@1",
+      "row": "HPC-BLD-017",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HPC-BLD-017.json",
+      "fields": 4,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HPC-BLD-018",
+      "identity": "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HPC-BLD-018@1",
+      "row": "HPC-BLD-018",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HPC-BLD-018.json",
+      "fields": 10,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HPC-BLD-019",
+      "identity": "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HPC-BLD-019@1",
+      "row": "HPC-BLD-019",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HPC-BLD-019.json",
+      "fields": 5,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HPC-BLD-020",
+      "identity": "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HPC-BLD-020@1",
+      "row": "HPC-BLD-020",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HPC-BLD-020.json",
+      "fields": 10,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HPC-HOU-001",
+      "identity": "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HPC-HOU-001@1",
+      "row": "HPC-HOU-001",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HPC-HOU-001.json",
+      "fields": 7,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HPC-HOU-002",
+      "identity": "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HPC-HOU-002@1",
+      "row": "HPC-HOU-002",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HPC-HOU-002.json",
+      "fields": 11,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HPC-HOU-003",
+      "identity": "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HPC-HOU-003@1",
+      "row": "HPC-HOU-003",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HPC-HOU-003.json",
+      "fields": 7,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HPC-HOU-004",
+      "identity": "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HPC-HOU-004@1",
+      "row": "HPC-HOU-004",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HPC-HOU-004.json",
+      "fields": 5,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HPC-PLN-009",
+      "identity": "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HPC-PLN-009@1",
+      "row": "HPC-PLN-009",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HPC-PLN-009.json",
+      "fields": 13,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HPC-PLN-012",
+      "identity": "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HPC-PLN-012@1",
+      "row": "HPC-PLN-012",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HPC-PLN-012.json",
+      "fields": 5,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "HPC-PLN-013",
+      "identity": "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:HPC-PLN-013@1",
+      "row": "HPC-PLN-013",
+      "file": "app/src/lib/forms/library/catalogue-contracts/HPC-PLN-013.json",
+      "fields": 8,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "LND-REG-005",
+      "identity": "PARTS-08-11:LND-REG-005@1",
+      "row": "LND-REG-005",
+      "file": "app/src/lib/forms/library/catalogue-contracts/LND-REG-005.json",
+      "fields": 11,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "LND-REG-007",
+      "identity": "PARTS-08-11:LND-REG-007@1",
+      "row": "LND-REG-007",
+      "file": "app/src/lib/forms/library/catalogue-contracts/LND-REG-007.json",
+      "fields": 20,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "LND-REG-008",
+      "identity": "PARTS-08-11:LND-REG-008@1",
+      "row": "LND-REG-008",
+      "file": "app/src/lib/forms/library/catalogue-contracts/LND-REG-008.json",
+      "fields": 17,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "LND-REG-009",
+      "identity": "PARTS-08-11:LND-REG-009@1",
+      "row": "LND-REG-009",
+      "file": "app/src/lib/forms/library/catalogue-contracts/LND-REG-009.json",
+      "fields": 17,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "LND-REG-010",
+      "identity": "PARTS-08-11:LND-REG-010@1",
+      "row": "LND-REG-010",
+      "file": "app/src/lib/forms/library/catalogue-contracts/LND-REG-010.json",
+      "fields": 13,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "LND-REG-011",
+      "identity": "PARTS-08-11:LND-REG-011@1",
+      "row": "LND-REG-011",
+      "file": "app/src/lib/forms/library/catalogue-contracts/LND-REG-011.json",
+      "fields": 17,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "LND-REG-012",
+      "identity": "PARTS-08-11:LND-REG-012@1",
+      "row": "LND-REG-012",
+      "file": "app/src/lib/forms/library/catalogue-contracts/LND-REG-012.json",
+      "fields": 17,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "LND-REG-016",
+      "identity": "PARTS-08-11:LND-REG-016@1",
+      "row": "LND-REG-016",
+      "file": "app/src/lib/forms/library/catalogue-contracts/LND-REG-016.json",
+      "fields": 16,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "LND-REG-017",
+      "identity": "PARTS-08-11:LND-REG-017@1",
+      "row": "LND-REG-017",
+      "file": "app/src/lib/forms/library/catalogue-contracts/LND-REG-017.json",
+      "fields": 11,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "LND-REG-020",
+      "identity": "PARTS-08-11:LND-REG-020@1",
+      "row": "LND-REG-020",
+      "file": "app/src/lib/forms/library/catalogue-contracts/LND-REG-020.json",
+      "fields": 17,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "LND-REG-021",
+      "identity": "PARTS-08-11:LND-REG-021@1",
+      "row": "LND-REG-021",
+      "file": "app/src/lib/forms/library/catalogue-contracts/LND-REG-021.json",
+      "fields": 13,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "LND-REG-022",
+      "identity": "PARTS-08-11:LND-REG-022@1",
+      "row": "LND-REG-022",
+      "file": "app/src/lib/forms/library/catalogue-contracts/LND-REG-022.json",
+      "fields": 11,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "LRG-FIN-008",
+      "identity": "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LRG-FIN-008@1",
+      "row": "LRG-FIN-008",
+      "file": "app/src/lib/forms/library/catalogue-contracts/LRG-FIN-008.json",
+      "fields": 10,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "LRG-ORG-004",
+      "identity": "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LRG-ORG-004@1",
+      "row": "LRG-ORG-004",
+      "file": "app/src/lib/forms/library/catalogue-contracts/LRG-ORG-004.json",
+      "fields": 5,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "LRG-ORG-005",
+      "identity": "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LRG-ORG-005@1",
+      "row": "LRG-ORG-005",
+      "file": "app/src/lib/forms/library/catalogue-contracts/LRG-ORG-005.json",
+      "fields": 12,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "LRG-SVC-013",
+      "identity": "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LRG-SVC-013@1",
+      "row": "LRG-SVC-013",
+      "file": "app/src/lib/forms/library/catalogue-contracts/LRG-SVC-013.json",
+      "fields": 11,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "LRG-SVC-014",
+      "identity": "SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:LRG-SVC-014@1",
+      "row": "LRG-SVC-014",
+      "file": "app/src/lib/forms/library/catalogue-contracts/LRG-SVC-014.json",
+      "fields": 11,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "TRN-DRV-001",
+      "identity": "PARTS-08-11:TRN-DRV-001@1",
+      "row": "TRN-DRV-001",
+      "file": "app/src/lib/forms/library/catalogue-contracts/TRN-DRV-001.json",
+      "fields": 9,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "TRN-OPS-001",
+      "identity": "PARTS-08-11:TRN-OPS-001@1",
+      "row": "TRN-OPS-001",
+      "file": "app/src/lib/forms/library/catalogue-contracts/TRN-OPS-001.json",
+      "fields": 10,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "TRN-ROAD-002",
+      "identity": "PARTS-08-11:TRN-ROAD-002@1",
+      "row": "TRN-ROAD-002",
+      "file": "app/src/lib/forms/library/catalogue-contracts/TRN-ROAD-002.json",
+      "fields": 11,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "TRN-VEH-001",
+      "identity": "PARTS-08-11:TRN-VEH-001@1",
+      "row": "TRN-VEH-001",
+      "file": "app/src/lib/forms/library/catalogue-contracts/TRN-VEH-001.json",
+      "fields": 11,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "TRN-VEH-002",
+      "identity": "PARTS-08-11:TRN-VEH-002@1",
+      "row": "TRN-VEH-002",
+      "file": "app/src/lib/forms/library/catalogue-contracts/TRN-VEH-002.json",
+      "fields": 7,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     }
+    ],
+    "form_status": {
+     "contract_draft": 36
+    }
    }
   ],
   "form_status_without_library": {
@@ -2388,6 +2756,13 @@
     "under_review": 91,
     "excluded": 128,
     "blocked": 1
+   },
+   "10": {
+    "contract_missing": 1484,
+    "contract_draft": 368,
+    "under_review": 91,
+    "excluded": 128,
+    "blocked": 1
    }
   },
   "forms_without_contract_after_batch": {
@@ -2397,7 +2772,8 @@
    "4": 1850,
    "5": 1817,
    "6": 1722,
-   "7": 1715
+   "7": 1715,
+   "10": 1688
   }
  },
  "incomplete_contracts": [

@@ -9,21 +9,21 @@
 // (reason), withdraw (reason). Each under the verified name, by those the
 // rules allow, audited without holders' names.
 import { NextRequest, NextResponse } from 'next/server';
-import { actOnParcel, getParcel, parcelPolicy, viewParcel, type ParcelAction } from '@/lib/data/parcels';
+import { actOnParcel, getParcel, parcelPolicy, rightsKeepers, viewParcel, type ParcelAction } from '@/lib/data/parcels';
 import { currentOfficial, refusal, withOfficial, actorLabel } from '@/lib/auth/official';
 import { canCertifyParcel, canRecordParcel, canSeeParcelRights } from '@/lib/auth/roles';
 import { recordAccess } from '@/lib/records/access-log';
 import { accessBy } from '@/lib/records/access-by';
 export const dynamic = 'force-dynamic';
 
-const seesRights = async () => { const o = await currentOfficial(); return !!o && !canSeeParcelRights(o, parcelPolicy().authorityId); };
+const seesRights = async () => { const o = await currentOfficial(); return !!o && !canSeeParcelRights(o, rightsKeepers()); };
 
 export async function GET(_r: NextRequest, props: { params: Promise<{ pid: string }> }) {
   const params = await props.params;
   const p = getParcel(decodeURIComponent(params.pid));
   if (!p) return NextResponse.json({ error: 'No such parcel' }, { status: 404 });
   const o = await currentOfficial();
-  const rights = !!o && !canSeeParcelRights(o, parcelPolicy().authorityId);
+  const rights = !!o && !canSeeParcelRights(o, rightsKeepers());
   // Rights and holders are personal data: a read that returns them is written to the access log (baseline audit §3.3).
   if (o && rights) recordAccess({ ...accessBy({ id: o.sub, label: actorLabel(o), institution: o.institution }), record: { register: 'parcels', id: p.id }, action: 'view', result: 'allowed', rule: 'rights and holders (canSeeParcelRights)' });
   return NextResponse.json({ parcel: viewParcel(p, { rights }) });

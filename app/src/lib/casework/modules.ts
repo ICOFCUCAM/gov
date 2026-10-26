@@ -17,6 +17,13 @@ import '@/lib/health/products/procedures';
 import '@/lib/health/programmes/procedures';
 import '@/lib/health/complaints/procedures';
 import '@/lib/oversight/procedures';
+// Territory and infrastructure (plan I7): the land registry's dealings and disputes.
+import '@/lib/land/procedures';
+import '@/lib/building/procedures';
+import '@/lib/housing/procedures';
+// Local and regional government (plan I7): each local government's own procedures, adopted from templates on request.
+import '@/lib/localgov/procedures';
+import '@/lib/transport/procedures';
 // Internal administration (plan I2): each institution's own procedures, drafted from templates on request.
 import '@/lib/administration/procedures';
 // The decision guard: every decision rests on a named authority (lib/permits/decisions.ts).
@@ -41,6 +48,10 @@ import { installProductProcedures } from '@/lib/health/products/procedures';
 import { installProgrammeProcedures } from '@/lib/health/programmes/procedures';
 import { installComplaintProcedures } from '@/lib/health/complaints/procedures';
 import { installOversightProcedures } from '@/lib/oversight/procedures';
+import { installLandProcedures } from '@/lib/land/procedures';
+import { installBuildingProcedures } from '@/lib/building/procedures';
+import { installHousingProcedures } from '@/lib/housing/procedures';
+import { installTransportProcedures } from '@/lib/transport/procedures';
 export { REFERENCE_PROCEDURES } from '@/lib/civil/procedures';
 export { ORGANISATION_PROCEDURES } from '@/lib/organisations/procedures';
 export { IMMIGRATION_PROCEDURES } from '@/lib/immigration/procedures';
@@ -55,9 +66,13 @@ export { PRODUCT_PROCEDURES } from '@/lib/health/products/procedures';
 export { PROGRAMME_PROCEDURES } from '@/lib/health/programmes/procedures';
 export { COMPLAINT_PROCEDURES } from '@/lib/health/complaints/procedures';
 export { INDEPENDENT_OVERSIGHT_PROCEDURES } from '@/lib/oversight/procedures';
+export { LAND_PROCEDURES } from '@/lib/land/procedures';
+export { BUILDING_PROCEDURES } from '@/lib/building/procedures';
+export { HOUSING_PROCEDURES } from '@/lib/housing/procedures';
+export { TRANSPORT_PROCEDURES } from '@/lib/transport/procedures';
 
-/** Draft every reference procedure (civil registration, organisations, immigration, police intake, courts, tax, education, professions, health, customs, medicines and devices, public-health programmes, health complaints, independent oversight) the installation does not have yet. */
+/** Draft every reference procedure (civil registration, organisations, immigration, police intake, courts, tax, education, professions, health, customs, medicines and devices, public-health programmes, health complaints, independent oversight, land dealings and disputes, planning and building control, housing, transport) the installation does not have yet. */
 export function installReferenceProcedures(by: string): { drafted: string[]; present: string[] } {
-  const all = [installCivil(by), installOrganisationProcedures(by), installImmigrationProcedures(by), installPoliceProcedures(by), installCourtProcedures(by), installTaxProcedures(by), installEducationProcedures(by), installProfessionProcedures(by), installHealthProcedures(by), installCustomsProcedures(by), installProductProcedures(by), installProgrammeProcedures(by), installComplaintProcedures(by), installOversightProcedures(by)];
+  const all = [installCivil(by), installOrganisationProcedures(by), installImmigrationProcedures(by), installPoliceProcedures(by), installCourtProcedures(by), installTaxProcedures(by), installEducationProcedures(by), installProfessionProcedures(by), installHealthProcedures(by), installCustomsProcedures(by), installProductProcedures(by), installProgrammeProcedures(by), installComplaintProcedures(by), installOversightProcedures(by), installLandProcedures(by), installBuildingProcedures(by), installHousingProcedures(by), installTransportProcedures(by)];
   return { drafted: all.flatMap(x => x.drafted), present: all.flatMap(x => x.present) };
 }

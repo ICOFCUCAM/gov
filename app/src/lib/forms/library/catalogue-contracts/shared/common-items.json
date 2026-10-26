@@ -219,7 +219,43 @@
   "DEM-CON-018",
   "DEM-CON-019",
   "DEM-CON-020",
-  "DEM-PUB-009"
+  "DEM-PUB-009",
+  "LND-REG-007",
+  "LND-REG-012",
+  "LND-REG-008",
+  "LND-REG-009",
+  "LND-REG-011",
+  "LND-REG-020",
+  "LND-REG-010",
+  "LND-REG-021",
+  "LND-REG-016",
+  "LND-REG-005",
+  "LND-REG-017",
+  "LND-REG-022",
+  "HPC-HOU-001",
+  "HPC-HOU-002",
+  "HPC-HOU-003",
+  "HPC-HOU-004",
+  "HPC-PLN-009",
+  "HPC-PLN-012",
+  "HPC-PLN-013",
+  "HPC-BLD-014",
+  "HPC-BLD-015",
+  "HPC-BLD-016",
+  "HPC-BLD-017",
+  "HPC-BLD-018",
+  "HPC-BLD-019",
+  "HPC-BLD-020",
+  "LRG-ORG-005",
+  "LRG-ORG-004",
+  "LRG-FIN-008",
+  "LRG-SVC-013",
+  "LRG-SVC-014",
+  "TRN-DRV-001",
+  "TRN-VEH-001",
+  "TRN-VEH-002",
+  "TRN-ROAD-002",
+  "TRN-OPS-001"
  ],
  "groups": {
   "health": [
@@ -450,6 +486,50 @@
    "DEM-CON-019",
    "DEM-CON-020",
    "DEM-PUB-009"
+  ],
+  "land": [
+   "LND-REG-007",
+   "LND-REG-012",
+   "LND-REG-008",
+   "LND-REG-009",
+   "LND-REG-011",
+   "LND-REG-020",
+   "LND-REG-010",
+   "LND-REG-021",
+   "LND-REG-016",
+   "LND-REG-005",
+   "LND-REG-017",
+   "LND-REG-022"
+  ],
+  "hpc": [
+   "HPC-HOU-001",
+   "HPC-HOU-002",
+   "HPC-HOU-003",
+   "HPC-HOU-004",
+   "HPC-PLN-009",
+   "HPC-PLN-012",
+   "HPC-PLN-013",
+   "HPC-BLD-014",
+   "HPC-BLD-015",
+   "HPC-BLD-016",
+   "HPC-BLD-017",
+   "HPC-BLD-018",
+   "HPC-BLD-019",
+   "HPC-BLD-020"
+  ],
+  "lrg": [
+   "LRG-ORG-005",
+   "LRG-ORG-004",
+   "LRG-FIN-008",
+   "LRG-SVC-013",
+   "LRG-SVC-014"
+  ],
+  "trn": [
+   "TRN-DRV-001",
+   "TRN-VEH-001",
+   "TRN-VEH-002",
+   "TRN-ROAD-002",
+   "TRN-OPS-001"
   ]
  },
  "items": [
@@ -2829,6 +2909,467 @@
     }
    },
    "for": "adm"
+  },
+  {
+   "for": "land",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 24,
+   "quotes": [
+    "The central principle is rights and resource decisions must be traceable to lawful authority and verified evidence.",
+    "A land application is not proof of ownership; a permit application is not permission to operate; a satellite image is not, by itself, proof of a legal violation.",
+    "CivicOS must distinguish reported information, verified observations, technical assessments, and legally authorized decisions."
+   ],
+   "met_by": {
+    "deviation": "rights-on-parcel",
+    "platform": {
+     "file": "app/src/lib/land/procedures.ts",
+     "how": "An application opens a case; nothing is registered until two officials decide on verified evidence"
+    }
+   }
+  },
+  {
+   "for": "land",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 30,
+   "quotes": [
+    "Land registry and cadastre",
+    "Parcels, boundaries, recorded interests, and authorized changes",
+    "Registry entries change only through lawful procedures"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/land/procedures.ts",
+     "how": "The land registry the nation names keeps registered interests; they change only through its procedures' effects"
+    }
+   }
+  },
+  {
+   "for": "land",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 31,
+   "quotes": [
+    "Survey and mapping authority",
+    "Survey standards, cadastral mapping, and geospatial records",
+    "Map evidence does not independently determine legal title"
+   ],
+   "met_by": {
+    "deviation": "rights-on-parcel",
+    "platform": {
+     "file": "app/src/lib/data/parcels.ts",
+     "how": "The spatial unit is the cadastre authority's; a map feature never changes a right"
+    }
+   }
+  },
+  {
+   "for": "land",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 91,
+   "quotes": [
+    "CivicOS must never treat a map feature, tax payment, occupancy declaration, or application receipt as conclusive proof of land ownership."
+   ],
+   "met_by": {
+    "deviation": "rights-on-parcel",
+    "platform": {
+     "file": "app/src/lib/land/procedures.ts",
+     "how": "A transfer is registered only on a verified instrument and a decision; no map, payment, declaration or receipt registers it"
+    }
+   }
+  },
+  {
+   "for": "land",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 118,
+   "quotes": [
+    "Not every country uses a title-registration system.",
+    "Some jurisdictions recognize deeds registration, customary tenure, community land, state land, or other forms of landholding.",
+    "CivicOS must represent the country's actual legal model rather than forcing every interest into a single ownership field."
+   ],
+   "met_by": {
+    "deviation": "nation-lists",
+    "platform": {
+     "file": "app/src/lib/data/parcels.ts",
+     "how": "Rights, restrictions and responsibilities of every tenure type (LADM RRR), never one ownership field"
+    }
+   }
+  },
+  {
+   "for": "land",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 132,
+   "quotes": [
+    "Parcel geometry and legal interests must be linked without being conflated.",
+    "A geometry correction does not automatically change the registered holder of an interest, and a transfer of ownership does not automatically validate a disputed boundary."
+   ],
+   "met_by": {
+    "deviation": "rights-on-parcel",
+    "platform": {
+     "file": "app/src/lib/data/parcels.ts",
+     "how": "A geometry amendment never changes a right; a boundary held by a dispute is not amended"
+    }
+   }
+  },
+  {
+   "for": "land",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 134,
+   "quotes": [
+    "Every legally material change must have:"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/land/procedures.ts",
+     "how": "Each step below is an action of the land registry procedures"
+    }
+   }
+  },
+  {
+   "for": "land",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 135,
+   "quotes": [
+    "An authenticated application or legally authorized initiating event."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/land/procedures.ts",
+     "how": "lodge (a dealing) or register (a dispute): the case opens with its documents"
+    }
+   }
+  },
+  {
+   "for": "land",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 136,
+   "quotes": [
+    "Evidence appropriate to the specific transaction."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/land/procedures.ts",
+     "how": "The lodged documents and parties are the case's; reads of parties are logged"
+    }
+   }
+  },
+  {
+   "for": "land",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 137,
+   "quotes": [
+    "Verification of the parties' authority and the instrument's validity."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/land/procedures.ts",
+     "how": "verify (a dealing) or investigate (a dispute): officials check the evidence before any decision"
+    }
+   }
+  },
+  {
+   "for": "land",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 138,
+   "quotes": [
+    "A check for applicable objections, restrictions, competing claims, or required approvals."
+   ],
+   "met_by": {
+    "deviation": "dispute-holds",
+    "platform": {
+     "file": "app/src/lib/land/procedures.ts",
+     "how": "land.check: held interests and caveats refuse the registration"
+    }
+   }
+  },
+  {
+   "for": "land",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 139,
+   "quotes": [
+    "A decision by the competent authority."
+   ],
+   "met_by": {
+    "deviation": "two-officials",
+    "platform": {
+     "file": "app/src/lib/permits/decisions.ts",
+     "how": "Each decision under the land-dealing or land-dispute mapping"
+    }
+   }
+  },
+  {
+   "for": "land",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 140,
+   "quotes": [
+    "A recorded effective date and new record version."
+   ],
+   "met_by": {
+    "deviation": "rights-on-parcel",
+    "platform": {
+     "file": "app/src/lib/data/parcels.ts",
+     "how": "applyRightsChange(): a new version with its effective date"
+    }
+   }
+  },
+  {
+   "for": "land",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 141,
+   "quotes": [
+    "Notification and review procedures where required."
+   ],
+   "met_by": {
+    "deviation": "slot-owner",
+    "platform": {
+     "file": "app/src/lib/land/procedures.ts",
+     "how": "The decision states its reasons and the review route; notices are the nation's procedure"
+    }
+   }
+  },
+  {
+   "for": "land",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 142,
+   "quotes": [
+    "Where law requires independent confirmation, two-person approval must involve distinct authorized individuals.",
+    "The system must not allow a single operator to initiate and silently finalize a high-impact change."
+   ],
+   "met_by": {
+    "deviation": "two-officials",
+    "platform": {
+     "file": "app/src/lib/casework/engine.ts",
+     "how": "fourEyes and distinctFrom: one official proposes, a different person confirms"
+    }
+   }
+  },
+  {
+   "for": "land",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 144,
+   "quotes": [
+    "Suspected fraud, competing claims, missing historical records, or inconsistent instruments must trigger the appropriate review workflow.",
+    "They must not be resolved by automatically selecting the newest document or the record with the most recent timestamp."
+   ],
+   "met_by": {
+    "deviation": "dispute-holds",
+    "platform": {
+     "file": "app/src/lib/land/procedures.ts",
+     "how": "A dispute or conflicting title is its own case; nothing selects the newest document"
+    }
+   }
+  },
+  {
+   "for": "land",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 461,
+   "quotes": [
+    "Land-rights integrity: No ownership or other registered interest can be silently overwritten."
+   ],
+   "met_by": {
+    "deviation": "rights-on-parcel",
+    "platform": {
+     "file": "app/src/lib/data/parcels.ts",
+     "how": "Rights of a published parcel change only by applyRightsChange() from a decided case, the earlier version kept"
+    }
+   }
+  },
+  {
+   "for": "land",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 472,
+   "quotes": [
+    "Auditability: Material changes, access events, decisions, and disclosures are recorded in a tamper-evident audit chain."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/data/store/audit.ts",
+     "how": "Every registration, hold and release is on the audit chain; reads of parties in the access log"
+    }
+   }
+  },
+  {
+   "for": "land",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 479,
+   "quotes": [
+    "Land rights and cadastre service — parcels, interests, transfers, encumbrances, disputes, and controlled corrections."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/land/procedures.ts",
+     "how": "Transfers, encumbrances, discharges, corrections and disputes on the parcel register"
+    }
+   }
+  },
+  {
+   "for": "land",
+   "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+   "line": 2424,
+   "quotes": [
+    "Ownership rule: the institution that legally maintains the title register remains authoritative for title.",
+    "The cadastral authority may maintain spatial parcels, and a planning authority may maintain zoning.",
+    "CivicOS should connect these records by stable references instead of assuming that one register controls every land-related fact."
+   ],
+   "met_by": {
+    "deviation": "slot-owner",
+    "platform": {
+     "file": "app/src/lib/data/parcels.ts",
+     "how": "rightsKeepers(): the cadastre authority (spatial parcels) and the land registry (registered interests) by reference"
+    }
+   }
+  },
+  {
+   "for": "land",
+   "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+   "line": 2449,
+   "quotes": [
+    "A land dispute must not be resolved merely by allowing an administrator to edit the parcel record.",
+    "Corrections to boundaries, title or registered interests require the process and authority defined by national law."
+   ],
+   "met_by": {
+    "deviation": "dispute-holds",
+    "platform": {
+     "file": "app/src/lib/data/parcels.ts",
+     "how": "actOnParcel() refuses rights on a published parcel"
+    }
+   }
+  },
+  {
+   "for": "hpc",
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 1082,
+   "quotes": [
+    "Housing allocation must use transparent, approved eligibility and priority rules.",
+    "Planning and building decisions must record the relevant parcel, applicable rule version, evidence, decision-maker and review or appeal route.",
+    "A digital map or automated model must not silently override a legally authoritative property or planning record."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/building/procedures.ts",
+     "how": "Every decision records the parcel version, the rules version, the evidence and the deciding officials; the parcel record is authoritative"
+    }
+   }
+  },
+  {
+   "for": "lrg",
+   "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+   "line": 974,
+   "quotes": [
+    "Local and regional authorities must have their own institutional scope, records and delegated powers.",
+    "A central-government administrator must not be able to alter local resolutions, budgets or case records without an authorized legal relationship and an auditable action."
+   ],
+   "met_by": {
+    "deviation": "institution-owned",
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "Boundaries.subnational: whole-government scope stops at a local government; it reads only under an approved relationship, logged"
+    }
+   }
+  },
+  {
+   "for": "lrg",
+   "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+   "line": 2522,
+   "quotes": [
+    "Access model: a municipal officer may access records within the municipality and their assigned functions.",
+    "A national ministry may receive authorised reports or inspect records under a lawful power, but must not automatically acquire full write access to municipal registers."
+   ],
+   "met_by": {
+    "deviation": "institution-owned",
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "reaches(), readRelationship(): only its own officials act; a read under a relationship never writes"
+    }
+   }
+  },
+  {
+   "for": "trn",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 525,
+   "quotes": [
+    "CivicOS must represent each competent authority as an explicitly configured institution or office, rather than infer its legal powers from its name."
+   ],
+   "met_by": {
+    "deviation": "slot-owner"
+   }
+  },
+  {
+   "for": "trn",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 685,
+   "quotes": [
+    "Do not treat a completed form, uploaded document or successful payment as proof that a legal requirement has been satisfied."
+   ],
+   "met_by": {
+    "deviation": "evidence-requirement",
+    "platform": {
+     "file": "app/src/lib/transport/procedures.ts",
+     "how": "Each record is decided by officials on checked evidence; a payment proves nothing"
+    }
+   }
+  },
+  {
+   "for": "trn",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 729,
+   "quotes": [
+    "Important: an operator's registration, operating licence, vehicle registration and individual driver's licence are different records.",
+    "CivicOS must not combine them into a single undifferentiated “approved” status."
+   ],
+   "met_by": {
+    "deviation": "separate-records"
+   }
+  },
+  {
+   "for": "trn",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 766,
+   "quotes": [
+    "Never silently overwrite a historic registration, permit or decision."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/transport/register.ts",
+     "how": "Every change is an event with its case and decision; the earlier keeper kept"
+    }
+   }
+  },
+  {
+   "for": "trn",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 767,
+   "quotes": [
+    "Model corrections, transfers and revocations as linked, time-stamped events."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/transport/register.ts",
+     "how": "Transfers are linked, time-stamped events"
+    }
+   }
+  },
+  {
+   "for": "trn",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 846,
+   "quotes": [
+    "Never use a model-generated risk score alone to impose a fine, revoke a licence, deny a permit or restrict movement."
+   ],
+   "met_by": {
+    "deviation": "no-ai-decision"
+   }
+  },
+  {
+   "for": "trn",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1003,
+   "quotes": [
+    "Register integrity: Transfers, corrections, expiry, suspension and revocation preserve history."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/transport/register.ts",
+     "how": "Transfers keep their history; nothing is overwritten"
+    }
+   }
   }
  ]
 }

@@ -151,7 +151,7 @@ function ParcelDetail({ id, vocab, official, onChanged, onClose }: { id: string;
   if (!p) return <p className="text-[13px] text-ink-muted">Reading the parcel…</p>;
   const rightWord = (k: string) => vocab.rightTypes.find(t => t.key === k)?.label ?? k;
   const showRights = (rs: ParcelRight[] | undefined, count: number) => (rs ? (
-    rs.length ? <ul className="list-disc space-y-0.5 ps-5">{rs.map((r, i) => <li key={i}>{rightWord(r.type)}: {r.holder || 'holder not yet known'}{r.holderRef ? ` (${r.holderRef})` : ''}{r.share ? `, share ${r.share}` : ''} · {vocab.sourceKinds.find(s => s.key === r.source.kind)?.label} {r.source.ref}{r.source.date ? ` of ${r.source.date}` : ''}</li>)}</ul> : <p className="text-ink-muted">No rights recorded.</p>
+    rs.length ? <ul className="list-disc space-y-0.5 ps-5">{rs.map((r, i) => <li key={i}>{r.id ? <span className="font-mono text-[11px] text-ink-muted">{r.id} </span> : null}{rightWord(r.type)}{r.priority ? ` (rank ${r.priority})` : ''}: {r.holder || 'holder not yet known'}{r.holderRef ? ` (${r.holderRef})` : ''}{r.share ? `, share ${r.share}` : ''} · {vocab.sourceKinds.find(s => s.key === r.source.kind)?.label} {r.source.ref}{r.source.date ? ` of ${r.source.date}` : ''}</li>)}</ul> : <p className="text-ink-muted">No rights recorded.</p>
   ) : <p className="text-ink-muted">{count} right{count === 1 ? '' : 's'} recorded. Rights and holders are shown only to the cadastre authority and officials with need.</p>);
   return (
     <article aria-labelledby="parcel-h" className="space-y-2 rounded-[3px] border border-line-soft bg-surface-2 p-3 text-[13px]">
@@ -168,7 +168,15 @@ function ParcelDetail({ id, vocab, official, onChanged, onClose }: { id: string;
         <div><dt className="text-ink-muted">Recorded</dt><dd>{p.recordedBy}, {when(p.recordedAt)}{p.publishedBy ? ` · published by ${p.publishedBy}, ${when(p.publishedAt)}` : ''}</dd></div>
         {p.overlaps.length ? <div className="sm:col-span-2"><dt className="text-ink-muted">Overlaps flagged</dt><dd className="text-warn">{p.overlaps.map(o => `${o.parcelId} (${area(o.areaM2)})`).join(', ')}</dd></div> : null}
       </dl>
-      <section aria-label="Rights"><h5 className="font-semibold">Rights</h5>{showRights(p.rights, p.rightsCount)}</section>
+      <section aria-label="Rights"><h5 className="font-semibold">Rights</h5>{showRights(p.rights, p.rightsCount)}
+        <p className="mt-1 text-ink-muted">Once published, rights change only through the land registry&rsquo;s cases (a transfer, an encumbrance or its discharge, a correction), each decided by two officials: <a className="underline" href="/gov/land">Land dealings</a>.</p>
+      </section>
+      {p.freezes?.length ? (
+        <section aria-label="Held by a dispute" className="rounded-[3px] border border-line p-2">
+          <h5 className="font-semibold text-warn">Held by an open dispute</h5>
+          <ul className="list-disc ps-5">{p.freezes.map(f => <li key={`${f.case}-${f.interest}`}>{f.interest === 'boundary' ? 'The boundary' : f.interest === 'parcel' ? 'The whole parcel' : `Interest ${f.interest}`} · case {f.case} · since {when(f.since)}: nothing changes it until the dispute is decided</li>)}</ul>
+        </section>
+      ) : null}
       {p.pending ? (
         <section className="rounded-[3px] border border-line p-2">
           <h5 className="font-semibold text-warn">A change waits for a second official</h5>

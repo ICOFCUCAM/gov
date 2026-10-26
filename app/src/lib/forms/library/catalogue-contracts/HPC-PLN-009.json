@@ -1,0 +1,550 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "HPC-PLN-009",
+ "record_type": "building.planning",
+ "form_version": 1,
+ "procedure_package_id": "building.planning",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-INF-001: planning, construction and building-control requirements (the building control rules two officials adopt; none ship).",
+  "CFG-DAT-001: retention and disclosure of the case and its personal data."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+  "id": "HPC-PLN-009",
+  "part": 20,
+  "section": "20.1",
+  "line": 987,
+  "batch": 10
+ },
+ "library": {
+  "title": "Apply for planning permission",
+  "intro": "Apply for planning permission for a development on a registered parcel. The application is validated, publicised and consulted on as the law requires, and decided by two officials against the nation's rules.",
+  "owner": "buildingControl",
+  "filled_by": "The applicant or their agent; an official at an office.",
+  "authority": "Filed with the planning and building control authority the nation names for its buildingControl slot (shipped empty); who holds each power comes from the permit authority registry, where a local government may lead for its area.",
+  "procedure": {
+   "key": "building.planning",
+   "stage": "received",
+   "action": "validate",
+   "document": "site-plan"
+  },
+  "lists": {},
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "slot-owner",
+    "what": "The competent body is the institution the nation names for its slot of the deployment profile (landRegistry, buildingControl, housing, vehicleRegistration, roadAuthority, transportRegulator), shipped empty; who holds each power over a decision comes from the permit authority registry, proposed and unapproved",
+    "why": "Authority comes from the deployment profile and the approved mappings, never a ministry by name; a production installation refuses a power no approved mapping covers.",
+    "rule": "CLAUDE.md Government operating model: authorityFor(); lib/permits/decisions.ts (plan I7)"
+   },
+   {
+    "id": "rules-version",
+    "what": "Categories, uses, inspection stages and checklists and finding severities are the nation's building control rules, adopted by two officials citing the law; every decision records the version it applied",
+    "why": "Planning and building decisions record the applicable rule version (supplement Part 20); none ship.",
+    "rule": "lib/building/register.ts proposeBuildingRules(), confirmBuildingRules(), rulesRef()"
+   },
+   {
+    "id": "distinct-states",
+    "what": "Planning permission, building approval (against one approved design version), construction and occupancy are separate states of separate records, never one approved flag",
+    "why": "Specification Part 3 §D.13 controls and acceptance P3-11.",
+    "rule": "lib/building/register.ts BuildingPermit (permit, construction, occupancy)"
+   },
+   {
+    "id": "two-officials",
+    "what": "Every registration and decision is proposed by one official and confirmed by a different person; the official who verified or reviewed does not decide",
+    "why": "Catalogue Part 8 §3.3 and Part 9 §5: dual control by distinct authorised individuals.",
+    "rule": "lib/casework/engine.ts act() (fourEyes, distinctFrom); lib/data/dual-control.ts dualControlRefusal()"
+   },
+   {
+    "id": "no-ai-decision",
+    "what": "No step is decided by a model, a score or a map: officials decide with reasons",
+    "why": "AI never makes a legally material decision.",
+    "rule": "CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 987,
+    "quotes": [
+     "HPC-PLN-009",
+     "Planning application"
+    ],
+    "met_by": {
+     "fields": [
+      "planning.proposed_use",
+      "planning.description"
+     ],
+     "procedure": "grant"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1023,
+    "quotes": [
+     "\"form_id\": \"HPC-PLN-009\""
+    ],
+    "met_by": {
+     "fields": [
+      "planning.description"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1024,
+    "quotes": [
+     "\"title\": \"Planning Application\""
+    ],
+    "met_by": {
+     "fields": [
+      "planning.description"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1025,
+    "quotes": [
+     "\"fields\": ["
+    ],
+    "met_by": {
+     "fields": [
+      "planning.applicant"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1026,
+    "quotes": [
+     "{\"key\": \"applicant_entity_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "planning.applicant"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1027,
+    "quotes": [
+     "{\"key\": \"site_parcel_reference\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "parcel.reference"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1028,
+    "quotes": [
+     "{\"key\": \"site_geometry\", \"type\": \"geo_geometry_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "planning.site_geometry"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1029,
+    "quotes": [
+     "{\"key\": \"proposed_use_code\", \"type\": \"code_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "planning.proposed_use"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1030,
+    "quotes": [
+     "{\"key\": \"development_description\", \"type\": \"long_text\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "planning.description"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1031,
+    "quotes": [
+     "{\"key\": \"site_plan_reference\", \"type\": \"document_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "planning.site_plan"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1032,
+    "quotes": [
+     "{\"key\": \"environmental_assessment_reference\", \"type\": \"document_reference\", \"required\": false}"
+    ],
+    "met_by": {
+     "fields": [
+      "planning.environmental_assessment"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1033,
+    "quotes": [
+     "{\"key\": \"heritage_assessment_reference\", \"type\": \"document_reference\", \"required\": false}"
+    ],
+    "met_by": {
+     "fields": [
+      "planning.heritage_assessment"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1034,
+    "quotes": [
+     "{\"key\": \"public_consultation_required_rule_id\", \"type\": \"rule_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "planning.consultation_rule"
+     ],
+     "deviation": "rules-version"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 2641,
+    "quotes": [
+     "Records: planning zone, parcel reference, development application, building design documents, permit, inspection, completion certificate, occupancy status and enforcement case."
+    ],
+    "met_by": {
+     "fields": [
+      "parcel.reference",
+      "planning.description"
+     ],
+     "deviation": "distinct-states"
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "planning.applicant",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.person_or_organisation",
+   "personal_data_class": "personal",
+   "evidence": [],
+   "label": {
+    "en": "Applicant (a person or an organisation of the registers)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter applicant (a person or an organisation of the registers).",
+     "reference_exists": "There is no record with that reference in the register."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Applicant"
+   }
+  },
+  {
+   "id": "parcel.reference",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.parcels",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The parcel (its national parcel id or record number)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the parcel (its national parcel id or record number).",
+     "reference_exists": "There is no record with that reference in the register."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The parcel"
+   }
+  },
+  {
+   "id": "planning.site_geometry",
+   "type": "boolean",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "must_be_true",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The site is the whole registered parcel (its outline in the register)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the site is the whole registered parcel (its outline in the register).",
+     "must_be_true": "Confirm this to continue."
+    }
+   },
+   "hint": {
+    "en": "The site is drawn by the parcel register; a different site needs the parcel recorded first."
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The parcel"
+   }
+  },
+  {
+   "id": "planning.proposed_use",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "building.country.uses",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Proposed use"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter proposed use.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": "CFG-INF-001: the uses are the nation's building control rules; none ship",
+   "section": {
+    "en": "The development"
+   }
+  },
+  {
+   "id": "planning.description",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 8000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "The development proposed"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the development proposed.",
+     "length": "The development proposed is too long."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The development"
+   }
+  },
+  {
+   "id": "planning.site_plan",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [
+    {
+     "kind": "site-plan",
+     "when": "when_the_form_asks_for_it"
+    }
+   ],
+   "label": {
+    "en": "Site plan"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter site plan."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Plans"
+   }
+  },
+  {
+   "id": "planning.environmental_assessment",
+   "type": "document",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [
+    {
+     "kind": "referral-response",
+     "when": "when_the_form_asks_for_it"
+    }
+   ],
+   "label": {
+    "en": "Environmental assessment, where required"
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Plans"
+   }
+  },
+  {
+   "id": "planning.heritage_assessment",
+   "type": "document",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [
+    {
+     "kind": "referral-response",
+     "when": "when_the_form_asks_for_it"
+    }
+   ],
+   "label": {
+    "en": "Heritage assessment, where required"
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Plans"
+   }
+  },
+  {
+   "id": "planning.consultation_rule",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The rule that decides whether public consultation is required (from the nation's rules)"
+   },
+   "country_decision": null
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "only": [
+    "declaration.text_version",
+    "declaration.confirmed",
+    "declaration.signed_at"
+   ],
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "planning.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

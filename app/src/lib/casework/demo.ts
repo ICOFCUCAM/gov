@@ -1,7 +1,8 @@
 // The demonstration set (demo and training installations only, lib/ops/mode.ts):
 // sample acts (civil registration; business registration, licensing and
 // accreditation; immigration, police, courts; tax, education, health
-// professions and facilities, customs), recorded and confirmed, and the reference procedures cited
+// professions and facilities, customs; land, building control, housing and
+// transport), recorded and confirmed, and the reference procedures cited
 // to them and approved, so cases can be run end to end
 // without a nation's real law. Everything goes through the same registers and
 // four-eyes rules as real work, under named demonstration officials, and the
@@ -12,6 +13,10 @@ import { authorityFor, getSovereign } from '@/lib/data/store';
 import { recordAudit } from '@/lib/data/store/audit';
 import { recordVersion, confirmVersion, listInstruments } from '@/lib/law/register';
 import { REFERENCE_PROCEDURES, ORGANISATION_PROCEDURES, IMMIGRATION_PROCEDURES, POLICE_PROCEDURES, COURT_PROCEDURES, TAX_PROCEDURES, EDUCATION_PROCEDURES, PROFESSION_PROCEDURES, HEALTH_PROCEDURES, CUSTOMS_PROCEDURES, PRODUCT_PROCEDURES, PROGRAMME_PROCEDURES, COMPLAINT_PROCEDURES, installReferenceProcedures } from '@/lib/casework/modules';
+import { LAND_PROCEDURES } from '@/lib/land/procedures';
+import { BUILDING_PROCEDURES } from '@/lib/building/procedures';
+import { HOUSING_PROCEDURES } from '@/lib/housing/procedures';
+import { TRANSPORT_PROCEDURES } from '@/lib/transport/procedures';
 import type { AuthorityKey } from '@/lib/nation/deployment';
 import { activePackage, approvePackage, draftPackage, listPackages, withSampleDeadlines } from '@/lib/casework/packages';
 import { registeredEffects } from '@/lib/casework/engine';
@@ -115,6 +120,34 @@ const MORE_ACTS: { title: string; number: string; authority: AuthorityKey; provi
   } },
   { title: 'Customs Act (sample for demonstration)', number: 'sample-10', authority: 'customs', procedures: CUSTOMS_PROCEDURES, provisions: {
     'customs.declaration': P('sec_30', '30', 'Goods shall be declared to customs, may be examined, and are released once the duty assessed on them is paid.'),
+  } },
+  // Plan I7: territory and infrastructure. Powers only: no fee, period, category or rate is sampled; building control rules, programme terms and
+  // council rules stay unset until officials adopt them, and the permit authority mappings stay drafts.
+  { title: 'Land Registration Act (sample for demonstration)', number: 'sample-i7-1', authority: 'landRegistry', procedures: LAND_PROCEDURES, provisions: {
+    'land.transfer': P('sec_30', '30', 'A transfer of a registered interest is registered by the Registrar on a verified instrument; the earlier entry is kept.'),
+    'land.encumbrance': P('sec_40', '40', 'A lease, charge, easement or caveat is registered against the parcel in the order lodged.'),
+    'land.discharge': P('sec_45', '45', 'A charge or caveat is discharged on the release of the person entitled to it.'),
+    'land.correction': P('sec_50', '50', 'The Registrar may correct an entry on evidence of the error; the earlier entry is kept.'),
+    'land.dispute': P('sec_60', '60', 'A dispute concerning a registered interest is registered and determined by the Registrar or referred to the court; the interest is not dealt with meanwhile.'),
+  } },
+  { title: 'Physical Planning and Building Control Act (sample for demonstration)', number: 'sample-i7-2', authority: 'buildingControl', procedures: BUILDING_PROCEDURES, provisions: {
+    'building.planning': P('sec_20', '20', 'No development shall be carried out without planning permission granted on an application after consultation.'),
+    'building.permit': P('sec_40', '40', 'No building shall be erected without a building permit; works are inspected, may be stopped, and are occupied only on a certificate of occupancy.'),
+  } },
+  { title: 'Housing Act (sample for demonstration)', number: 'sample-i7-3', authority: 'housing', procedures: HOUSING_PROCEDURES, provisions: {
+    'housing.programme': P('sec_10', '10', 'The housing authority may establish a housing programme with eligibility criteria and priority rules approved under this Act.'),
+    'housing.application': P('sec_20', '20', 'Homes under a programme are allocated to eligible applicants according to its priority rules, with reasons.'),
+  } },
+  { title: 'Traffic Act (sample for demonstration)', number: 'sample-i7-4', authority: 'vehicleRegistration', procedures: TRANSPORT_PROCEDURES.filter(p => /vehicle|driving/.test(p.key)), provisions: {
+    'transport.vehicle-registration': P('sec_5', '5', 'Every motor vehicle shall be registered and assigned a registration mark.'),
+    'transport.vehicle-transfer': P('sec_9', '9', 'A change of the keeper of a registered vehicle shall be registered.'),
+    'transport.driving-licence': P('sec_30', '30', 'No person shall drive without a driving licence for the category of vehicle, issued after a test.'),
+  } },
+  { title: 'Roads Act (sample for demonstration)', number: 'sample-i7-5', authority: 'roadAuthority', procedures: TRANSPORT_PROCEDURES.filter(p => p.key === 'transport.road-works'), provisions: {
+    'transport.road-works': P('sec_12', '12', 'No person shall excavate or obstruct a public road except under a permit of the road authority.'),
+  } },
+  { title: 'Transport Licensing Act (sample for demonstration)', number: 'sample-i7-6', authority: 'transportRegulator', procedures: TRANSPORT_PROCEDURES.filter(p => p.key === 'transport.operator-licence'), provisions: {
+    'transport.operator-licence': P('sec_8', '8', 'No person shall operate a public service vehicle except under an operator licence.'),
   } },
 ];
 

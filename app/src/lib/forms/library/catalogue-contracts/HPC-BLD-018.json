@@ -1,0 +1,499 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "HPC-BLD-018",
+ "record_type": "building.inspection",
+ "form_version": 1,
+ "procedure_package_id": "building.permit",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-INF-001: planning, construction and building-control requirements (the building control rules two officials adopt; none ship).",
+  "CFG-DAT-001: retention and disclosure of the case and its personal data."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+  "id": "HPC-BLD-018",
+  "part": 20,
+  "section": "20.1",
+  "line": 996,
+  "batch": 10
+ },
+ "library": {
+  "title": "Record a building inspection",
+  "intro": "The inspector records an inspection against the checklist of the nation's rules in force: each finding with what was observed and its severity, the result and the reasons. A finding is never a score.",
+  "owner": "buildingControl",
+  "filled_by": "An inspector of the building control authority (the inspector is the signed-in official).",
+  "authority": "Filed with the planning and building control authority the nation names for its buildingControl slot (shipped empty); who holds each power comes from the permit authority registry, where a local government may lead for its area.",
+  "procedure": {
+   "key": "building.permit",
+   "stage": "construction",
+   "action": "inspect",
+   "document": "inspection-evidence",
+   "also": []
+  },
+  "lists": {
+   "building.inspection_results": {
+    "values": [
+     {
+      "value": "pass",
+      "label": "Pass"
+     },
+     {
+      "value": "conditional",
+      "label": "Conditional pass"
+     },
+     {
+      "value": "remediation-required",
+      "label": "Remediation required"
+     },
+     {
+      "value": "fail",
+      "label": "Fail"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "slot-owner",
+    "what": "The competent body is the institution the nation names for its slot of the deployment profile (landRegistry, buildingControl, housing, vehicleRegistration, roadAuthority, transportRegulator), shipped empty; who holds each power over a decision comes from the permit authority registry, proposed and unapproved",
+    "why": "Authority comes from the deployment profile and the approved mappings, never a ministry by name; a production installation refuses a power no approved mapping covers.",
+    "rule": "CLAUDE.md Government operating model: authorityFor(); lib/permits/decisions.ts (plan I7)"
+   },
+   {
+    "id": "rules-version",
+    "what": "Categories, uses, inspection stages and checklists and finding severities are the nation's building control rules, adopted by two officials citing the law; every decision records the version it applied",
+    "why": "Planning and building decisions record the applicable rule version (supplement Part 20); none ship.",
+    "rule": "lib/building/register.ts proposeBuildingRules(), confirmBuildingRules(), rulesRef()"
+   },
+   {
+    "id": "distinct-states",
+    "what": "Planning permission, building approval (against one approved design version), construction and occupancy are separate states of separate records, never one approved flag",
+    "why": "Specification Part 3 §D.13 controls and acceptance P3-11.",
+    "rule": "lib/building/register.ts BuildingPermit (permit, construction, occupancy)"
+   },
+   {
+    "id": "two-officials",
+    "what": "Every registration and decision is proposed by one official and confirmed by a different person; the official who verified or reviewed does not decide",
+    "why": "Catalogue Part 8 §3.3 and Part 9 §5: dual control by distinct authorised individuals.",
+    "rule": "lib/casework/engine.ts act() (fourEyes, distinctFrom); lib/data/dual-control.ts dualControlRefusal()"
+   },
+   {
+    "id": "no-ai-decision",
+    "what": "No step is decided by a model, a score or a map: officials decide with reasons",
+    "why": "AI never makes a legally material decision.",
+    "rule": "CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 996,
+    "quotes": [
+     "HPC-BLD-018",
+     "Building inspection"
+    ],
+    "met_by": {
+     "fields": [
+      "inspection.findings",
+      "inspection.result"
+     ],
+     "procedure": "inspect"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1053,
+    "quotes": [
+     "\"form_id\": \"HPC-BLD-018\""
+    ],
+    "met_by": {
+     "fields": [
+      "inspection.findings"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1054,
+    "quotes": [
+     "\"title\": \"Building Inspection\""
+    ],
+    "met_by": {
+     "fields": [
+      "inspection.findings"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1055,
+    "quotes": [
+     "\"fields\": ["
+    ],
+    "met_by": {
+     "fields": [
+      "inspection.permit_case"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1056,
+    "quotes": [
+     "{\"key\": \"permit_case_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "inspection.permit_case"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1057,
+    "quotes": [
+     "{\"key\": \"inspection_stage\", \"type\": \"enum\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "inspection.stage"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1058,
+    "quotes": [
+     "{\"key\": \"inspection_date\", \"type\": \"date\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "inspection.date"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1059,
+    "quotes": [
+     "{\"key\": \"inspector_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "inspection.inspector"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1060,
+    "quotes": [
+     "{\"key\": \"inspection_checklist_version\", \"type\": \"rule_version_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "inspection.checklist_version"
+     ],
+     "deviation": "rules-version"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1061,
+    "quotes": [
+     "{\"key\": \"findings\", \"type\": \"array\", \"required\": true, \"items_type\": \"inspection_finding\"}"
+    ],
+    "met_by": {
+     "fields": [
+      "inspection.findings"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1062,
+    "quotes": [
+     "{\"key\": \"evidence_references\", \"type\": \"array\", \"required\": false, \"items_type\": \"document_or_media_reference\"}"
+    ],
+    "met_by": {
+     "fields": [
+      "inspection.evidence"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1063,
+    "quotes": [
+     "{\"key\": \"required_actions\", \"type\": \"array\", \"required\": false, \"items_type\": \"corrective_action\"}"
+    ],
+    "met_by": {
+     "fields": [
+      "inspection.required_actions"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "inspection.permit_case",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "building.registry.permit_cases",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The permit (its case reference)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the permit (its case reference).",
+     "reference_exists": "There is no record with that reference in the register."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "inspection.stage",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "building.country.inspection_stages",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Inspection stage"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter inspection stage.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": "CFG-INF-001: inspection stages and checklists are the nation's building control rules; none ship"
+  },
+  {
+   "id": "inspection.date",
+   "type": "date",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "date_not_in_future",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Date of the inspection"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter date of the inspection.",
+     "date_not_in_future": "The date cannot be in the future."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "inspection.inspector",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "actor_has_active_inspection_authority",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Inspector"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "inspection.checklist_version",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Checklist version (the rules version applied, recorded by the platform)"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "inspection.findings",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 8000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Findings: one per line, checklist item | what was observed | severity"
+   },
+   "error_text": {
+    "en": {
+     "length": "Findings: one per line, checklist item | what was observed | severity is too long."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "inspection.evidence",
+   "type": "document",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [
+    {
+     "kind": "inspection-evidence",
+     "when": "when_the_form_asks_for_it"
+    }
+   ],
+   "label": {
+    "en": "Evidence (photographs, measurements)"
+   },
+   "country_decision": null,
+   "multiple": true
+  },
+  {
+   "id": "inspection.required_actions",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Actions required and by whom"
+   },
+   "error_text": {
+    "en": {
+     "length": "Actions required and by whom is too long."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "inspection.result",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "building.inspection_results",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Result"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter result.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "inspection.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

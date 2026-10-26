@@ -58,6 +58,19 @@ import { scheduledJobsHealthy } from '@/lib/ops/cron-runs';
 import { sealKeyRules, sealKeyAuthority, presentedStanding, waitingSealKeys } from '@/lib/keys/seal-register';
 import { signer } from '@/lib/keys/custody';
 import { institutionCompleteness, type InstitutionCompleteness } from './completeness';
+import { LAND_PROCEDURES, LAND_PERMITS } from '@/lib/land/procedures';
+import { landCounts } from '@/lib/land/register';
+import { BUILDING_PROCEDURES, BUILDING_DECISION_PERMITS } from '@/lib/building/procedures';
+import { buildingRules, buildingRuleChanges, buildingCounts } from '@/lib/building/register';
+import { HOUSING_PROCEDURES, HOUSING_PERMITS } from '@/lib/housing/procedures';
+import { housingCounts } from '@/lib/housing/register';
+import { TRANSPORT_PROCEDURES, TRANSPORT_PERMITS } from '@/lib/transport/procedures';
+import { transportCounts } from '@/lib/transport/register';
+import { LOCAL_GOVERNMENT_TEMPLATES, localKey } from '@/lib/localgov/procedures';
+import { councilRules, councilRuleChanges, localCounts } from '@/lib/localgov/register';
+import { institutionBounds } from '@/lib/data/store/institutions';
+import { getMinistry } from '@/lib/data/store/ministries';
+import type { AuthorityKey } from '@/lib/nation/deployment';
 import { departmentsOf, waitingDepartmentChanges } from '@/lib/institution/departments';
 import { ADMINISTRATION_PROCEDURES, administrationKey } from '@/lib/administration/procedures';
 import { ruleInForce } from '@/lib/law/rules';
@@ -110,6 +123,7 @@ const TRACK_OWNER: Record<string, string> = {
   administration: 'Administrators of each institution, a different official confirming',
   indicators: 'Officials who can sign at each institution whose figures an indicator defines', tax: 'The tax administration the nation names (officials who can sign there)',
   oversight: 'Each independent oversight body the nation names (its own officials)',
+  territory: 'The land registry, building control, housing and transport bodies the nation names, and each local government for its own records',
 };
 
 /** One track, read defensively: a store that cannot be read shows as a check not done, never breaks the page. */
@@ -514,6 +528,40 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
         { label: 'Who decides each body\'s findings and decisions approved (permit authorities)', done: mapped.length === types.length, href: '/gov/law/permit-authorities', detail: `${mapped.length} of ${types.length}: ${types.join(', ')}` },
         { label: 'Relationships that let a body ask for evidence or records (audit, request information), approved citing the law', done: grants.length > 0, href: '/gov/configuration/relationships', detail: grants.length ? `${grants.length} in force` : 'None: a body asks no institution for evidence until one is approved' },
         { label: 'Findings issued through decided cases', done: c.issued > 0, href: '/gov/oversight', detail: `${c.findings} finding(s), ${c.issued} issued, ${c.responses} response(s)${c.samples ? ` (${c.samples} samples)` : ''}` },
+      ] };
+    }));
+  }
+
+  // Territory and infrastructure (plan I7): only once the nation names one of its bodies or records a local government.
+  const SLOTS: [AuthorityKey, string, { key: string }[], Record<string, string>][] = [
+    ['landRegistry', 'Land registry', LAND_PROCEDURES, LAND_PERMITS], ['buildingControl', 'Planning and building control', BUILDING_PROCEDURES, BUILDING_DECISION_PERMITS],
+    ['housing', 'Housing authority', HOUSING_PROCEDURES, HOUSING_PERMITS], ['vehicleRegistration', 'Vehicle and driver licensing', TRANSPORT_PROCEDURES.filter(p => !/road-works|operator/.test(p.key)), {}],
+    ['roadAuthority', 'Road authority', TRANSPORT_PROCEDURES.filter(p => /road-works/.test(p.key)), {}], ['transportRegulator', 'Transport regulator', TRANSPORT_PROCEDURES.filter(p => /operator/.test(p.key)), {}],
+  ];
+  const namedSlots = SLOTS.filter(([k]) => !!authorityFor(k));
+  const locals = institutionBounds().subnational ?? [];
+  if (namedSlots.length || locals.length) {
+    tracks.push(track({ key: 'territory', title: 'Territory and infrastructure', why: 'Land dealings and disputes on the parcel register, planning and building control, housing allocations, transport registers, and each local government\'s own resolutions, budgets and services: each worked by the body the nation names, its procedures and rules approved by two officials citing the law.', href: '/gov/land', seeded: true }, () => {
+      const rulesPending = buildingRuleChanges().pending;
+      if (rulesPending) wait({ what: 'Building control rules: a change waiting for a second official', proposedBy: rulesPending.by, at: rulesPending.at, href: '/gov/building' });
+      for (const l of locals) { const pend = councilRuleChanges(l).pending; if (pend) wait({ what: `Council rules of ${getMinistry(l)?.name ?? l}: a change waiting for a second official of that local government`, proposedBy: pend.by, at: pend.at, href: '/gov/local-government' }); }
+      const keys = namedSlots.flatMap(([, , ps]) => ps.map(p => p.key));
+      const approved = keys.filter(k => listPackages({ key: k, state: 'approved' }).length);
+      const types = [...new Set([...namedSlots.flatMap(([, , , m]) => Object.values(m)), ...namedSlots.filter(([k]) => ['vehicleRegistration', 'roadAuthority', 'transportRegulator'].includes(k)).flatMap(() => Object.values(TRANSPORT_PERMITS))])];
+      const mapped = types.filter(t => listMappings(t).some(m => m.state === 'approved'));
+      const lc = landCounts(), bc = buildingCounts(), hc = housingCounts(), tc = transportCounts();
+      const localAdopted = locals.filter(l => LOCAL_GOVERNMENT_TEMPLATES.every(t => listPackages({ key: localKey(t.key, l), state: 'approved' }).length));
+      return { checks: [
+        { label: 'Bodies named (Who is responsible)', done: namedSlots.length > 0, href: '/gov/configuration/responsible#who-is-responsible', detail: namedSlots.map(([, label]) => label).join(', ') || 'None named' },
+        { label: 'Their procedures approved', done: keys.length > 0 && approved.length === keys.length, href: '/gov/law/procedures', detail: `${approved.length} of ${keys.length} approved` },
+        { label: 'Who decides each kind of decision approved (permit authorities)', done: types.length > 0 && mapped.length === types.length, href: '/gov/law/permit-authorities', detail: `${mapped.length} of ${types.length}: ${types.join(', ')}` },
+        ...(authorityFor('landRegistry') ? [{ label: 'The cadastre authority named in the parcel policy', done: !!cadastreAuthority(), href: '/gov/sites/parcels', detail: cadastreAuthority()?.name ?? 'Not named: no parcel is recorded and no right registered' }] : []),
+        ...(authorityFor('buildingControl') ? [{ label: 'Building control rules adopted by two officials citing the law', done: !!buildingRules(), href: '/gov/building', detail: buildingRules() ? `Version ${buildingRules()!.version}` : 'None: no planning or building decision until adopted' }] : []),
+        ...(locals.length ? [
+          { label: 'Each local government has adopted its own procedures', done: localAdopted.length === locals.length, href: '/gov/local-government', detail: `${localAdopted.length} of ${locals.length}` },
+          { label: 'Each council\'s rules (seats, quorum, majority) adopted by two of its officials', done: locals.every(l => !!councilRules(l)), href: '/gov/local-government', detail: `${locals.filter(l => !!councilRules(l)).length} of ${locals.length}` },
+        ] : []),
+        { label: 'Records through decided cases', done: lc.transactions + bc.permits + hc.allocated + tc.vehicles + tc.licences + localCounts().resolutions > 0, href: '/gov/land', detail: `${lc.transactions} land transactions, ${lc.disputes} disputes · ${bc.planning} planning decisions, ${bc.permits} permits · ${hc.allocated} homes allocated · ${tc.vehicles} vehicles, ${tc.licences} licences · ${localCounts().resolutions} resolutions` },
       ] };
     }));
   }

@@ -261,6 +261,19 @@ What has been built is locked. Work only upgrades it toward the vision in
   The audit chain (`/api/audit`) is read only under `canReadAuditChain()`, logged;
   refusals (`refusal()`, `readRefusal()`, the middleware's 403) are logged as
   reference and rule (`lib/records/refusal-log.ts`).
+- Territory and infrastructure (plan I7): rights on a parcel change only
+  through the land registry's decided cases (`lib/land/procedures.ts`,
+  `applyRightsChange()`, two officials, every version with its effective
+  date); a registered dispute holds the interest until a decision, a recorded
+  court order or a withdrawal, never on its own. Building control rules and
+  each council's quorum rules come only through `policy-change.ts`, housing
+  programme terms only through the `housing.programme` decision (none ship);
+  each decision records the version it applied;
+  planning permission, building approval, construction and occupancy stay
+  separate records, decided on the published parcel, never a map. Local
+  governments (standing `subnational`) adopt the `lg.*` templates as their
+  own; transport keeps vehicles, licences (medical fitness only as a sealed
+  document's reference), road works and operators apart.
 
 ## Constitutional architecture
 
@@ -303,7 +316,8 @@ What has been built is locked. Work only upgrades it toward the vision in
   devices regulation, 21 forms; batch 3, taxpayer registration and account,
   29 forms; batch 4, public-health programme forms, 2 forms; batch 5,
   internal administration, 40 forms; batch 6, tax services, 95 forms;
-  batch 7, independent oversight, 7 forms: owner 2026-10-21), as library
+  batch 7, independent oversight, 7 forms; batch 10, territory and
+  infrastructure, 36 forms: owner 2026-10-21), as library
   drafts in `lib/forms/library/catalogue-contracts/`, each matched to one
   register row, never for an excluded form, regenerated into the register.
 - Every requirement of that specification is a row of

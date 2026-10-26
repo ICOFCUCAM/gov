@@ -1,0 +1,499 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "LRG-FIN-008",
+ "record_type": "lg.budget",
+ "form_version": 1,
+ "procedure_package_id": "lg.budget",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-DAT-001: retention and disclosure of the case and its personal data."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+  "id": "LRG-FIN-008",
+  "part": 19,
+  "section": "19.1",
+  "line": 872,
+  "batch": 10
+ },
+ "library": {
+  "title": "Submit a local budget",
+  "intro": "Submit the local budget: revenue, expenditure and capital lines in whole minor units. It is adopted by two officials on the council's certified resolution; a submission to another institution carries a reference only.",
+  "owner": "institution",
+  "filled_by": "The local government's finance officials.",
+  "authority": "Each local government's own: filed with the local government (an institution of standing subnational) that adopted the procedure; never the whole government's.",
+  "procedure": {
+   "key": "lg.budget",
+   "stage": "draft",
+   "action": "submit",
+   "document": "budget-document"
+  },
+  "lists": {},
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "institution-owned",
+    "what": "The owner is each local government itself (an institution of standing subnational): it adopts the procedure as its own (lg.<template>.<institution>), drafted by one of its officials and approved by another",
+    "why": "Local and regional authorities have their own institutional scope, records and delegated powers; the whole government reaches them only under an approved relationship.",
+    "rule": "lib/localgov/procedures.ts installLocalGovernmentProcedures(); lib/auth/roles.ts Boundaries.subnational"
+   },
+   {
+    "id": "two-officials",
+    "what": "Every registration and decision is proposed by one official and confirmed by a different person; the official who verified or reviewed does not decide",
+    "why": "Catalogue Part 8 §3.3 and Part 9 §5: dual control by distinct authorised individuals.",
+    "rule": "lib/casework/engine.ts act() (fourEyes, distinctFrom); lib/data/dual-control.ts dualControlRefusal()"
+   },
+   {
+    "id": "no-ai-decision",
+    "what": "No step is decided by a model, a score or a map: officials decide with reasons",
+    "why": "AI never makes a legally material decision.",
+    "rule": "CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   },
+   {
+    "id": "whole-minor-units",
+    "what": "Budget amounts are whole numbers in the nation's minor units, entered by officials line by line; totals are computed, never typed",
+    "why": "No figure ships; the budget register of the finance ministry is not on the platform (plan I5).",
+    "rule": "lib/localgov/procedures.ts lg.check-budget"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 872,
+    "quotes": [
+     "LRG-FIN-008",
+     "Local budget submission"
+    ],
+    "met_by": {
+     "fields": [
+      "budget.revenue",
+      "budget.expenditure"
+     ],
+     "procedure": "adopt"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 917,
+    "quotes": [
+     "\"form_id\": \"LRG-FIN-008\""
+    ],
+    "met_by": {
+     "fields": [
+      "budget.version"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 918,
+    "quotes": [
+     "\"title\": \"Local Budget Submission\""
+    ],
+    "met_by": {
+     "fields": [
+      "budget.version"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 919,
+    "quotes": [
+     "\"fields\": ["
+    ],
+    "met_by": {
+     "fields": [
+      "budget.local_government"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 920,
+    "quotes": [
+     "{\"key\": \"local_government_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "budget.local_government"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 921,
+    "quotes": [
+     "{\"key\": \"fiscal_year\", \"type\": \"integer\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "budget.fiscal_year"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 922,
+    "quotes": [
+     "{\"key\": \"budget_version\", \"type\": \"string\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "budget.version"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 923,
+    "quotes": [
+     "{\"key\": \"revenue_estimates\", \"type\": \"array\", \"required\": true, \"items_type\": \"budget_line\"}"
+    ],
+    "met_by": {
+     "fields": [
+      "budget.revenue"
+     ],
+     "deviation": "whole-minor-units"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 924,
+    "quotes": [
+     "{\"key\": \"expenditure_estimates\", \"type\": \"array\", \"required\": true, \"items_type\": \"budget_line\"}"
+    ],
+    "met_by": {
+     "fields": [
+      "budget.expenditure"
+     ],
+     "deviation": "whole-minor-units"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 925,
+    "quotes": [
+     "{\"key\": \"capital_projects\", \"type\": \"array\", \"required\": false, \"items_type\": \"project_budget_line\"}"
+    ],
+    "met_by": {
+     "fields": [
+      "budget.capital"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 926,
+    "quotes": [
+     "{\"key\": \"approval_resolution_reference\", \"type\": \"document_reference\", \"required\": false}"
+    ],
+    "met_by": {
+     "fields": [
+      "budget.approval_resolution"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 927,
+    "quotes": [
+     "{\"key\": \"submission_signatory_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "budget.signatory"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "budget.local_government",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "actor_authorized_for_institution",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.institutions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Local government (its id in the institution register)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter local government (its id in the institution register).",
+     "reference_exists": "There is no record with that reference in the register."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "budget.fiscal_year",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 20
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Fiscal year"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter fiscal year.",
+     "length": "Fiscal year is too long."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "budget.version",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 60
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Budget version"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter budget version.",
+     "length": "Budget version is too long."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "budget.revenue",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 20000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Revenue estimates: one per line, line | amount in minor units"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter revenue estimates: one per line, line | amount in minor units.",
+     "length": "Revenue estimates: one per line, line | amount in minor units is too long."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "budget.expenditure",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 20000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Expenditure estimates: one per line, line | amount in minor units"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter expenditure estimates: one per line, line | amount in minor units.",
+     "length": "Expenditure estimates: one per line, line | amount in minor units is too long."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "budget.capital",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 20000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Capital projects: one per line, project | amount in minor units"
+   },
+   "error_text": {
+    "en": {
+     "length": "Capital projects: one per line, project | amount in minor units is too long."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "budget.approval_resolution",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "localgov.registry.resolutions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The council resolution that approved it (its number)"
+   },
+   "error_text": {
+    "en": {
+     "reference_exists": "There is no record with that reference in the register."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "budget.signatory",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Submitted by (from sign-in)"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "budget.document",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [
+    {
+     "kind": "budget-document",
+     "when": "when_the_form_asks_for_it"
+    }
+   ],
+   "label": {
+    "en": "The budget as approved"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the budget as approved."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "budget.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

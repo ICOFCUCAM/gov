@@ -15,7 +15,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   HOLDER_KINDS, LAND_USES, PARCEL_COLUMNS, RIGHT_TYPES, SOURCE_KINDS, SURVEY_METHODS, cadastreAuthority, checkParcel, pageParcels,
-  parcelCounts, parcelPolicy, recordParcel, viewParcel, type ParcelPageFilter, type RecordInput,
+  parcelCounts, parcelPolicy, recordParcel, rightsKeepers, viewParcel, type ParcelPageFilter, type RecordInput,
 } from '@/lib/data/parcels';
 import { currentOfficial, refusal, withOfficial } from '@/lib/auth/official';
 import { canRecordParcel, canSeeParcelRights } from '@/lib/auth/roles';
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
     parcels: page.parcels, page: { total: page.total, offset: page.offset, limit: page.limit, next: page.next },
     counts: parcelCounts(), policy, authority: cadastreAuthority(),
     // Whether this viewer may see rights and holders on a parcel's own record (never in this list).
-    seesRights: !!o && !canSeeParcelRights(o, policy.authorityId),
+    seesRights: !!o && !canSeeParcelRights(o, rightsKeepers()),
     landUses: LAND_USES, methods: SURVEY_METHODS, rightTypes: RIGHT_TYPES, holderKinds: HOLDER_KINDS, sourceKinds: SOURCE_KINDS, columns: PARCEL_COLUMNS,
   });
 }
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
   if ('error' in r) return NextResponse.json({ error: r.error, ...(r.check ? { check: { errors: r.check.errors, warnings: r.check.warnings, overlaps: r.check.overlaps } } : {}) }, { status: 422 });
   const o = await currentOfficial();
   return NextResponse.json({
-    parcel: viewParcel(r.parcel, { rights: !!o && !canSeeParcelRights(o, parcelPolicy().authorityId) }),
+    parcel: viewParcel(r.parcel, { rights: !!o && !canSeeParcelRights(o, rightsKeepers()) }),
     check: { warnings: r.check.warnings, overlaps: r.check.overlaps },
   }, { status: 201 });
 }

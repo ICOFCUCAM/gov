@@ -73,8 +73,8 @@ describe('procedure-link states', () => {
     expect(procedureLink({ identity: lib('HLT-FAC-002').identity, procedure: { key: 'health.facility' } }).state).toBe('missing');
     installAll('Administrator');
     expect(listPackages({ key: 'health.facility' }).length).toBeGreaterThan(0);
-    // Internal-administration templates are adopted per institution (the next test).
-    for (const f of CATALOGUE_CONTRACTS.filter(x => x.procedure && x.batch !== 5)) {
+    // Internal-administration templates are adopted per institution (the next test); local-government templates by each local government (below).
+    for (const f of CATALOGUE_CONTRACTS.filter(x => x.procedure && x.batch !== 5 && !x.procedure.key.startsWith('lg.'))) {
       const l = procedureLink({ identity: f.identity, procedure: f.procedure });
       expect(l.state, f.identity).toBe('draft');
       expect(l.detail).toMatch(/no version of it carries this contract yet/);
@@ -92,6 +92,22 @@ describe('procedure-link states', () => {
       expect(l, f.identity).toMatchObject({ state: 'draft', linked: { key: f.procedure!.key, inRegister: true } });
       expect(libraryPublicationOf(findLibraryForm(f.identity)!).status, f.identity).toBe('contract_draft');
     }
+  });
+
+  it('is draft for each batch-10 local-government form once a local government has adopted its template, never before (plan I7)', async () => {
+    const lg = CATALOGUE_CONTRACTS.filter(f => f.batch === 10 && f.procedure?.key.startsWith('lg.'));
+    expect(lg.map(f => f.specId).sort()).toEqual(['LRG-FIN-008', 'LRG-ORG-004', 'LRG-ORG-005', 'LRG-SVC-013', 'LRG-SVC-014']);
+    for (const f of lg) expect(procedureLink({ identity: f.identity, procedure: f.procedure }).state, f.identity).toBe('missing');
+    const { createMinistry } = await import('@/lib/data/store');
+    const { recordTermsDuringSetup } = await import('@/lib/data/store/institutions');
+    const { installLocalGovernmentProcedures } = await import('@/lib/localgov/procedures');
+    const m = createMinistry({ archetype: 'GENERIC', name: 'Lakeside District Council', slug: `lakeside-${Math.random().toString(36).slice(2, 7)}` });
+    if ('error' in m) throw new Error(m.error);
+    const t = recordTermsDuringSetup(m.id, { standing: 'subnational', branch: 'executive' }, 'Setup');
+    if (t && typeof t === 'object' && 'error' in t) throw new Error(String(t.error));
+    const r = installLocalGovernmentProcedures(m.id, 'District clerk', 'local:clerk');
+    if ('error' in r) throw new Error(r.error);
+    for (const f of lg) expect(procedureLink({ identity: f.identity, procedure: f.procedure }), f.identity).toMatchObject({ state: 'draft', linked: { key: f.procedure!.key, inRegister: true } });
   });
 
   it('is draft for each batch-2 form the product procedures carry once they are in the register, never approved by it', () => {

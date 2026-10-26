@@ -1,0 +1,231 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "HPC-HOU-004",
+ "record_type": "housing.allocation",
+ "form_version": 1,
+ "procedure_package_id": "housing.application",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-DAT-001: retention and disclosure of the case and its personal data."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+  "id": "HPC-HOU-004",
+  "part": 20,
+  "section": "20.1",
+  "line": 982,
+  "batch": 10
+ },
+ "library": {
+  "title": "Record a housing allocation decision",
+  "intro": "Two officials allocate a home to an eligible application, with reasons. The decision records the programme's terms version and, where an eligible applicant with more points still waits, says so.",
+  "owner": "housing",
+  "filled_by": "Officials who can sign at the housing authority.",
+  "authority": "Filed with the housing authority the nation names for its housing slot (shipped empty).",
+  "procedure": {
+   "key": "housing.application",
+   "stage": "waiting",
+   "action": "allocate"
+  },
+  "lists": {},
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "slot-owner",
+    "what": "The competent body is the institution the nation names for its slot of the deployment profile (landRegistry, buildingControl, housing, vehicleRegistration, roadAuthority, transportRegulator), shipped empty; who holds each power over a decision comes from the permit authority registry, proposed and unapproved",
+    "why": "Authority comes from the deployment profile and the approved mappings, never a ministry by name; a production installation refuses a power no approved mapping covers.",
+    "rule": "CLAUDE.md Government operating model: authorityFor(); lib/permits/decisions.ts (plan I7)"
+   },
+   {
+    "id": "programme-terms",
+    "what": "Eligibility criteria and priority factors with their points are the programme's terms, approved by two officials citing the law, each version kept with its digest; an officer records each criterion met or not with its evidence, and eligibility and points follow from the terms in force",
+    "why": "Housing allocation uses transparent, approved eligibility and priority rules; none ship.",
+    "rule": "lib/housing/register.ts readTerms(), termsDigest(); lib/housing/procedures.ts housing.assess"
+   },
+   {
+    "id": "no-health-detail",
+    "what": "Accessibility needs are what the home must have, never a medical detail; income and household evidence stay documents of the case",
+    "why": "No patient or clinical field anywhere (CLAUDE.md Health).",
+    "rule": "lib/forms/scope.ts; lib/housing/register.ts (no income figures or health details kept)"
+   },
+   {
+    "id": "two-officials",
+    "what": "Every registration and decision is proposed by one official and confirmed by a different person; the official who verified or reviewed does not decide",
+    "why": "Catalogue Part 8 §3.3 and Part 9 §5: dual control by distinct authorised individuals.",
+    "rule": "lib/casework/engine.ts act() (fourEyes, distinctFrom); lib/data/dual-control.ts dualControlRefusal()"
+   },
+   {
+    "id": "no-ai-decision",
+    "what": "No step is decided by a model, a score or a map: officials decide with reasons",
+    "why": "AI never makes a legally material decision.",
+    "rule": "CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 982,
+    "quotes": [
+     "HPC-HOU-004",
+     "Housing allocation decision record"
+    ],
+    "met_by": {
+     "fields": [
+      "allocation.home",
+      "allocation.reasons",
+      "allocation.out_of_order"
+     ],
+     "procedure": "allocate"
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "allocation.application",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "housing.registry.applications",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The application (its case reference)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the application (its case reference).",
+     "reference_exists": "There is no record with that reference in the register."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "allocation.home",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 80
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The home allocated (its reference in the programme)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the home allocated (its reference in the programme).",
+     "length": "The home allocated (its reference in the programme) is too long."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "allocation.reasons",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Reasons for the allocation"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter reasons for the allocation.",
+     "length": "Reasons for the allocation is too long."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "allocation.out_of_order",
+   "type": "boolean",
+   "required": false,
+   "validation": [
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "An eligible applicant with more points waits (recorded by the platform)"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "allocation.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}
