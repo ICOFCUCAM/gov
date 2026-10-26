@@ -19,6 +19,11 @@ import '@/lib/health/complaints/procedures';
 import '@/lib/oversight/procedures';
 // Internal administration (plan I2): each institution's own procedures, drafted from templates on request.
 import '@/lib/administration/procedures';
+// The economic group (plan I5): budget and treasury, the Cabinet office, and procurement (each institution's own
+// templates, drafted on request, and the review body's complaint procedure).
+import '@/lib/finance/procedures';
+import '@/lib/cabinet/procedures';
+import '@/lib/procurement/procedures';
 // The decision guard: every decision rests on a named authority (lib/permits/decisions.ts).
 import '@/lib/permits/decisions';
 // Publication gates: a form takes submissions in production only once its release is approved (lib/forms/publication.ts).
@@ -41,6 +46,9 @@ import { installProductProcedures } from '@/lib/health/products/procedures';
 import { installProgrammeProcedures } from '@/lib/health/programmes/procedures';
 import { installComplaintProcedures } from '@/lib/health/complaints/procedures';
 import { installOversightProcedures } from '@/lib/oversight/procedures';
+import { installFinanceProcedures } from '@/lib/finance/procedures';
+import { installCabinetProcedures } from '@/lib/cabinet/procedures';
+import { installProcurementReviewProcedures } from '@/lib/procurement/procedures';
 export { REFERENCE_PROCEDURES } from '@/lib/civil/procedures';
 export { ORGANISATION_PROCEDURES } from '@/lib/organisations/procedures';
 export { IMMIGRATION_PROCEDURES } from '@/lib/immigration/procedures';
@@ -55,9 +63,14 @@ export { PRODUCT_PROCEDURES } from '@/lib/health/products/procedures';
 export { PROGRAMME_PROCEDURES } from '@/lib/health/programmes/procedures';
 export { COMPLAINT_PROCEDURES } from '@/lib/health/complaints/procedures';
 export { INDEPENDENT_OVERSIGHT_PROCEDURES } from '@/lib/oversight/procedures';
+export { FINANCE_PROCEDURES } from '@/lib/finance/procedures';
+export { CABINET_PROCEDURES } from '@/lib/cabinet/procedures';
+export { PROCUREMENT_PROCEDURES, REFERENCE_PROCUREMENT_COMPLAINT } from '@/lib/procurement/procedures';
 
-/** Draft every reference procedure (civil registration, organisations, immigration, police intake, courts, tax, education, professions, health, customs, medicines and devices, public-health programmes, health complaints, independent oversight) the installation does not have yet. */
+/** Draft every reference procedure (civil registration, organisations, immigration, police intake, courts, tax, education, professions, health, customs, medicines and devices, public-health programmes, health complaints, independent oversight, budget and treasury, the Cabinet office, procurement review) the installation does not have yet. */
 export function installReferenceProcedures(by: string): { drafted: string[]; present: string[] } {
-  const all = [installCivil(by), installOrganisationProcedures(by), installImmigrationProcedures(by), installPoliceProcedures(by), installCourtProcedures(by), installTaxProcedures(by), installEducationProcedures(by), installProfessionProcedures(by), installHealthProcedures(by), installCustomsProcedures(by), installProductProcedures(by), installProgrammeProcedures(by), installComplaintProcedures(by), installOversightProcedures(by)];
+  const all = [installCivil(by), installOrganisationProcedures(by), installImmigrationProcedures(by), installPoliceProcedures(by), installCourtProcedures(by), installTaxProcedures(by), installEducationProcedures(by), installProfessionProcedures(by), installHealthProcedures(by), installCustomsProcedures(by), installProductProcedures(by), installProgrammeProcedures(by), installComplaintProcedures(by), installOversightProcedures(by),
+    // Plan step I5: budget and treasury, the Cabinet office, the procurement review body (procurement itself: each institution's own templates).
+    installFinanceProcedures(by), installCabinetProcedures(by), installProcurementReviewProcedures(by)];
   return { drafted: all.flatMap(x => x.drafted), present: all.flatMap(x => x.present) };
 }

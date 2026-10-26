@@ -42,6 +42,8 @@ import { INDEPENDENT_OVERSIGHT_PROCEDURES, OVERSIGHT_PERMITS } from '@/lib/overs
 import { OVERSIGHT_SLOTS, oversightCounts } from '@/lib/oversight/register';
 import { relationshipGrants } from '@/lib/data/store/relationships';
 import { taxServicesView } from '@/lib/tax/services-view';
+import { economicServicesView } from '@/lib/finance/services-view';
+import { cabinetRuleChanges } from '@/lib/cabinet/register';
 import { smallCellRule, smallCellChanges } from '@/lib/health/small-cells';
 import { indicatorSmallCells } from '@/lib/indicators/disclosure';
 import { listDefinitions as listIndicators, approvedAt as indicatorApprovedAt } from '@/lib/indicators/register';
@@ -399,6 +401,41 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
         { label: 'Who decides each tax power approved (permit authorities)', done: v.counts.mappingsApproved === v.counts.permitTypes, href: '/gov/law/permit-authorities', detail: `${v.counts.mappingsApproved} of ${v.counts.permitTypes} mappings approved; the proposals ship unapproved` },
         { label: 'Tax rates, interest and penalties approved as rules citing the law', done: rules > 0, href: '/gov/law/rules', detail: rules ? `${rules} approved tax rule version(s)` : 'None ship: assessments are entered with reasons, and a production installation refuses interest or a penalty without its rule' },
         { label: 'Tax-service forms adopted in approved procedure versions', done: forms.length > 0 && adopted === forms.length, href: '/gov/tax/services', detail: `${adopted} of ${forms.length} forms carried by a procedure adopted; ${v.counts.waiting} wait for a procedure` },
+      ] };
+    }),
+
+    // The economic group (plan step I5): budget and treasury, public procurement, the Cabinet office.
+    track({ key: 'finance', title: 'Budget and treasury', why: 'The budget call, ceilings and bids; appropriations released under the law; commitments against them; payments verified, approved by two officials, executed and reconciled by different people; payee accounts changed only after verification; cash forecasts. No ceiling, tier or period ships: each is the nation\'s.', href: '/gov/treasury/budget' }, () => {
+      const v = economicServicesView('finance');
+      const tiers = v.rules.find(r => r.key === 'treasury.payment.approval-tiers');
+      return { checks: [
+        { label: 'Finance authority named (Who is responsible)', done: !!authorityFor('finance'), href: '/gov/configuration/responsible#who-is-responsible', detail: authorityFor('finance') ? undefined : 'Not named: nobody keeps appropriations, commitments or payments until it is' },
+        { label: 'Budget and treasury procedures approved', done: v.counts.approved === v.counts.procedures, href: '/gov/law/procedures', detail: `${v.counts.approved} of ${v.counts.procedures} approved` },
+        { label: 'Who decides each budget and treasury power approved (permit authorities)', done: v.counts.mappingsApproved === v.counts.permitTypes, href: '/gov/law/permit-authorities', detail: `${v.counts.mappingsApproved} of ${v.counts.permitTypes} mappings approved; the proposals ship unapproved` },
+        { label: 'Payment approval tiers approved as a rule citing the law', done: tiers?.state === 'approved', href: '/gov/law/rules', detail: tiers?.state === 'approved' ? undefined : 'treasury.payment.approval-tiers ships unset: a production installation approves no payment without it' },
+      ] };
+    }),
+    track({ key: 'procurement', title: 'Public procurement', why: 'Each institution\'s own procurement: plans against its budget, tenders published once and never silently changed, bids sealed until opened together, evaluation with declared interests and reasons, award by officials who did not evaluate, contracts and their variations; complaints decided by an independent review body.', href: '/gov/treasury/procurement' }, () => {
+      const v = economicServicesView('procurement');
+      const adopted = new Set(v.procedures.flatMap(p => (p.adoptedBy ?? []).filter(x => x.state === 'approved').map(x => x.institution)));
+      const thresholds = v.rules.find(r => r.key === 'procurement.method-thresholds');
+      return { checks: [
+        { label: 'Procurement review body named (Who is responsible)', done: !!authorityFor('procurementReview'), href: '/gov/configuration/responsible#who-is-responsible', detail: authorityFor('procurementReview') ? undefined : 'Not named: complaints cannot be decided independently until it is' },
+        { label: 'At least one procuring institution has adopted and approved the procurement procedures', done: adopted.size > 0, href: '/gov/treasury/procurement', detail: `${adopted.size} institution(s)` },
+        { label: 'Who decides each procurement power approved (permit authorities)', done: v.counts.mappingsApproved === v.counts.permitTypes, href: '/gov/law/permit-authorities', detail: `${v.counts.mappingsApproved} of ${v.counts.permitTypes} mappings approved; the proposals ship unapproved` },
+        { label: 'Procurement method thresholds approved as a rule citing the law', done: thresholds?.state === 'approved', href: '/gov/law/rules', detail: thresholds?.state === 'approved' ? undefined : 'procurement.method-thresholds ships unset: a production installation authorises no method without it' },
+      ] };
+    }),
+    track({ key: 'cabinet', title: 'Cabinet office', why: 'Cabinet papers reviewed and circulated, decisions recorded under the nation\'s quorum and voting rules and authenticated by a second official, actions assigned without transferring any institution\'s powers, directives with required responses, petitions answered or referred.', href: '/gov/cabinet-office' }, () => {
+      const v = economicServicesView('cabinet');
+      const rules = v.rules.find(r => r.key === 'cabinet.rules');
+      const rulesPending = cabinetRuleChanges().pending;
+      if (rulesPending) wait({ what: 'Cabinet composition, quorum and decision rule: a change waiting for a second official', proposedBy: rulesPending.by, at: rulesPending.at, href: '/gov/cabinet-office' });
+      return { checks: [
+        { label: 'Cabinet office named (Who is responsible)', done: !!authorityFor('cabinetOffice'), href: '/gov/configuration/responsible#who-is-responsible', detail: authorityFor('cabinetOffice') ? undefined : 'Not named: no Cabinet paper or petition is registered until it is' },
+        { label: 'Cabinet procedures approved', done: v.counts.approved === v.counts.procedures, href: '/gov/law/procedures', detail: `${v.counts.approved} of ${v.counts.procedures} approved` },
+        { label: 'Cabinet composition, quorum and decision rule adopted (citing the law)', done: rules?.state === 'approved', href: '/gov/cabinet-office', detail: rules?.state === 'approved' ? undefined : 'Ships unset: a production installation records no Cabinet decision without them' },
+        { label: 'Who decides each Cabinet office power approved (permit authorities)', done: v.counts.mappingsApproved === v.counts.permitTypes, href: '/gov/law/permit-authorities', detail: `${v.counts.mappingsApproved} of ${v.counts.permitTypes} mappings approved` },
       ] };
     }),
 

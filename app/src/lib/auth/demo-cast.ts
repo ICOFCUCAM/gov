@@ -55,6 +55,9 @@ const NOUN: Record<AuthorityKey, string> = {
   medicinesRegulation: 'medicines regulator',
   controlledSubstances: 'controlled substances officer',
   publicHealth: 'public health officer',
+  finance: 'finance officer',
+  cabinetOffice: 'cabinet office official',
+  procurementReview: 'procurement review officer',
 };
 
 const slug = (v: string) => v.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'institution';

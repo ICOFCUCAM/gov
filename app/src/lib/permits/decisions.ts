@@ -33,6 +33,9 @@ import { PRODUCT_PERMIT_TYPES, PROCEDURE_PERMITS } from '@/lib/health/products/p
 import { PROGRAMME_PERMITS } from '@/lib/health/programmes/procedures';
 import { OVERSIGHT_PERMITS } from '@/lib/oversight/procedures';
 import { TAX_PERMITS } from '@/lib/tax/procedures';
+import { FINANCE_PERMITS } from '@/lib/finance/procedures';
+import { PROCUREMENT_PERMITS, PROCURING_ENTITY } from '@/lib/procurement/procedures';
+import { CABINET_PERMITS } from '@/lib/cabinet/procedures';
 import { mappingInForce, powerRefusal, type Power } from './authority';
 import type { ActionSpec, Case, CasePackage } from '@/lib/casework/types';
 
@@ -94,6 +97,11 @@ export function classifyDecision(c: Case, a: ActionSpec, pkg: Pick<CasePackage, 
   // Independent oversight (plan I8, lib/oversight): admissibility, issued findings and recommendations, approved audit reports and the
   // data-protection authority's decisions, each family under its own permit type (lead: the body's slot). Proposed, unapproved.
   for (const [prefix, permitType] of Object.entries(OVERSIGHT_PERMITS)) if (key.startsWith(prefix)) return mapped(permitType);
+  // The economic group (plan step I5): budget and treasury (lead: the finance slot), the Cabinet office's decisions and
+  // correspondence (lead: the cabinet office slot), each institution's own procurement (proc.<template>.<institution>; lead:
+  // the procuring entity, resolved to the case's own institution) and the review body's complaints (lead: its slot).
+  // Proposed mappings, none approved: a production installation refuses these decisions until the nation approves them.
+  for (const [k, permitType] of Object.entries({ ...FINANCE_PERMITS, ...CABINET_PERMITS, ...PROCUREMENT_PERMITS })) if (is(key, k)) return mapped(permitType);
   for (const [prefix, authority] of DEPLOYMENT_DOMAINS) if (key.startsWith(`${prefix}.`)) return { kind: 'deployment', authority };
   return mapped(pkg.authority?.permitType);
 }
@@ -107,7 +115,8 @@ export function checkDecision(c: Case, a: ActionSpec, pkg: CasePackage, now: Dat
     : { authority: { basis: 'unmapped', note: 'Not classified; a demonstration or training installation only' } };
   if (cls.kind === 'deployment') return { authority: { basis: 'deployment', authority: cls.authority } };
   const on = now.toISOString().slice(0, 10);
-  const why = powerRefusal(cls.permitType, cls.power, c.owner, a2 => ownerInstitution(a2, authorityFor), { on, required: production });
+  // A mapping whose lead is the procuring entity gives the power to each institution for its own procurement.
+  const why = powerRefusal(cls.permitType, cls.power, c.owner, a2 => (a2 === PROCURING_ENTITY ? c.owner : ownerInstitution(a2, authorityFor)), { on, required: production });
   if (why) return { error: why };
   const m = mappingInForce(cls.permitType, on);
   return { authority: m

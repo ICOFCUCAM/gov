@@ -109,6 +109,8 @@ const REGISTRY_SOURCES: Record<string, string> = {
   'civicos.registry.sites': 'site',
   'medicines.registry.products': 'product',
   'health.registry.programmes': 'programme',
+  // Plan step I5: the finance register's appropriations (what the catalogue calls approved budget allocations).
+  'civicos.finance.approved_budget_allocations': 'appropriation',
 };
 /** Rules whose field is answered by an official, or set by the platform. */
 const OFFICER_RULES = new Set(Object.entries(RULE_REGISTRY).filter(([, r]) => r.scope === 'officer').map(([k]) => k));

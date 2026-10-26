@@ -87,6 +87,23 @@ const REGISTERS: Register[] = [
   { module: 'lib/records/delegations.ts', store: '__civicosDelegations', procedures: 'lib/administration/procedures.ts',
     changes: ['resetDelegations', 'grantDelegation', 'revokeDelegation', 'recordAuthorityDelegation', 'revokeAuthorityDelegation'],
     reads: ['delegationFor', 'delegationsOf', 'authorityDelegationOfCase', 'authorityDelegationsOf', 'authorityGrantsFor'] },
+  // The economic group (plan step I5).
+  { module: 'lib/finance/register.ts', store: '__civicosFinance', procedures: 'lib/finance/procedures.ts',
+    changes: ['resetFinance', 'issueCall', 'setCeiling', 'recordBid', 'reviseBid', 'negotiateBid', 'allocateBid', 'closeBid', 'enactAppropriation', 'validateAppropriation', 'releaseAppropriation', 'refuseRelease',
+      'attachAppropriationDecision', 'reviseAppropriations', 'recordCommitment', 'endCommitment', 'attachCommitmentDecision', 'requestPayeeAccount', 'verifyPayeeAccount', 'approvePayeeAccount', 'refusePayeeAccount',
+      'attachPayeeDecision', 'instructPayment', 'verifyPayment', 'approvePayment', 'attachPaymentDecision', 'executePayment', 'reconcilePayment', 'endPayment', 'retryPayment', 'submitForecast', 'reviewForecast'],
+    reads: ['samePerson', 'callFor', 'ceilingFor', 'getBid', 'getAppropriation', 'balanceOf', 'REVISION_KINDS', 'checkRevision', 'listAppropriations', 'getCommitment', 'commitmentRemaining', 'payeeAccountInForce',
+      'listPayeeAccounts', 'getPayment', 'getForecast', 'financeRecords', 'financeCounts'] },
+  { module: 'lib/procurement/register.ts', store: '__civicosProcurement', procedures: 'lib/procurement/procedures.ts',
+    changes: ['resetProcurement', 'recordPlanItem', 'confirmPlanBudget', 'setPlanMethodRule', 'setPlanState', 'prepareTender', 'publishTender', 'attachTenderDecision', 'addAddendum', 'receiveBid', 'withdrawBid',
+      'closeSubmissions', 'appointCommittee', 'declareInterest', 'manageInterest', 'openBids', 'recordEvaluation', 'awardTender', 'cancelTender', 'lodgeChallenge', 'interimMeasure', 'decideChallenge',
+      'signContract', 'varyContract', 'attachContractDecision', 'submitDeliverable', 'decideDeliverable', 'certifyPayment'],
+    reads: ['samePerson', 'parseCriteria', 'getPlanItem', 'getTender', 'latestVersion', 'mayEvaluate', 'parseResults', 'getContract', 'contractValue', 'contractForPayment', 'bidView', 'bidsOf',
+      'procurementRecords', 'ocdsRelease', 'procurementCounts'] },
+  { module: 'lib/cabinet/register.ts', store: '__civicosCabinet', procedures: 'lib/cabinet/procedures.ts',
+    changes: ['resetCabinet', 'proposeCabinetRules', 'confirmCabinetRules', 'withdrawCabinetRules', 'registerSubmission', 'reviewSubmission', 'setSubmissionState', 'recordCabinetDecision', 'attachCabinetDecision',
+      'correctCabinetDecision', 'distribute', 'setDisclosure', 'assignAction', 'reportAction', 'proposeActionClosure', 'decideActionClosure'],
+    reads: ['samePerson', 'CLASSIFICATIONS', 'cabinetRules', 'cabinetRuleChanges', 'checkVote', 'getSubmission', 'getCabinetDecision', 'getAction', 'actionsOf', 'cabinetRecords', 'cabinetIndicators', 'cabinetCounts'] },
   { module: 'lib/courts/hearings.ts', store: '__civicosHearings', procedures: 'lib/courts/procedures.ts',
     changes: ['resetHearings', 'scheduleHearing', 'concludeHearing'],
     reads: ['causeList', 'hearingsOf'] },
@@ -126,6 +143,21 @@ const EXCEPTIONS: { file: string; fn: string; why: string }[] = [
   { file: 'app/api/oversight/route.ts', fn: 'respondToFinding', why: 'the management response of the institution a finding concerns, appended beside the finding; the finding, its versions and stage are untouched (P4-04)' },
   { file: 'app/api/oversight/route.ts', fn: 'submitEvidence', why: 'evidence the institution asked submits to the body\'s request under an approved relationship; the request is the body\'s' },
   { file: 'app/api/oversight/route.ts', fn: 'answerControllerRequest', why: 'the controller\'s answer to the data-protection authority: what it did with a person\'s request about its records; the authority never reads them' },
+  // Plan step I5. Procurement: what a case cannot carry without breaking a seal or putting a person's statement about themselves in the
+  // procuring institution's case: a sealed bid received (its content never in a case) or withdrawn before the deadline, a committee
+  // member's own declaration of interests and its management by an independent official. The Cabinet: the assigned institution's own
+  // progress report and proposed closure of an action (a different cabinet office official confirms or returns it), and the Cabinet
+  // rules, a country rule set (proposed citing the law, confirmed by a different official).
+  { file: 'app/api/procurement/route.ts', fn: 'receiveBid', why: 'a sealed bid received by an official of the procuring institution: the receipt and its time, content sealed until the opening step decides nothing' },
+  { file: 'app/api/procurement/route.ts', fn: 'withdrawBid', why: 'a supplier\'s withdrawal of its sealed bid before the deadline, recorded with its reason' },
+  { file: 'app/api/procurement/route.ts', fn: 'declareInterest', why: 'a committee member\'s own declaration of interests (about themselves); decides nothing' },
+  { file: 'app/api/procurement/route.ts', fn: 'manageInterest', why: 'how a declared interest is managed, by an official who can sign there and is neither the member nor on the committee' },
+  { file: 'app/api/cabinet-office/route.ts', fn: 'reportAction', why: 'the assigned institution\'s own progress report on a Cabinet action; the decision is untouched' },
+  { file: 'app/api/cabinet-office/route.ts', fn: 'proposeActionClosure', why: 'the assigned institution proposes closing its action with evidence; a different official of the cabinet office confirms or returns it' },
+  { file: 'app/api/cabinet-office/route.ts', fn: 'decideActionClosure', why: 'a cabinet office official, a different person, confirms or returns a proposed closure' },
+  { file: 'app/api/cabinet-office/route.ts', fn: 'proposeCabinetRules', why: 'the Cabinet rules, a country rule set: proposed citing the law, confirmed by a different official; records no decision' },
+  { file: 'app/api/cabinet-office/route.ts', fn: 'confirmCabinetRules', why: 'the Cabinet rules, a country rule set: proposed citing the law, confirmed by a different official; records no decision' },
+  { file: 'app/api/cabinet-office/route.ts', fn: 'withdrawCabinetRules', why: 'withdraws a waiting rules proposal' },
   { file: 'lib/organisations/import.ts', fn: 'organisationsDb', why: 'the checked load of an existing register: proposed by one official of the keeping authority, confirmed by a different one, under the approved mapping in production' },
   { file: 'lib/organisations/import.ts', fn: 'nextOrganisationNumber', why: 'numbers the organisations a confirmed load enters' },
   // An institution's own records coming back from its portable export (Health I4 standalone-and-pilot): nothing is decided;

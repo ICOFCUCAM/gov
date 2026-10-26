@@ -11,7 +11,7 @@ import { samplesAllowed } from '@/lib/ops/mode';
 import { authorityFor, getSovereign } from '@/lib/data/store';
 import { recordAudit } from '@/lib/data/store/audit';
 import { recordVersion, confirmVersion, listInstruments } from '@/lib/law/register';
-import { REFERENCE_PROCEDURES, ORGANISATION_PROCEDURES, IMMIGRATION_PROCEDURES, POLICE_PROCEDURES, COURT_PROCEDURES, TAX_PROCEDURES, EDUCATION_PROCEDURES, PROFESSION_PROCEDURES, HEALTH_PROCEDURES, CUSTOMS_PROCEDURES, PRODUCT_PROCEDURES, PROGRAMME_PROCEDURES, COMPLAINT_PROCEDURES, installReferenceProcedures } from '@/lib/casework/modules';
+import { REFERENCE_PROCEDURES, ORGANISATION_PROCEDURES, IMMIGRATION_PROCEDURES, POLICE_PROCEDURES, COURT_PROCEDURES, TAX_PROCEDURES, EDUCATION_PROCEDURES, PROFESSION_PROCEDURES, HEALTH_PROCEDURES, CUSTOMS_PROCEDURES, PRODUCT_PROCEDURES, PROGRAMME_PROCEDURES, COMPLAINT_PROCEDURES, FINANCE_PROCEDURES, CABINET_PROCEDURES, REFERENCE_PROCUREMENT_COMPLAINT, installReferenceProcedures } from '@/lib/casework/modules';
 import type { AuthorityKey } from '@/lib/nation/deployment';
 import { activePackage, approvePackage, draftPackage, listPackages, withSampleDeadlines } from '@/lib/casework/packages';
 import { registeredEffects } from '@/lib/casework/engine';
@@ -112,6 +112,26 @@ const MORE_ACTS: { title: string; number: string; authority: AuthorityKey; provi
   } },
   { title: 'Controlled Substances Act (sample for demonstration)', number: 'sample-12', authority: 'controlledSubstances', procedures: PRODUCT_PROCEDURES, provisions: {
     'medicines.controlled': P('sec_8', '8', 'No person shall import, export, manufacture or distribute a controlled substance except under an authorisation, within the quantities the regulations set.'),
+  } },
+  // The economic group (plan step I5): powers only. No ceiling, threshold, approval tier, quorum or period is sampled: payments are
+  // approved without tiers and Cabinet decisions recorded without adopted rules only in a demonstration, marked as such.
+  { title: 'Public Finance Management Act (sample for demonstration)', number: 'sample-14', authority: 'finance', procedures: FINANCE_PROCEDURES, provisions: {
+    'budget.circular': P('sec_10', '10', 'The finance authority shall issue a budget call circular for each budget period, stating the calendar and what bids must contain.'),
+    'budget.ceiling': P('sec_11', '11', 'The finance authority shall set each institution\'s budget ceiling within the fiscal framework.'),
+    'budget.bid': P('sec_12', '12', 'Each institution shall submit its budget bid within its ceiling; the finance authority shall review, negotiate and allocate.'),
+    'budget.appropriation': P('sec_20', '20', 'Money appropriated by the legislature shall be released for commitment by the finance authority once its authority is validated.'),
+    'budget.revision': P('sec_25', '25', 'The finance authority may transfer between appropriations, release further sums or reduce an appropriation as the law permits; supplementary sums need a supplementary appropriation.'),
+    'finance.commitment': P('sec_30', '30', 'No commitment shall be made unless a released appropriation covers it.'),
+    'treasury.payee-account': P('sec_34', '34', 'A payee\'s bank account shall be verified independently and approved by two officers before any payment is made to it.'),
+    'treasury.payment': P('sec_35', '35', 'No payment shall be made unless instructed against a commitment, verified, approved by two officers, executed by the bank and reconciled, each step by a different officer.'),
+    'treasury.cash-forecast': P('sec_40', '40', 'Each institution shall report a cash forecast for each period; the finance authority shall review it.'),
+  } },
+  { title: 'Cabinet Procedure Order (sample for demonstration)', number: 'sample-15', authority: 'cabinetOffice', procedures: CABINET_PROCEDURES, provisions: {
+    'cabinet.decision': P('art_4', '4', 'The cabinet office shall register Cabinet papers, have them reviewed, circulate them, record and authenticate Cabinet\'s decisions and follow up the actions they assign.'),
+    'exec.correspondence': P('art_9', '9', 'The cabinet office shall receive petitions and correspondence to the executive, acknowledge them and respond or refer them to the responsible institution.'),
+  } },
+  { title: 'Public Procurement Review Act (sample for demonstration)', number: 'sample-16', authority: 'procurementReview', procedures: [REFERENCE_PROCUREMENT_COMPLAINT], provisions: {
+    'procurement-review.complaint': P('sec_50', '50', 'A bidder may complain to the review body about a procurement decision; the review body may suspend the award and shall decide with reasons.'),
   } },
   { title: 'Customs Act (sample for demonstration)', number: 'sample-10', authority: 'customs', procedures: CUSTOMS_PROCEDURES, provisions: {
     'customs.declaration': P('sec_30', '30', 'Goods shall be declared to customs, may be examined, and are released once the duty assessed on them is paid.'),
