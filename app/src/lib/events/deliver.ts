@@ -11,6 +11,10 @@
 //     "type": "org.civicos.facility.publish", "subject": …, "time": …,
 //     "datacontenttype": "application/json", "auditseq": …, "data": { … } }
 //
+// `data` carries the action, the resource reference, the outcome and the
+// audit link only: never the actor's name or the entry's free-text detail
+// (plan I9, outbox.ts subscriberEvent()).
+//
 // At least once, in audit order: a webhook's cursor advances past each
 // delivered event; the first failure stops that webhook's run (retried next
 // run) and counts on the subscription. Addresses are fetched through
@@ -25,7 +29,7 @@
 import { createHmac } from 'node:crypto';
 import { listWebhooks, webhookSigningSecret, noteWebhookDelivery } from '@/lib/data/store';
 import { safeFetchText, type SafeFetchOptions } from '@/lib/net/safe-fetch';
-import { pendingFor, advanceCursor, recordDelivery, type CloudEvent } from './outbox';
+import { pendingFor, advanceCursor, recordDelivery, subscriberEvent, type CloudEvent } from './outbox';
 import { installationMode, samplesAllowed } from '@/lib/ops/mode';
 
 export const PER_RUN_LIMIT = 50;
@@ -76,7 +80,8 @@ export async function deliverOutbox(now = Date.now(), net: Pick<SafeFetchOptions
 }
 
 async function deliverOne(url: string, secret: string, ev: CloudEvent, now: number, net: Pick<SafeFetchOptions, 'fetch' | 'resolve'>): Promise<{ ok: boolean; detail: string }> {
-  const body = JSON.stringify(ev);
+  // I9: subscribers receive no actor name and no free text (subscriberEvent()).
+  const body = JSON.stringify(subscriberEvent(ev));
   const ts = Math.floor(now / 1000);
   try {
     await safeFetchText(url, {
