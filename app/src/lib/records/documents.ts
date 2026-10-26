@@ -165,6 +165,9 @@ export function documentBytes(id: string, n?: number): { bytes: Buffer; mediaTyp
   return { bytes, mediaType: v.mediaType, sha256: v.sha256 };
 }
 
+/** The documents of one institution carrying a retention class (plan step I13: a record class's records, for disposal, transfer and migration). Without content. */
+export const documentsOfClass = (institution: string, retention: string): DocumentRecord[] => db().docs.filter(d => d.institution === institution && d.retention === retention).map(withoutContent);
+
 /** Documents added before a time and not yet disposed of (the retention sweep's candidates). */
 export const dueDocuments = (before: string): DocumentRecord[] => db().docs.filter(d => !d.disposed && d.createdAt < before).map(withoutContent);
 

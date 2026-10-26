@@ -206,6 +206,9 @@
       "name": "public-sites"
     },
     {
+      "name": "records-management"
+    },
+    {
       "name": "registers"
     },
     {
@@ -216,6 +219,9 @@
     },
     {
       "name": "seal-keys"
+    },
+    {
+      "name": "services"
     },
     {
       "name": "session"
@@ -8318,6 +8324,7 @@
                                       "type": "string",
                                       "enum": [
                                         "anticorruption",
+                                        "archives",
                                         "buildingControl",
                                         "businessRegister",
                                         "cabinetOffice",
@@ -8365,6 +8372,7 @@
                                       "type": "string",
                                       "enum": [
                                         "anticorruption",
+                                        "archives",
                                         "buildingControl",
                                         "businessRegister",
                                         "cabinetOffice",
@@ -11107,7 +11115,7 @@
         ],
         "operationId": "get_citizen_applications",
         "summary": "GET /api/citizen/applications",
-        "description": "/api/citizen/applications — a citizen's own applications (design §8.4, §10.1). The route checks the citizen itself (SELF_AUTHENTICATED): signed in through the nation's identity service, or the demo citizen in training and demonstration installations. GET: the cases they applied for, with stage and decisions only, and the forms of the procedures citizens may start (as they render, in the language asked for with ?locale=; the procedure version in force, or \"not connected\" when none is approved). POST: notify a birth or report an incident to the police (civil.birth, civil.late-birth, police.incident), opened as a citizen case under the procedure in force. Under a procedure with a form (lib/forms/contract.ts) it is a self-service submission: the form's required answers, declaration and checks apply (submitForm(), the same rules and messages as the form in the browser), a refusal names the answers it concerns (`fieldErrors`), and the answer carries the receipt. Officials of the responsible authority take it from there.",
+        "description": "/api/citizen/applications — a citizen's own applications (design §8.4, §10.1). The route checks the citizen itself (SELF_AUTHENTICATED): signed in through the nation's identity service, or the demo citizen in training and demonstration installations. GET: the cases they applied for, with stage and decisions only, and the forms of the procedures citizens may start (as they render, in the language asked for with ?locale=; the procedure version in force, or \"not connected\" when none is approved). POST: notify a birth or report an incident to the police (civil.birth, civil.late-birth, police.incident), opened as a citizen case under the procedure in force. Under a procedure with a form (lib/forms/contract.ts) it is a self-service submission: the form's required answers, declaration and checks apply (submitForm(), the same rules and messages as the form in the browser), a refusal names the answers it concerns (`fieldErrors`), and the answer carries the receipt. Officials of the responsible authority take it from there. Plan step I13 (the front door, lib/frontdoor/journey.ts): GET also lists the published catalogue services that take applications online with their forms, the person's applications as they follow them (own, made for them, made by them for another: stage, deadlines, sealed decisions, whether a reconsideration can be asked) and how they can prove who they are (the nation's identity provider, or the lawful alternatives). POST { service, fields, onBehalfOf? } applies for a catalogue service, routed to the institution responsible (a representative only within the representation the person granted); POST { op: 'reconsider', case, grounds } asks for a decided application to be reconsidered by the institution that decided it.",
         "parameters": [
           {
             "name": "locale",
@@ -11213,12 +11221,73 @@
                           }
                         ]
                       }
+                    },
+                    "services": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "owner": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "active",
+                              "informational",
+                              "pilot",
+                              "retired",
+                              "unavailable",
+                              "unpublished"
+                            ]
+                          },
+                          "representatives": {
+                            "type": "boolean"
+                          },
+                          "form": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/components/schemas/FormView"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "owner",
+                          "status",
+                          "representatives",
+                          "form"
+                        ]
+                      }
+                    },
+                    "tracked": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Tracked"
+                      }
+                    },
+                    "identity": {
+                      "$ref": "#/components/schemas/IdentityRoute"
                     }
                   },
                   "required": [
                     "applications",
                     "procedures",
-                    "forms"
+                    "forms",
+                    "services",
+                    "tracked",
+                    "identity"
                   ]
                 },
                 "examples": {
@@ -11265,6 +11334,59 @@
                             "string"
                           ]
                         }
+                      },
+                      "services": [
+                        {
+                          "id": "ID-0001",
+                          "name": "Example",
+                          "owner": "string",
+                          "status": "active",
+                          "representatives": true,
+                          "form": {
+                            "procedure": {},
+                            "form": {},
+                            "fields": [],
+                            "documents": [],
+                            "currency": "string",
+                            "locale": "string",
+                            "dir": "ltr",
+                            "regions": []
+                          }
+                        }
+                      ],
+                      "tracked": [
+                        {
+                          "id": "ID-0001",
+                          "ref": "string",
+                          "procedure": "string",
+                          "institution": "string",
+                          "stage": "string",
+                          "openedAt": "2026-01-15T09:30:00.000Z",
+                          "closedAt": "2026-01-15T09:30:00.000Z",
+                          "role": "made by you for another",
+                          "deadlines": [
+                            {}
+                          ],
+                          "decisions": [
+                            {}
+                          ],
+                          "certificates": [
+                            {}
+                          ],
+                          "challenge": {
+                            "available": true
+                          },
+                          "reconsiderations": [
+                            {}
+                          ]
+                        }
+                      ],
+                      "identity": {
+                        "provider": {
+                          "issuer": "string"
+                        },
+                        "assisted": true,
+                        "statement": "string"
                       }
                     }
                   }
@@ -11296,7 +11418,7 @@
         ],
         "operationId": "post_citizen_applications",
         "summary": "POST /api/citizen/applications",
-        "description": "/api/citizen/applications — a citizen's own applications (design §8.4, §10.1). The route checks the citizen itself (SELF_AUTHENTICATED): signed in through the nation's identity service, or the demo citizen in training and demonstration installations. GET: the cases they applied for, with stage and decisions only, and the forms of the procedures citizens may start (as they render, in the language asked for with ?locale=; the procedure version in force, or \"not connected\" when none is approved). POST: notify a birth or report an incident to the police (civil.birth, civil.late-birth, police.incident), opened as a citizen case under the procedure in force. Under a procedure with a form (lib/forms/contract.ts) it is a self-service submission: the form's required answers, declaration and checks apply (submitForm(), the same rules and messages as the form in the browser), a refusal names the answers it concerns (`fieldErrors`), and the answer carries the receipt. Officials of the responsible authority take it from there.",
+        "description": "/api/citizen/applications — a citizen's own applications (design §8.4, §10.1). The route checks the citizen itself (SELF_AUTHENTICATED): signed in through the nation's identity service, or the demo citizen in training and demonstration installations. GET: the cases they applied for, with stage and decisions only, and the forms of the procedures citizens may start (as they render, in the language asked for with ?locale=; the procedure version in force, or \"not connected\" when none is approved). POST: notify a birth or report an incident to the police (civil.birth, civil.late-birth, police.incident), opened as a citizen case under the procedure in force. Under a procedure with a form (lib/forms/contract.ts) it is a self-service submission: the form's required answers, declaration and checks apply (submitForm(), the same rules and messages as the form in the browser), a refusal names the answers it concerns (`fieldErrors`), and the answer carries the receipt. Officials of the responsible authority take it from there. Plan step I13 (the front door, lib/frontdoor/journey.ts): GET also lists the published catalogue services that take applications online with their forms, the person's applications as they follow them (own, made for them, made by them for another: stage, deadlines, sealed decisions, whether a reconsideration can be asked) and how they can prove who they are (the nation's identity provider, or the lawful alternatives). POST { service, fields, onBehalfOf? } applies for a catalogue service, routed to the institution responsible (a representative only within the representation the person granted); POST { op: 'reconsider', case, grounds } asks for a decided application to be reconsidered by the institution that decided it.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -11321,7 +11443,13 @@
                       "version": {}
                     }
                   },
-                  "locale": {}
+                  "locale": {},
+                  "service": {},
+                  "onBehalfOf": {},
+                  "op": {},
+                  "case": {},
+                  "grounds": {},
+                  "newEvidence": {}
                 }
               },
               "examples": {
@@ -11334,7 +11462,13 @@
                     "declaration": {
                       "version": null
                     },
-                    "locale": null
+                    "locale": null,
+                    "service": null,
+                    "onBehalfOf": null,
+                    "op": null,
+                    "case": null,
+                    "grounds": null,
+                    "newEvidence": null
                   }
                 }
               }
@@ -11347,30 +11481,108 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "application": {
+                  "anyOf": [
+                    {
                       "type": "object",
                       "properties": {
-                        "id": {
-                          "type": "string"
+                        "application": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "ref": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "ref"
+                          ]
                         },
-                        "ref": {
-                          "type": "string"
+                        "routed": {
+                          "type": "object",
+                          "properties": {
+                            "institution": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "institution"
+                          ]
                         }
                       },
                       "required": [
-                        "id",
-                        "ref"
+                        "application",
+                        "routed"
                       ]
                     },
-                    "receipt": {
-                      "$ref": "#/components/schemas/Receipt"
+                    {
+                      "type": "object",
+                      "properties": {
+                        "application": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "ref": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "ref"
+                          ]
+                        },
+                        "receipt": {
+                          "$ref": "#/components/schemas/Receipt"
+                        },
+                        "routed": {
+                          "type": "object",
+                          "properties": {
+                            "institution": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "institution"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "application",
+                        "receipt",
+                        "routed"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "application": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "ref": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "ref"
+                          ]
+                        },
+                        "receipt": {
+                          "$ref": "#/components/schemas/Receipt"
+                        }
+                      },
+                      "required": [
+                        "application",
+                        "receipt"
+                      ]
                     }
-                  },
-                  "required": [
-                    "application",
-                    "receipt"
                   ]
                 },
                 "examples": {
@@ -11381,20 +11593,8 @@
                         "id": "ID-0001",
                         "ref": "string"
                       },
-                      "receipt": {
-                        "ref": "string",
-                        "receivedAt": "2026-01-15T09:30:00.000Z",
-                        "procedure": "string",
-                        "procedureVersion": 1,
-                        "form": "string",
-                        "declaration": "string",
-                        "evidencePolicy": "string",
-                        "channel": "string",
-                        "assistedBy": "A. Official",
-                        "servicePoint": "string",
-                        "stillToProvide": [
-                          "string"
-                        ]
+                      "routed": {
+                        "institution": "string"
                       }
                     }
                   }
@@ -11420,6 +11620,339 @@
         ],
         "x-permission-rule": "self-authenticated",
         "x-source": "src/app/api/citizen/applications/route.ts"
+      }
+    },
+    "/api/citizen/representation": {
+      "get": {
+        "tags": [
+          "citizen"
+        ],
+        "operationId": "get_citizen_representation",
+        "summary": "GET /api/citizen/representation",
+        "description": "/api/citizen/representation — representations a person grants and revokes themselves (plan step I13; forms catalogue Part 13 §5.3, GOV-SVC-014). The route checks the citizen itself (SELF_AUTHENTICATED): signed in through the nation's identity service, or the demo citizen in training and demonstration installations (lib/auth/citizen.ts currentCitizen()). GET: what they granted and what they were granted, and the catalogue services that allow a representative. POST { op: 'grant', agent: { sub, name }, services, actions, validFrom?, validUntil?, basis?, restrictions? } or { op: 'revoke', id, reason }: only the person who granted it revokes it. Kept in the delegations register; every change audited without names.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "actions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "add-information",
+                              "apply",
+                              "challenge",
+                              "receive-decision",
+                              "track"
+                            ]
+                          },
+                          "label": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "label"
+                        ]
+                      }
+                    },
+                    "services": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "owner": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "owner"
+                        ]
+                      }
+                    },
+                    "granted": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Delegation"
+                      }
+                    },
+                    "received": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Delegation"
+                      }
+                    }
+                  },
+                  "required": [
+                    "actions",
+                    "services",
+                    "granted",
+                    "received"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "actions": [
+                        {
+                          "key": "add-information",
+                          "label": "Example"
+                        }
+                      ],
+                      "services": [
+                        {
+                          "id": "ID-0001",
+                          "name": "Example",
+                          "owner": "string"
+                        }
+                      ],
+                      "granted": [
+                        {
+                          "id": "ID-0001",
+                          "principal": {
+                            "kind": "organisation",
+                            "id": "ID-0001",
+                            "name": "Example"
+                          },
+                          "agent": {
+                            "kind": "citizen",
+                            "id": "ID-0001",
+                            "name": "Example"
+                          },
+                          "procedures": [
+                            "string"
+                          ],
+                          "basis": "string",
+                          "validFrom": "2026-01-15",
+                          "grantedBy": "A. Official",
+                          "grantedAt": "2026-01-15T09:30:00.000Z"
+                        }
+                      ],
+                      "received": [
+                        {
+                          "id": "ID-0001",
+                          "principal": {
+                            "kind": "organisation",
+                            "id": "ID-0001",
+                            "name": "Example"
+                          },
+                          "agent": {
+                            "kind": "citizen",
+                            "id": "ID-0001",
+                            "name": "Example"
+                          },
+                          "procedures": [
+                            "string"
+                          ],
+                          "basis": "string",
+                          "validFrom": "2026-01-15",
+                          "grantedBy": "A. Official",
+                          "grantedAt": "2026-01-15T09:30:00.000Z"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "integrationKey": []
+          }
+        ],
+        "x-source": "src/app/api/citizen/representation/route.ts"
+      },
+      "post": {
+        "tags": [
+          "citizen"
+        ],
+        "operationId": "post_citizen_representation",
+        "summary": "POST /api/citizen/representation",
+        "description": "/api/citizen/representation — representations a person grants and revokes themselves (plan step I13; forms catalogue Part 13 §5.3, GOV-SVC-014). The route checks the citizen itself (SELF_AUTHENTICATED): signed in through the nation's identity service, or the demo citizen in training and demonstration installations (lib/auth/citizen.ts currentCitizen()). GET: what they granted and what they were granted, and the catalogue services that allow a representative. POST { op: 'grant', agent: { sub, name }, services, actions, validFrom?, validUntil?, basis?, restrictions? } or { op: 'revoke', id, reason }: only the person who granted it revokes it. Kept in the delegations register; every change audited without names.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {}
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "representation": {
+                      "$ref": "#/components/schemas/Delegation"
+                    }
+                  },
+                  "required": [
+                    "representation"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "representation": {
+                        "id": "ID-0001",
+                        "principal": {
+                          "kind": "organisation",
+                          "id": "ID-0001",
+                          "name": "Example"
+                        },
+                        "agent": {
+                          "kind": "citizen",
+                          "id": "ID-0001",
+                          "name": "Example"
+                        },
+                        "procedures": [
+                          "string"
+                        ],
+                        "basis": "string",
+                        "validFrom": "2026-01-15",
+                        "validUntil": "string",
+                        "grantedBy": "A. Official",
+                        "grantedAt": "2026-01-15T09:30:00.000Z",
+                        "revoked": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "reason": "Text"
+                        },
+                        "byPrincipal": true,
+                        "services": [
+                          "string"
+                        ],
+                        "actions": [
+                          "string"
+                        ],
+                        "restrictions": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "representation": {
+                      "$ref": "#/components/schemas/Delegation"
+                    }
+                  },
+                  "required": [
+                    "representation"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "representation": {
+                        "id": "ID-0001",
+                        "principal": {
+                          "kind": "organisation",
+                          "id": "ID-0001",
+                          "name": "Example"
+                        },
+                        "agent": {
+                          "kind": "citizen",
+                          "id": "ID-0001",
+                          "name": "Example"
+                        },
+                        "procedures": [
+                          "string"
+                        ],
+                        "basis": "string",
+                        "validFrom": "2026-01-15",
+                        "validUntil": "string",
+                        "grantedBy": "A. Official",
+                        "grantedAt": "2026-01-15T09:30:00.000Z",
+                        "revoked": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "reason": "Text"
+                        },
+                        "byPrincipal": true,
+                        "services": [
+                          "string"
+                        ],
+                        "actions": [
+                          "string"
+                        ],
+                        "restrictions": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "integrationKey": []
+          }
+        ],
+        "x-permission-rule": "self-authenticated",
+        "x-source": "src/app/api/citizen/representation/route.ts"
       }
     },
     "/api/civil": {
@@ -18010,6 +18543,7 @@
                             "type": "string",
                             "enum": [
                               "anticorruption",
+                              "archives",
                               "buildingControl",
                               "businessRegister",
                               "cabinetOffice",
@@ -28652,6 +29186,7 @@
                                         "type": "string",
                                         "enum": [
                                           "anticorruption",
+                                          "archives",
                                           "buildingControl",
                                           "businessRegister",
                                           "cabinetOffice",
@@ -55812,6 +56347,7 @@
                                     "type": "string",
                                     "enum": [
                                       "anticorruption",
+                                      "archives",
                                       "buildingControl",
                                       "businessRegister",
                                       "cabinetOffice",
@@ -61691,6 +62227,211 @@
         "x-source": "src/app/api/public/route.ts"
       }
     },
+    "/api/public/services": {
+      "get": {
+        "tags": [
+          "public"
+        ],
+        "operationId": "get_public_services",
+        "summary": "GET /api/public/services",
+        "description": "GET /api/public/services — the public service catalogue (plan step I13; open without sign-in, middleware PUBLIC_READ). Only published entries, each with its status computed now from the records (a service whose procedure is not approved never shows \"active\"), never who proposed or published it. ?id=<service> one service with its journey (each step ready or not connected) and the disruptions open on it.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "service": {
+                          "$ref": "#/components/schemas/PublicService"
+                        },
+                        "journey": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/JourneyStep"
+                          }
+                        },
+                        "disruptions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "sample": {
+                                "type": "boolean"
+                              },
+                              "startedAt": {
+                                "type": "string"
+                              },
+                              "impact": {
+                                "type": "string"
+                              },
+                              "channels": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "updates": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "at": {
+                                      "type": "string"
+                                    },
+                                    "text": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "at",
+                                    "text"
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "startedAt",
+                              "impact",
+                              "channels",
+                              "updates"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "service",
+                        "journey",
+                        "disruptions"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "services": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/PublicService"
+                          }
+                        }
+                      },
+                      "required": [
+                        "services"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "service": {
+                        "id": "ID-0001",
+                        "version": 1,
+                        "name": "Example",
+                        "description": "Text",
+                        "owner": "string",
+                        "status": "active",
+                        "statusLabel": "string",
+                        "reasons": [
+                          "Text"
+                        ],
+                        "legalBasis": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string"
+                          }
+                        ],
+                        "forms": [
+                          "string"
+                        ],
+                        "eligibility": "string",
+                        "representatives": true,
+                        "evidence": [
+                          "string"
+                        ],
+                        "fee": {
+                          "rule": "string",
+                          "approved": true
+                        },
+                        "channels": [
+                          {
+                            "key": "assisted",
+                            "label": "Example"
+                          }
+                        ],
+                        "outcome": "string",
+                        "review": "string",
+                        "stages": [
+                          "string"
+                        ],
+                        "languages": [
+                          "string"
+                        ],
+                        "accessibility": "string",
+                        "contact": "string",
+                        "lifeEvents": [
+                          "string"
+                        ],
+                        "category": "string",
+                        "verifiedAt": "2026-01-15T09:30:00.000Z",
+                        "sample": true
+                      },
+                      "journey": [
+                        {
+                          "key": "apply",
+                          "label": "Example",
+                          "state": "not-applicable",
+                          "detail": "string"
+                        }
+                      ],
+                      "disruptions": [
+                        {
+                          "startedAt": "2026-01-15T09:30:00.000Z",
+                          "impact": "string",
+                          "channels": [
+                            "string"
+                          ],
+                          "updates": [
+                            {}
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "x-source": "src/app/api/public/services/route.ts"
+      }
+    },
     "/api/public/telemetry": {
       "get": {
         "tags": [
@@ -61830,6 +62571,729 @@
           }
         ],
         "x-source": "src/app/api/public/telemetry/route.ts"
+      }
+    },
+    "/api/records-management": {
+      "get": {
+        "tags": [
+          "records-management"
+        ],
+        "operationId": "get_records_management",
+        "summary": "GET /api/records-management",
+        "description": "/api/records-management — records management (plan step I13, lib/recordkeeping). GET ?institution=<id>: the institution's record classes with every schedule version, legal holds (who, why, scope, release), registered incoming items, disposals (the listed items with their hashes, what was destroyed or skipped, the certificate), transfers and migrations; the transfers sent to it when it is the archive the nation names; which records procedures it adopted. Read by the institution's own officials and those within reach, and auditors (canReadAdministration()); every read is written to the access log. Schedules, holds, disposals, transfers and migrations move only through decided cases (/api/cases). POST (signed-in officials): { op: 'adopt', institution } an administrator or one who can sign there drafts the institution's own rec.* procedures (a second official approves) { op: 'acknowledge-transfer', transfer, manifest, receipt } an official of the archive the nation names records its receipt of the exact manifest sent",
+        "parameters": [
+          {
+            "name": "institution",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "institution": {
+                          "type": "null"
+                        },
+                        "archive": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name"
+                              ]
+                            }
+                          ]
+                        },
+                        "labels": {
+                          "type": "object",
+                          "properties": {
+                            "triggers": {
+                              "type": "object",
+                              "properties": {
+                                "closed": {
+                                  "type": "string"
+                                },
+                                "created": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "closed",
+                                "created"
+                              ]
+                            },
+                            "dispositions": {
+                              "type": "object",
+                              "properties": {
+                                "archive": {
+                                  "type": "string"
+                                },
+                                "destroy": {
+                                  "type": "string"
+                                },
+                                "permanent": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "archive",
+                                "destroy",
+                                "permanent"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "triggers",
+                            "dispositions"
+                          ]
+                        },
+                        "platformRules": {
+                          "type": "object",
+                          "properties": {
+                            "access-log": {
+                              "$ref": "#/components/schemas/RetentionRule"
+                            },
+                            "cases": {
+                              "$ref": "#/components/schemas/RetentionRule"
+                            },
+                            "documents": {
+                              "$ref": "#/components/schemas/RetentionRule"
+                            },
+                            "permits": {
+                              "$ref": "#/components/schemas/RetentionRule"
+                            },
+                            "procedure-cases": {
+                              "$ref": "#/components/schemas/RetentionRule"
+                            }
+                          },
+                          "required": [
+                            "access-log",
+                            "cases",
+                            "documents",
+                            "permits",
+                            "procedure-cases"
+                          ]
+                        },
+                        "institutions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ]
+                          }
+                        },
+                        "counts": {
+                          "type": "object",
+                          "properties": {
+                            "classes": {
+                              "type": "number"
+                            },
+                            "scheduled": {
+                              "type": "number"
+                            },
+                            "holds": {
+                              "type": "number"
+                            },
+                            "holdsInForce": {
+                              "type": "number"
+                            },
+                            "incoming": {
+                              "type": "number"
+                            },
+                            "disposals": {
+                              "type": "number"
+                            },
+                            "destroyed": {
+                              "type": "number"
+                            },
+                            "transfers": {
+                              "type": "number"
+                            },
+                            "received": {
+                              "type": "number"
+                            },
+                            "migrations": {
+                              "type": "number"
+                            },
+                            "reconciled": {
+                              "type": "number"
+                            },
+                            "samples": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "classes",
+                            "scheduled",
+                            "holds",
+                            "holdsInForce",
+                            "incoming",
+                            "disposals",
+                            "destroyed",
+                            "transfers",
+                            "received",
+                            "migrations",
+                            "reconciled",
+                            "samples"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "institution",
+                        "archive",
+                        "labels",
+                        "platformRules",
+                        "institutions",
+                        "counts"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "institution": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
+                        },
+                        "classes": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/RecordClass"
+                          }
+                        },
+                        "holds": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Hold"
+                          }
+                        },
+                        "incoming": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/IncomingItem"
+                          }
+                        },
+                        "disposals": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Disposal"
+                          }
+                        },
+                        "transfers": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Transfer"
+                          }
+                        },
+                        "received": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Transfer"
+                          }
+                        },
+                        "migrations": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Migration"
+                          }
+                        },
+                        "mine": {
+                          "type": "object",
+                          "properties": {
+                            "classes": {
+                              "type": "number"
+                            },
+                            "scheduled": {
+                              "type": "number"
+                            },
+                            "holds": {
+                              "type": "number"
+                            },
+                            "holdsInForce": {
+                              "type": "number"
+                            },
+                            "incoming": {
+                              "type": "number"
+                            },
+                            "disposals": {
+                              "type": "number"
+                            },
+                            "destroyed": {
+                              "type": "number"
+                            },
+                            "transfers": {
+                              "type": "number"
+                            },
+                            "received": {
+                              "type": "number"
+                            },
+                            "migrations": {
+                              "type": "number"
+                            },
+                            "reconciled": {
+                              "type": "number"
+                            },
+                            "samples": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "classes",
+                            "scheduled",
+                            "holds",
+                            "holdsInForce",
+                            "incoming",
+                            "disposals",
+                            "destroyed",
+                            "transfers",
+                            "received",
+                            "migrations",
+                            "reconciled",
+                            "samples"
+                          ]
+                        },
+                        "procedures": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "template": {
+                                "type": "string"
+                              },
+                              "key": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "forms": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "state": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "template",
+                              "key",
+                              "title",
+                              "forms",
+                              "state"
+                            ]
+                          }
+                        },
+                        "archive": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name"
+                              ]
+                            }
+                          ]
+                        },
+                        "labels": {
+                          "type": "object",
+                          "properties": {
+                            "triggers": {
+                              "type": "object",
+                              "properties": {
+                                "closed": {
+                                  "type": "string"
+                                },
+                                "created": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "closed",
+                                "created"
+                              ]
+                            },
+                            "dispositions": {
+                              "type": "object",
+                              "properties": {
+                                "archive": {
+                                  "type": "string"
+                                },
+                                "destroy": {
+                                  "type": "string"
+                                },
+                                "permanent": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "archive",
+                                "destroy",
+                                "permanent"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "triggers",
+                            "dispositions"
+                          ]
+                        },
+                        "platformRules": {
+                          "type": "object",
+                          "properties": {
+                            "access-log": {
+                              "$ref": "#/components/schemas/RetentionRule"
+                            },
+                            "cases": {
+                              "$ref": "#/components/schemas/RetentionRule"
+                            },
+                            "documents": {
+                              "$ref": "#/components/schemas/RetentionRule"
+                            },
+                            "permits": {
+                              "$ref": "#/components/schemas/RetentionRule"
+                            },
+                            "procedure-cases": {
+                              "$ref": "#/components/schemas/RetentionRule"
+                            }
+                          },
+                          "required": [
+                            "access-log",
+                            "cases",
+                            "documents",
+                            "permits",
+                            "procedure-cases"
+                          ]
+                        },
+                        "institutions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ]
+                          }
+                        },
+                        "counts": {
+                          "type": "object",
+                          "properties": {
+                            "classes": {
+                              "type": "number"
+                            },
+                            "scheduled": {
+                              "type": "number"
+                            },
+                            "holds": {
+                              "type": "number"
+                            },
+                            "holdsInForce": {
+                              "type": "number"
+                            },
+                            "incoming": {
+                              "type": "number"
+                            },
+                            "disposals": {
+                              "type": "number"
+                            },
+                            "destroyed": {
+                              "type": "number"
+                            },
+                            "transfers": {
+                              "type": "number"
+                            },
+                            "received": {
+                              "type": "number"
+                            },
+                            "migrations": {
+                              "type": "number"
+                            },
+                            "reconciled": {
+                              "type": "number"
+                            },
+                            "samples": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "classes",
+                            "scheduled",
+                            "holds",
+                            "holdsInForce",
+                            "incoming",
+                            "disposals",
+                            "destroyed",
+                            "transfers",
+                            "received",
+                            "migrations",
+                            "reconciled",
+                            "samples"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "institution",
+                        "classes",
+                        "holds",
+                        "incoming",
+                        "disposals",
+                        "transfers",
+                        "received",
+                        "migrations",
+                        "mine",
+                        "procedures",
+                        "archive",
+                        "labels",
+                        "platformRules",
+                        "institutions",
+                        "counts"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "institution": null,
+                      "archive": {
+                        "id": "ID-0001",
+                        "name": "Example"
+                      },
+                      "labels": {
+                        "triggers": {
+                          "closed": "string",
+                          "created": "string"
+                        },
+                        "dispositions": {
+                          "archive": "string",
+                          "destroy": "string",
+                          "permanent": "string"
+                        }
+                      },
+                      "platformRules": {
+                        "access-log": {
+                          "action": "anonymise"
+                        },
+                        "cases": {
+                          "action": "anonymise"
+                        },
+                        "documents": {
+                          "action": "anonymise"
+                        },
+                        "permits": {
+                          "action": "anonymise"
+                        },
+                        "procedure-cases": {
+                          "action": "anonymise"
+                        }
+                      },
+                      "institutions": [
+                        {
+                          "id": "ID-0001",
+                          "name": "Example"
+                        }
+                      ],
+                      "counts": {
+                        "classes": 1,
+                        "scheduled": 1,
+                        "holds": 1,
+                        "holdsInForce": 1,
+                        "incoming": 1,
+                        "disposals": 1,
+                        "destroyed": 1,
+                        "transfers": 1,
+                        "received": 1,
+                        "migrations": 1,
+                        "reconciled": 1,
+                        "samples": 1
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/records-management/route.ts"
+      },
+      "post": {
+        "tags": [
+          "records-management"
+        ],
+        "operationId": "post_records_management",
+        "summary": "POST /api/records-management",
+        "description": "/api/records-management — records management (plan step I13, lib/recordkeeping). GET ?institution=<id>: the institution's record classes with every schedule version, legal holds (who, why, scope, release), registered incoming items, disposals (the listed items with their hashes, what was destroyed or skipped, the certificate), transfers and migrations; the transfers sent to it when it is the archive the nation names; which records procedures it adopted. Read by the institution's own officials and those within reach, and auditors (canReadAdministration()); every read is written to the access log. Schedules, holds, disposals, transfers and migrations move only through decided cases (/api/cases). POST (signed-in officials): { op: 'adopt', institution } an administrator or one who can sign there drafts the institution's own rec.* procedures (a second official approves) { op: 'acknowledge-transfer', transfer, manifest, receipt } an official of the archive the nation names records its receipt of the exact manifest sent",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {}
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "drafted": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "present": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "drafted",
+                        "present"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "transfer": {
+                          "$ref": "#/components/schemas/Transfer"
+                        }
+                      },
+                      "required": [
+                        "transfer"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "drafted": [
+                        "string"
+                      ],
+                      "present": [
+                        "string"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/records-management/route.ts"
       }
     },
     "/api/registers/check": {
@@ -73683,6 +75147,7 @@
                           "type": "string",
                           "enum": [
                             "anticorruption",
+                            "archives",
                             "buildingControl",
                             "businessRegister",
                             "cabinetOffice",
@@ -74076,6 +75541,1193 @@
         ],
         "x-permission-rule": "official",
         "x-source": "src/app/api/seal-keys/route.ts"
+      }
+    },
+    "/api/services/management": {
+      "get": {
+        "tags": [
+          "services"
+        ],
+        "operationId": "get_services_management",
+        "summary": "GET /api/services/management",
+        "description": "/api/services/management — service management (plan step I13, lib/frontdoor/service-management.ts). GET: the dashboard registry, service-level objectives with the target in force (none until the nation's target, cited, is approved), performance reports, disruptions, changes and architecture exceptions (their standing computed today) of the institutions the signed-in official reaches; with ?service=<id>&from=&to= the service's performance computed now from its procedure's cases, every figure a signal (Record, Sample, Not connected), never a generated number. POST (signed-in officials; checked in lib/frontdoor against the institution): dashboard | publish-dashboard | objective | target | approve-target | report | validate-report | disruption | update-disruption | change | decide-change | exception | approve-exception | withdraw-exception",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "service",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "service": {
+                          "type": "string"
+                        },
+                        "institution": {
+                          "type": "string"
+                        },
+                        "period": {
+                          "type": "object",
+                          "properties": {
+                            "from": {
+                              "type": "string"
+                            },
+                            "to": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "from",
+                            "to"
+                          ]
+                        },
+                        "figures": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "object",
+                            "properties": {
+                              "value": {
+                                "anyOf": [
+                                  {
+                                    "type": "null"
+                                  },
+                                  {
+                                    "type": "number"
+                                  }
+                                ]
+                              },
+                              "unit": {
+                                "type": "string"
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "modelled",
+                                  "observed",
+                                  "record",
+                                  "reported",
+                                  "sample",
+                                  "simulated",
+                                  "unavailable"
+                                ]
+                              },
+                              "source": {
+                                "type": "string",
+                                "description": "Where it comes from, in words (a stream, a register, \"Reference model\")."
+                              },
+                              "asOf": {
+                                "type": "string",
+                                "description": "When it was true (ISO time), for observed and reported figures."
+                              }
+                            },
+                            "required": [
+                              "value",
+                              "kind",
+                              "source"
+                            ]
+                          }
+                        },
+                        "objectives": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "measure": {
+                                "type": "string",
+                                "enum": [
+                                  "deadlines-lapsed",
+                                  "median-days-to-decision",
+                                  "open-applications",
+                                  "share-decided-within-target"
+                                ]
+                              },
+                              "label": {
+                                "type": "string"
+                              },
+                              "target": {
+                                "anyOf": [
+                                  {
+                                    "type": "null"
+                                  },
+                                  {
+                                    "type": "number"
+                                  }
+                                ]
+                              },
+                              "withinDays": {
+                                "type": "number"
+                              },
+                              "met": {
+                                "anyOf": [
+                                  {
+                                    "type": "boolean"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "measure",
+                              "label",
+                              "target",
+                              "met"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "service",
+                        "institution",
+                        "period",
+                        "figures",
+                        "objectives"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "measures": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string"
+                              },
+                              "label": {
+                                "type": "string",
+                                "enum": [
+                                  "Applications open",
+                                  "Median days from application to decision",
+                                  "Share decided within the target number of days",
+                                  "Statutory deadlines lapsed"
+                                ]
+                              },
+                              "unit": {
+                                "type": "string",
+                                "enum": [
+                                  "%",
+                                  "1",
+                                  "d"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "label",
+                              "unit"
+                            ]
+                          }
+                        },
+                        "access": {
+                          "type": "array",
+                          "prefixItems": [
+                            {
+                              "type": "string",
+                              "const": "public"
+                            },
+                            {
+                              "type": "string",
+                              "const": "internal"
+                            },
+                            {
+                              "type": "string",
+                              "const": "restricted"
+                            }
+                          ],
+                          "minItems": 3,
+                          "maxItems": 3
+                        },
+                        "dashboards": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Dashboard"
+                          }
+                        },
+                        "objectives": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "label": {
+                                "type": "string",
+                                "enum": [
+                                  "Applications open",
+                                  "Median days from application to decision",
+                                  "Share decided within the target number of days",
+                                  "Statutory deadlines lapsed"
+                                ]
+                              },
+                              "inForce": {
+                                "anyOf": [
+                                  {
+                                    "type": "null"
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "value": {
+                                        "type": "number"
+                                      },
+                                      "withinDays": {
+                                        "type": "number"
+                                      },
+                                      "citations": {
+                                        "type": "array",
+                                        "items": {
+                                          "$ref": "#/components/schemas/Citation"
+                                        }
+                                      },
+                                      "basis": {
+                                        "type": "string"
+                                      },
+                                      "proposedBy": {
+                                        "$ref": "#/components/schemas/Who_frontdoor_servicemanagement"
+                                      },
+                                      "at": {
+                                        "type": "string"
+                                      },
+                                      "approvedBy": {
+                                        "$ref": "#/components/schemas/Who_frontdoor_servicemanagement"
+                                      },
+                                      "approvedAt": {
+                                        "type": "string"
+                                      },
+                                      "state": {
+                                        "type": "string",
+                                        "enum": [
+                                          "approved",
+                                          "proposed",
+                                          "withdrawn"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "value",
+                                      "citations",
+                                      "basis",
+                                      "proposedBy",
+                                      "at",
+                                      "state"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "id": {
+                                "type": "string"
+                              },
+                              "service": {
+                                "type": "string"
+                              },
+                              "institution": {
+                                "type": "string"
+                              },
+                              "measure": {
+                                "type": "string",
+                                "enum": [
+                                  "deadlines-lapsed",
+                                  "median-days-to-decision",
+                                  "open-applications",
+                                  "share-decided-within-target"
+                                ]
+                              },
+                              "methodology": {
+                                "type": "string"
+                              },
+                              "target": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "number"
+                                    },
+                                    "withinDays": {
+                                      "type": "number"
+                                    },
+                                    "citations": {
+                                      "type": "array",
+                                      "items": {
+                                        "$ref": "#/components/schemas/Citation"
+                                      }
+                                    },
+                                    "basis": {
+                                      "type": "string"
+                                    },
+                                    "proposedBy": {
+                                      "$ref": "#/components/schemas/Who_frontdoor_servicemanagement"
+                                    },
+                                    "at": {
+                                      "type": "string"
+                                    },
+                                    "approvedBy": {
+                                      "$ref": "#/components/schemas/Who_frontdoor_servicemanagement"
+                                    },
+                                    "approvedAt": {
+                                      "type": "string"
+                                    },
+                                    "state": {
+                                      "type": "string",
+                                      "enum": [
+                                        "approved",
+                                        "proposed",
+                                        "withdrawn"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "value",
+                                    "citations",
+                                    "basis",
+                                    "proposedBy",
+                                    "at",
+                                    "state"
+                                  ]
+                                },
+                                "description": "The nation's target: absent until set and approved. For share-decided-within-target, `withinDays` too."
+                              },
+                              "createdBy": {
+                                "$ref": "#/components/schemas/Who_frontdoor_servicemanagement"
+                              },
+                              "at": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "label",
+                              "inForce",
+                              "id",
+                              "service",
+                              "institution",
+                              "measure",
+                              "methodology",
+                              "createdBy",
+                              "at"
+                            ]
+                          }
+                        },
+                        "reports": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/PerformanceReport"
+                          }
+                        },
+                        "disruptions": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Disruption"
+                          }
+                        },
+                        "changes": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/ServiceChange"
+                          }
+                        },
+                        "exceptions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "expired",
+                                  "in-force",
+                                  "waiting",
+                                  "withdrawn"
+                                ]
+                              },
+                              "id": {
+                                "type": "string"
+                              },
+                              "institution": {
+                                "type": "string"
+                              },
+                              "requirement": {
+                                "type": "string"
+                              },
+                              "scope": {
+                                "type": "string"
+                              },
+                              "justification": {
+                                "type": "string"
+                              },
+                              "expiresOn": {
+                                "type": "string"
+                              },
+                              "proposedBy": {
+                                "$ref": "#/components/schemas/Who_frontdoor_servicemanagement"
+                              },
+                              "at": {
+                                "type": "string"
+                              },
+                              "approvedBy": {
+                                "$ref": "#/components/schemas/Who_frontdoor_servicemanagement"
+                              },
+                              "approvedAt": {
+                                "type": "string"
+                              },
+                              "withdrawn": {
+                                "type": "object",
+                                "properties": {
+                                  "by": {
+                                    "type": "string"
+                                  },
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "reason": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "by",
+                                  "at",
+                                  "reason"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "state",
+                              "id",
+                              "institution",
+                              "requirement",
+                              "scope",
+                              "justification",
+                              "expiresOn",
+                              "proposedBy",
+                              "at"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "measures",
+                        "access",
+                        "dashboards",
+                        "objectives",
+                        "reports",
+                        "disruptions",
+                        "changes",
+                        "exceptions"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "service": "string",
+                      "institution": "string",
+                      "period": {
+                        "from": "string",
+                        "to": "string"
+                      },
+                      "figures": {
+                        "key": {
+                          "value": 1,
+                          "kind": "modelled",
+                          "source": "string"
+                        }
+                      },
+                      "objectives": [
+                        {
+                          "id": "ID-0001",
+                          "measure": "deadlines-lapsed",
+                          "label": "Example",
+                          "target": 1,
+                          "met": true
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/services/management/route.ts"
+      },
+      "post": {
+        "tags": [
+          "services"
+        ],
+        "operationId": "post_services_management",
+        "summary": "POST /api/services/management",
+        "description": "/api/services/management — service management (plan step I13, lib/frontdoor/service-management.ts). GET: the dashboard registry, service-level objectives with the target in force (none until the nation's target, cited, is approved), performance reports, disruptions, changes and architecture exceptions (their standing computed today) of the institutions the signed-in official reaches; with ?service=<id>&from=&to= the service's performance computed now from its procedure's cases, every figure a signal (Record, Sample, Not connected), never a generated number. POST (signed-in officials; checked in lib/frontdoor against the institution): dashboard | publish-dashboard | objective | target | approve-target | report | validate-report | disruption | update-disruption | change | decide-change | exception | approve-exception | withdraw-exception",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {}
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/services/management/route.ts"
+      }
+    },
+    "/api/services": {
+      "get": {
+        "tags": [
+          "services"
+        ],
+        "operationId": "get_services",
+        "summary": "GET /api/services",
+        "description": "/api/services — the public service catalogue for officials (plan step I13, lib/frontdoor/catalogue.ts). GET: every service with every version (proposed, published, superseded, withdrawn), its status computed now from the records (never stored) and the reasons when it is not what the owner declared, its journey (?journey=<id>: discover → authenticate → apply → route → track → decision → challenge, each step ready or not connected), the front-door procedure templates and which institutions adopted them, the identity route for citizens. The public sees only published entries (/api/public/services, /services). POST (signed-in officials; checked in lib/frontdoor against the owner): { op: 'propose', id?, terms, reason } an official of the owning institution (a new service, or a new version) { op: 'publish', id } a different person who can sign at the owning institution { op: 'withdraw', id, reason } the proposer, or one who could publish it { op: 'retire', id, reason, plan } propose retiring a published service (the record is kept) { op: 'decide-retirement', id, decision } confirm (a different official who can sign there) or withdraw { op: 'adopt', institution } an administrator or one who can sign there drafts the institution's own front-door procedures (svc.*), approved by a second official",
+        "parameters": [
+          {
+            "name": "journey",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "service": {
+                          "$ref": "#/components/schemas/PublicService"
+                        },
+                        "steps": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/JourneyStep"
+                          }
+                        }
+                      },
+                      "required": [
+                        "service",
+                        "steps"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "services": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "sample": {
+                                "type": "boolean"
+                              },
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "owner": {
+                                "type": "string"
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "active",
+                                  "informational",
+                                  "pilot",
+                                  "retired",
+                                  "unavailable",
+                                  "unpublished"
+                                ]
+                              },
+                              "statusLabel": {
+                                "type": "string"
+                              },
+                              "reasons": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "stages": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "procedure": {
+                                "anyOf": [
+                                  {
+                                    "type": "null"
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "key": {
+                                        "type": "string"
+                                      },
+                                      "version": {
+                                        "type": "number"
+                                      },
+                                      "title": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "key",
+                                      "version",
+                                      "title"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "fee": {
+                                "anyOf": [
+                                  {
+                                    "type": "null"
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "rule": {
+                                        "type": "string"
+                                      },
+                                      "version": {
+                                        "type": "number"
+                                      },
+                                      "approved": {
+                                        "type": "boolean"
+                                      }
+                                    },
+                                    "required": [
+                                      "rule",
+                                      "approved"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "versions": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/ServiceVersion"
+                                }
+                              },
+                              "retirement": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/ServiceRetirement"
+                                }
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "owner",
+                              "status",
+                              "statusLabel",
+                              "reasons",
+                              "stages",
+                              "procedure",
+                              "fee",
+                              "versions",
+                              "retirement"
+                            ]
+                          }
+                        },
+                        "counts": {
+                          "type": "object",
+                          "properties": {
+                            "services": {
+                              "type": "number"
+                            },
+                            "published": {
+                              "type": "number"
+                            },
+                            "waiting": {
+                              "type": "number"
+                            },
+                            "byStatus": {
+                              "type": "object",
+                              "properties": {
+                                "active": {
+                                  "type": "number"
+                                },
+                                "informational": {
+                                  "type": "number"
+                                },
+                                "pilot": {
+                                  "type": "number"
+                                },
+                                "retired": {
+                                  "type": "number"
+                                },
+                                "unavailable": {
+                                  "type": "number"
+                                },
+                                "unpublished": {
+                                  "type": "number"
+                                }
+                              }
+                            },
+                            "samples": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "services",
+                            "published",
+                            "waiting",
+                            "byStatus",
+                            "samples"
+                          ]
+                        },
+                        "identity": {
+                          "$ref": "#/components/schemas/IdentityRoute"
+                        },
+                        "channels": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string",
+                                "enum": [
+                                  "assisted",
+                                  "online",
+                                  "paper",
+                                  "post",
+                                  "telephone"
+                                ]
+                              },
+                              "label": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "label"
+                            ]
+                          }
+                        },
+                        "slots": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string",
+                                "enum": [
+                                  "anticorruption",
+                                  "archives",
+                                  "buildingControl",
+                                  "businessRegister",
+                                  "cabinetOffice",
+                                  "centralBank",
+                                  "citizenship",
+                                  "civilRegistration",
+                                  "constitutionalCourt",
+                                  "controlledSubstances",
+                                  "customs",
+                                  "dataProtection",
+                                  "education",
+                                  "electoral",
+                                  "finance",
+                                  "headOfState",
+                                  "healthRegulation",
+                                  "higherEducationAccreditation",
+                                  "housing",
+                                  "humanRights",
+                                  "identity",
+                                  "immigration",
+                                  "judiciary",
+                                  "labour",
+                                  "landRegistry",
+                                  "lawRegister",
+                                  "legislature",
+                                  "medicinesRegulation",
+                                  "ombudsman",
+                                  "police",
+                                  "procurementReview",
+                                  "professionalRegulation",
+                                  "publicHealth",
+                                  "roadAuthority",
+                                  "socialProtection",
+                                  "statistics",
+                                  "supremeAudit",
+                                  "tax",
+                                  "transportRegulator",
+                                  "travelDocuments",
+                                  "trustServices",
+                                  "vehicleRegistration"
+                                ]
+                              },
+                              "label": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "label"
+                            ]
+                          }
+                        },
+                        "institutions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ]
+                          }
+                        },
+                        "templates": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "forms": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "adoptedBy": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "key": {
+                                      "type": "string"
+                                    },
+                                    "institution": {
+                                      "type": "string"
+                                    },
+                                    "state": {
+                                      "type": "string",
+                                      "enum": [
+                                        "approved",
+                                        "draft",
+                                        "superseded"
+                                      ]
+                                    },
+                                    "version": {
+                                      "type": "number"
+                                    }
+                                  },
+                                  "required": [
+                                    "key",
+                                    "institution",
+                                    "state",
+                                    "version"
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "title",
+                              "forms",
+                              "adoptedBy"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "services",
+                        "counts",
+                        "identity",
+                        "channels",
+                        "slots",
+                        "institutions",
+                        "templates"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "service": {
+                        "id": "ID-0001",
+                        "version": 1,
+                        "name": "Example",
+                        "description": "Text",
+                        "owner": "string",
+                        "status": "active",
+                        "statusLabel": "string",
+                        "reasons": [
+                          "Text"
+                        ],
+                        "legalBasis": [
+                          {
+                            "instrument": "string",
+                            "eId": "ID-0001",
+                            "version": "string"
+                          }
+                        ],
+                        "forms": [
+                          "string"
+                        ],
+                        "eligibility": "string",
+                        "representatives": true,
+                        "evidence": [
+                          "string"
+                        ],
+                        "fee": {
+                          "rule": "string",
+                          "approved": true
+                        },
+                        "channels": [
+                          {
+                            "key": "assisted",
+                            "label": "Example"
+                          }
+                        ],
+                        "outcome": "string",
+                        "review": "string",
+                        "stages": [
+                          "string"
+                        ],
+                        "languages": [
+                          "string"
+                        ],
+                        "accessibility": "string",
+                        "contact": "string",
+                        "lifeEvents": [
+                          "string"
+                        ],
+                        "category": "string",
+                        "verifiedAt": "2026-01-15T09:30:00.000Z",
+                        "sample": true
+                      },
+                      "steps": [
+                        {
+                          "key": "apply",
+                          "label": "Example",
+                          "state": "not-applicable",
+                          "detail": "string"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/services/route.ts"
+      },
+      "post": {
+        "tags": [
+          "services"
+        ],
+        "operationId": "post_services",
+        "summary": "POST /api/services",
+        "description": "/api/services — the public service catalogue for officials (plan step I13, lib/frontdoor/catalogue.ts). GET: every service with every version (proposed, published, superseded, withdrawn), its status computed now from the records (never stored) and the reasons when it is not what the owner declared, its journey (?journey=<id>: discover → authenticate → apply → route → track → decision → challenge, each step ready or not connected), the front-door procedure templates and which institutions adopted them, the identity route for citizens. The public sees only published entries (/api/public/services, /services). POST (signed-in officials; checked in lib/frontdoor against the owner): { op: 'propose', id?, terms, reason } an official of the owning institution (a new service, or a new version) { op: 'publish', id } a different person who can sign at the owning institution { op: 'withdraw', id, reason } the proposer, or one who could publish it { op: 'retire', id, reason, plan } propose retiring a published service (the record is kept) { op: 'decide-retirement', id, decision } confirm (a different official who can sign there) or withdraw { op: 'adopt', institution } an administrator or one who can sign there drafts the institution's own front-door procedures (svc.*), approved by a second official",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {}
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "keys": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "drafted": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "present": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "keys",
+                        "drafted",
+                        "present"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {}
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/services/route.ts"
       }
     },
     "/api/session": {
@@ -74967,6 +77619,9 @@
                         "anticorruption": {
                           "type": "string"
                         },
+                        "archives": {
+                          "type": "string"
+                        },
                         "buildingControl": {
                           "type": "string"
                         },
@@ -75102,6 +77757,9 @@
                                   "type": "object",
                                   "properties": {
                                     "anticorruption": {
+                                      "type": "string"
+                                    },
+                                    "archives": {
                                       "type": "string"
                                     },
                                     "buildingControl": {
@@ -75298,6 +77956,9 @@
                                     "type": "object",
                                     "properties": {
                                       "anticorruption": {
+                                        "type": "string"
+                                      },
+                                      "archives": {
                                         "type": "string"
                                       },
                                       "buildingControl": {
@@ -75506,6 +78167,7 @@
                     "value": {
                       "authorities": {
                         "anticorruption": "string",
+                        "archives": "string",
                         "buildingControl": "string",
                         "businessRegister": "string",
                         "cabinetOffice": "string",
@@ -75654,6 +78316,9 @@
                         "anticorruption": {
                           "type": "string"
                         },
+                        "archives": {
+                          "type": "string"
+                        },
                         "buildingControl": {
                           "type": "string"
                         },
@@ -75789,6 +78454,9 @@
                                   "type": "object",
                                   "properties": {
                                     "anticorruption": {
+                                      "type": "string"
+                                    },
+                                    "archives": {
                                       "type": "string"
                                     },
                                     "buildingControl": {
@@ -75985,6 +78653,9 @@
                                     "type": "object",
                                     "properties": {
                                       "anticorruption": {
+                                        "type": "string"
+                                      },
+                                      "archives": {
                                         "type": "string"
                                       },
                                       "buildingControl": {
@@ -76191,6 +78862,7 @@
                       "result": {},
                       "authorities": {
                         "anticorruption": "string",
+                        "archives": "string",
                         "buildingControl": "string",
                         "businessRegister": "string",
                         "cabinetOffice": "string",
@@ -88235,6 +90907,29 @@
           "source"
         ]
       },
+      "Agent": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "citizen",
+              "person"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "name"
+        ]
+      },
       "AiAssistantModel": {
         "description": "The model service behind the AI assistant.",
         "type": "object",
@@ -98002,6 +100697,95 @@
           "event"
         ]
       },
+      "Dashboard": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "string"
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DashboardVersion"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "institution",
+          "versions"
+        ]
+      },
+      "DashboardVersion": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "number"
+          },
+          "title": {
+            "type": "string"
+          },
+          "purpose": {
+            "type": "string"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "refresh": {
+            "type": "string"
+          },
+          "access": {
+            "type": "string",
+            "enum": [
+              "internal",
+              "public",
+              "restricted"
+            ]
+          },
+          "limitations": {
+            "type": "string"
+          },
+          "proposedBy": {
+            "$ref": "#/components/schemas/Who_frontdoor_servicemanagement"
+          },
+          "at": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "proposed",
+              "published",
+              "superseded",
+              "withdrawn"
+            ]
+          },
+          "publishedBy": {
+            "$ref": "#/components/schemas/Who_frontdoor_servicemanagement"
+          },
+          "publishedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "n",
+          "title",
+          "purpose",
+          "sources",
+          "refresh",
+          "access",
+          "limitations",
+          "proposedBy",
+          "at",
+          "state"
+        ]
+      },
       "DataCategoryInfo": {
         "type": "object",
         "properties": {
@@ -98868,6 +101652,94 @@
           "member",
           "at",
           "interest"
+        ]
+      },
+      "Delegation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "principal": {
+            "$ref": "#/components/schemas/Principal"
+          },
+          "agent": {
+            "$ref": "#/components/schemas/Agent"
+          },
+          "procedures": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The procedures it covers ('*' for all), e.g. civil.birth."
+          },
+          "basis": {
+            "type": "string"
+          },
+          "validFrom": {
+            "type": "string"
+          },
+          "validUntil": {
+            "type": "string"
+          },
+          "grantedBy": {
+            "type": "string"
+          },
+          "grantedAt": {
+            "type": "string"
+          },
+          "revoked": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "by",
+              "at",
+              "reason"
+            ]
+          },
+          "byPrincipal": {
+            "type": "boolean",
+            "const": true,
+            "description": "Plan step I13 (forms catalogue Part 13 §5.3): granted by the represented person themselves through the front door (lib/frontdoor/representation.ts), not by an official. Revoked only by them."
+          },
+          "services": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The catalogue services it covers ('*' for all), when granted through the front door."
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What the agent may do (apply, track, add-information, challenge, receive-decision); absent on earlier delegations: every act in the procedures covered."
+          },
+          "restrictions": {
+            "type": "string",
+            "description": "Restrictions the represented person set, in their words."
+          }
+        },
+        "required": [
+          "id",
+          "principal",
+          "agent",
+          "procedures",
+          "basis",
+          "validFrom",
+          "grantedBy",
+          "grantedAt"
         ]
       },
       "DelegationGrant": {
@@ -99776,6 +102648,9 @@
               "anticorruption": {
                 "type": "string"
               },
+              "archives": {
+                "type": "string"
+              },
               "buildingControl": {
                 "type": "string"
               },
@@ -100671,6 +103546,139 @@
           "publicFields"
         ]
       },
+      "Disposal": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "string"
+          },
+          "class": {
+            "type": "string"
+          },
+          "schedule": {
+            "type": "number"
+          },
+          "case": {
+            "type": "string"
+          },
+          "listedAt": {
+            "type": "string"
+          },
+          "listedBy": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ListedItem"
+            }
+          },
+          "listDigest": {
+            "type": "string",
+            "description": "SHA-256 over the listed items (kind, id, hash), so the authorisation names exactly what it covers."
+          },
+          "authorised": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ]
+                }
+              },
+              "at": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "by",
+              "at"
+            ]
+          },
+          "executed": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "destroyed": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ListedItem"
+                }
+              },
+              "skipped": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "document",
+                        "incoming"
+                      ]
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "sha256": {
+                      "type": "string"
+                    },
+                    "why": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "id",
+                    "sha256",
+                    "why"
+                  ]
+                }
+              },
+              "certificate": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "at",
+              "destroyed",
+              "skipped",
+              "certificate"
+            ]
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "id",
+          "institution",
+          "class",
+          "schedule",
+          "case",
+          "listedAt",
+          "listedBy",
+          "items",
+          "listDigest"
+        ]
+      },
       "DisputeView": {
         "description": "A dispute as an official sees it: the grounds and parties only with need.",
         "type": "object",
@@ -100816,6 +103824,90 @@
           "parcel",
           "interest",
           "detailHidden"
+        ]
+      },
+      "Disruption": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "service": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "string"
+          },
+          "startedAt": {
+            "type": "string"
+          },
+          "impact": {
+            "type": "string"
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "reportedBy": {
+            "$ref": "#/components/schemas/Who_frontdoor_servicemanagement"
+          },
+          "updates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "at": {
+                  "type": "string"
+                },
+                "by": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "at",
+                "by",
+                "text"
+              ]
+            }
+          },
+          "resolved": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "by": {
+                "$ref": "#/components/schemas/Who_frontdoor_servicemanagement"
+              },
+              "recovery": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "at",
+              "by",
+              "recovery"
+            ]
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "id",
+          "service",
+          "institution",
+          "startedAt",
+          "impact",
+          "channels",
+          "reportedBy",
+          "updates"
         ]
       },
       "DistributionRelease": {
@@ -101667,6 +104759,7 @@
                     "type": "string",
                     "enum": [
                       "anticorruption",
+                      "archives",
                       "buildingControl",
                       "businessRegister",
                       "cabinetOffice",
@@ -101755,6 +104848,7 @@
                   "type": "string",
                   "enum": [
                     "anticorruption",
+                    "archives",
                     "buildingControl",
                     "businessRegister",
                     "cabinetOffice",
@@ -101850,6 +104944,7 @@
                   "type": "string",
                   "enum": [
                     "anticorruption",
+                    "archives",
                     "buildingControl",
                     "businessRegister",
                     "cabinetOffice",
@@ -106564,6 +109659,124 @@
           "history"
         ]
       },
+      "Hold": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "case",
+                  "class",
+                  "document"
+                ]
+              },
+              "ref": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "ref"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            }
+          },
+          "case": {
+            "type": "string"
+          },
+          "placedBy": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            }
+          },
+          "placedAt": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string",
+            "description": "The sealed decision that placed it."
+          },
+          "released": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ]
+                }
+              },
+              "at": {
+                "type": "string"
+              },
+              "case": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "by",
+              "at",
+              "case",
+              "reason"
+            ]
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "id",
+          "institution",
+          "scope",
+          "reason",
+          "citations",
+          "case",
+          "placedBy",
+          "placedAt"
+        ]
+      },
       "Holder": {
         "type": "object",
         "properties": {
@@ -107669,6 +110882,45 @@
           "status"
         ]
       },
+      "IdentityRoute": {
+        "description": "How people prove who they are for a service: the nation's identity provider, or the lawful alternatives it allows.",
+        "type": "object",
+        "properties": {
+          "provider": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "issuer": {
+                    "type": "string"
+                  },
+                  "assurance": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "issuer"
+                ]
+              }
+            ]
+          },
+          "assisted": {
+            "type": "boolean",
+            "description": "Offices take applications for people who cannot authenticate digitally (the nation's choice; on unless it turned it off)."
+          },
+          "statement": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "assisted",
+          "statement"
+        ]
+      },
       "ImmigrationGrant": {
         "type": "object",
         "properties": {
@@ -108044,6 +111296,87 @@
           "at"
         ]
       },
+      "IncomingItem": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "string"
+          },
+          "class": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "senderKind": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "receivedOn": {
+            "type": "string"
+          },
+          "case": {
+            "type": "string"
+          },
+          "registeredBy": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "disposed": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "disposal": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "at",
+              "disposal"
+            ]
+          },
+          "transferred": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "transfer": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "at",
+              "transfer"
+            ]
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "number",
+          "institution",
+          "class",
+          "subject",
+          "senderKind",
+          "channel",
+          "receivedOn",
+          "case",
+          "registeredBy",
+          "at"
+        ]
+      },
       "IndependenceRule": {
         "description": "What the law provides for one dimension of an institution's independence.",
         "type": "object",
@@ -108158,6 +111491,7 @@
                     "type": "string",
                     "enum": [
                       "anticorruption",
+                      "archives",
                       "buildingControl",
                       "businessRegister",
                       "cabinetOffice",
@@ -110472,6 +113806,43 @@
           "at"
         ]
       },
+      "JourneyStep": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "apply",
+              "authenticate",
+              "challenge",
+              "decision",
+              "discover",
+              "route",
+              "track"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "not-applicable",
+              "not-connected",
+              "ready"
+            ]
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "state",
+          "detail"
+        ]
+      },
       "KpiValue": {
         "type": "object",
         "properties": {
@@ -111405,6 +114776,29 @@
           "valueMinor",
           "dutyMinor",
           "method"
+        ]
+      },
+      "ListedItem": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "document",
+              "incoming"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "sha256"
         ]
       },
       "LivePart": {
@@ -112366,6 +115760,181 @@
             "type": "string"
           }
         }
+      },
+      "Migration": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "string"
+          },
+          "case": {
+            "type": "string"
+          },
+          "source": {
+            "type": "object",
+            "properties": {
+              "system": {
+                "type": "string"
+              },
+              "count": {
+                "type": "number"
+              },
+              "manifest": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "system",
+              "count",
+              "manifest"
+            ]
+          },
+          "target": {
+            "type": "object",
+            "properties": {
+              "system": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "cases",
+                  "documents",
+                  "external"
+                ]
+              },
+              "ref": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "system",
+              "kind"
+            ]
+          },
+          "approved": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ]
+                }
+              },
+              "at": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "by",
+              "at"
+            ]
+          },
+          "reconciliation": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "count": {
+                  "type": "number"
+                },
+                "manifest": {
+                  "type": "string"
+                },
+                "computed": {
+                  "type": "boolean"
+                },
+                "matched": {
+                  "type": "boolean"
+                },
+                "discrepancies": {
+                  "type": "string"
+                },
+                "corrective": {
+                  "type": "string"
+                },
+                "by": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "count",
+                "manifest",
+                "computed",
+                "matched",
+                "discrepancies",
+                "corrective",
+                "by",
+                "at"
+              ]
+            }
+          },
+          "closed": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ]
+                }
+              },
+              "at": {
+                "type": "string"
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "accepted-with-corrections",
+                  "reconciled"
+                ]
+              }
+            },
+            "required": [
+              "by",
+              "at",
+              "outcome"
+            ]
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "id",
+          "institution",
+          "case",
+          "source",
+          "target"
+        ]
       },
       "Minimisation": {
         "description": "The seven questions of the field-level minimisation review (field series Part 1 §1.6).",
@@ -116201,6 +119770,7 @@
             "type": "string",
             "enum": [
               "anticorruption",
+              "archives",
               "buildingControl",
               "businessRegister",
               "cabinetOffice",
@@ -116248,6 +119818,7 @@
             "type": "string",
             "enum": [
               "anticorruption",
+              "archives",
               "buildingControl",
               "businessRegister",
               "cabinetOffice",
@@ -117709,6 +121280,106 @@
           "hash"
         ]
       },
+      "PerformanceReport": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "service": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "string"
+          },
+          "period": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "from",
+              "to"
+            ]
+          },
+          "figures": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "anyOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "unit": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "modelled",
+                    "observed",
+                    "record",
+                    "reported",
+                    "sample",
+                    "simulated",
+                    "unavailable"
+                  ]
+                },
+                "source": {
+                  "type": "string",
+                  "description": "Where it comes from, in words (a stream, a register, \"Reference model\")."
+                },
+                "asOf": {
+                  "type": "string",
+                  "description": "When it was true (ISO time), for observed and reported figures."
+                }
+              },
+              "required": [
+                "value",
+                "kind",
+                "source"
+              ]
+            }
+          },
+          "sha256": {
+            "type": "string"
+          },
+          "recordedBy": {
+            "$ref": "#/components/schemas/Who_frontdoor_servicemanagement"
+          },
+          "at": {
+            "type": "string"
+          },
+          "validatedBy": {
+            "$ref": "#/components/schemas/Who_frontdoor_servicemanagement"
+          },
+          "validatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "service",
+          "institution",
+          "period",
+          "figures",
+          "sha256",
+          "recordedBy",
+          "at"
+        ]
+      },
       "Permit": {
         "type": "object",
         "properties": {
@@ -118585,6 +122256,29 @@
           "findings",
           "summary",
           "approvable"
+        ]
+      },
+      "Principal": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "organisation",
+              "person"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "name"
         ]
       },
       "PriorityFactor": {
@@ -123035,6 +126729,210 @@
           "state"
         ]
       },
+      "PublicService": {
+        "description": "What the public catalogue shows of one service: only the published version, its computed status, nothing about who proposed it.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "informational",
+              "pilot",
+              "retired",
+              "unavailable",
+              "unpublished"
+            ]
+          },
+          "statusLabel": {
+            "type": "string"
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "legalBasis": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "num": {
+                  "type": "string"
+                },
+                "instrument": {
+                  "type": "string"
+                },
+                "eId": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "instrument",
+                "eId",
+                "version"
+              ]
+            }
+          },
+          "forms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "eligibility": {
+            "type": "string"
+          },
+          "representatives": {
+            "type": "boolean"
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "fee": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "rule": {
+                    "type": "string"
+                  },
+                  "approved": {
+                    "type": "boolean"
+                  },
+                  "version": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "rule",
+                  "approved"
+                ]
+              }
+            ]
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "enum": [
+                    "assisted",
+                    "online",
+                    "paper",
+                    "post",
+                    "telephone"
+                  ]
+                },
+                "label": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "key",
+                "label"
+              ]
+            }
+          },
+          "outcome": {
+            "type": "string"
+          },
+          "review": {
+            "type": "string"
+          },
+          "stages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "languages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "accessibility": {
+            "type": "string"
+          },
+          "contact": {
+            "type": "string"
+          },
+          "lifeEvents": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "category": {
+            "type": "string"
+          },
+          "verifiedAt": {
+            "type": "string",
+            "description": "When the published version was last verified (its publication)."
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "name",
+          "description",
+          "owner",
+          "status",
+          "statusLabel",
+          "reasons",
+          "legalBasis",
+          "forms",
+          "eligibility",
+          "representatives",
+          "evidence",
+          "fee",
+          "channels",
+          "outcome",
+          "review",
+          "stages",
+          "languages",
+          "accessibility",
+          "contact",
+          "lifeEvents",
+          "category",
+          "verifiedAt"
+        ]
+      },
       "Publication": {
         "type": "object",
         "properties": {
@@ -124260,6 +128158,47 @@
           "stillToProvide"
         ]
       },
+      "RecordClass": {
+        "type": "object",
+        "properties": {
+          "institution": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string",
+            "description": "The retention class records carry (a procedure's `retention`)."
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "access": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "restricted",
+              "secret"
+            ],
+            "description": "How the records of this class are classified for access."
+          },
+          "schedules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Schedule"
+            }
+          }
+        },
+        "required": [
+          "institution",
+          "key",
+          "title",
+          "description",
+          "access",
+          "schedules"
+        ]
+      },
       "RecordedVote": {
         "type": "object",
         "properties": {
@@ -124854,6 +128793,7 @@
                     "type": "string",
                     "enum": [
                       "anticorruption",
+                      "archives",
                       "buildingControl",
                       "businessRegister",
                       "cabinetOffice",
@@ -127229,6 +131169,75 @@
           "evidenceHash"
         ]
       },
+      "Schedule": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "number"
+          },
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "closed",
+              "created"
+            ]
+          },
+          "periodDays": {
+            "type": "number",
+            "description": "Days the law sets; absent for a permanent class. Entered with the citation in the approving case, never shipped."
+          },
+          "disposition": {
+            "type": "string",
+            "enum": [
+              "archive",
+              "destroy",
+              "permanent"
+            ]
+          },
+          "citations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            }
+          },
+          "case": {
+            "type": "string"
+          },
+          "approvedBy": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            }
+          },
+          "at": {
+            "type": "string"
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "n",
+          "trigger",
+          "disposition",
+          "citations",
+          "case",
+          "approvedBy",
+          "at"
+        ]
+      },
       "Scope": {
         "type": "object",
         "properties": {
@@ -127443,6 +131452,7 @@
                 "type": "string",
                 "enum": [
                   "anticorruption",
+                  "archives",
                   "buildingControl",
                   "businessRegister",
                   "cabinetOffice",
@@ -127636,6 +131646,7 @@
             "type": "string",
             "enum": [
               "anticorruption",
+              "archives",
               "buildingControl",
               "businessRegister",
               "cabinetOffice",
@@ -127860,6 +131871,7 @@
             "type": "string",
             "enum": [
               "anticorruption",
+              "archives",
               "buildingControl",
               "businessRegister",
               "cabinetOffice",
@@ -128924,6 +132936,72 @@
           "unauthenticated"
         ]
       },
+      "ServiceChange": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "service": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "impact": {
+            "type": "string"
+          },
+          "proposedBy": {
+            "$ref": "#/components/schemas/Who_frontdoor_servicemanagement"
+          },
+          "at": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "object",
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "approved",
+                  "rejected"
+                ]
+              },
+              "by": {
+                "$ref": "#/components/schemas/Who_frontdoor_servicemanagement"
+              },
+              "at": {
+                "type": "string"
+              },
+              "reasons": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "outcome",
+              "by",
+              "at",
+              "reasons"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "service",
+          "institution",
+          "description",
+          "reason",
+          "impact",
+          "proposedBy",
+          "at"
+        ]
+      },
       "ServiceForm": {
         "type": "object",
         "properties": {
@@ -129150,6 +133228,7 @@
                 "type": "string",
                 "enum": [
                   "anticorruption",
+                  "archives",
                   "buildingControl",
                   "businessRegister",
                   "cabinetOffice",
@@ -129590,6 +133669,67 @@
           "at"
         ]
       },
+      "ServiceRetirement": {
+        "type": "object",
+        "properties": {
+          "proposedBy": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ]
+          },
+          "proposedAt": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "plan": {
+            "type": "string",
+            "description": "What happens to applications in progress and where users go instead (GOV-GOV-010 \"migration plan\")."
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "proposed",
+              "withdrawn"
+            ]
+          },
+          "confirmedBy": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ]
+          },
+          "confirmedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "proposedBy",
+          "proposedAt",
+          "reason",
+          "plan",
+          "state"
+        ]
+      },
       "ServiceSlaStat": {
         "type": "object",
         "properties": {
@@ -129678,6 +133818,313 @@
           "oldestOpenHours",
           "rated",
           "avgSatisfaction"
+        ]
+      },
+      "ServiceTerms": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "institution": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "institution"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "slot": {
+                    "type": "string",
+                    "enum": [
+                      "anticorruption",
+                      "archives",
+                      "buildingControl",
+                      "businessRegister",
+                      "cabinetOffice",
+                      "centralBank",
+                      "citizenship",
+                      "civilRegistration",
+                      "constitutionalCourt",
+                      "controlledSubstances",
+                      "customs",
+                      "dataProtection",
+                      "education",
+                      "electoral",
+                      "finance",
+                      "headOfState",
+                      "healthRegulation",
+                      "higherEducationAccreditation",
+                      "housing",
+                      "humanRights",
+                      "identity",
+                      "immigration",
+                      "judiciary",
+                      "labour",
+                      "landRegistry",
+                      "lawRegister",
+                      "legislature",
+                      "medicinesRegulation",
+                      "ombudsman",
+                      "police",
+                      "procurementReview",
+                      "professionalRegulation",
+                      "publicHealth",
+                      "roadAuthority",
+                      "socialProtection",
+                      "statistics",
+                      "supremeAudit",
+                      "tax",
+                      "transportRegulator",
+                      "travelDocuments",
+                      "trustServices",
+                      "vehicleRegistration"
+                    ]
+                  }
+                },
+                "required": [
+                  "slot"
+                ]
+              }
+            ]
+          },
+          "legalBasis": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            },
+            "description": "The provisions the service rests on, cited from the laws register when the version was proposed."
+          },
+          "procedure": {
+            "type": "string",
+            "description": "The procedure that carries applications (its key); none for an information-only service."
+          },
+          "forms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The forms, each by its identity (catalogue:form-id@version); never a bare ID."
+          },
+          "eligibility": {
+            "type": "string",
+            "description": "Who may use it, in plain words."
+          },
+          "representatives": {
+            "type": "boolean",
+            "description": "Whether someone may act for the applicant (within a representation the applicant grants)."
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Evidence and prerequisites, in plain words."
+          },
+          "fee": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "rule": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "rule"
+                ]
+              }
+            ],
+            "description": "The fee: a reference to a rule of the rates register (never an amount); null when the service has none."
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "assisted",
+                "online",
+                "paper",
+                "post",
+                "telephone"
+              ]
+            }
+          },
+          "outcome": {
+            "type": "string",
+            "description": "Expected outcome, in plain words."
+          },
+          "review": {
+            "type": "string",
+            "description": "The review route: the owning institution's reconsideration (lib/frontdoor/procedures.ts), and any further route in words."
+          },
+          "languages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "accessibility": {
+            "type": "string"
+          },
+          "privacy": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "restricted",
+              "secret"
+            ],
+            "description": "How sensitive what it collects is (the procedure's sensitivity governs the case itself)."
+          },
+          "contact": {
+            "type": "string",
+            "description": "Operational contact and support."
+          },
+          "lifeEvents": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Life events and categories it is found under."
+          },
+          "category": {
+            "type": "string"
+          },
+          "declared": {
+            "type": "string",
+            "enum": [
+              "active",
+              "informational",
+              "pilot"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "owner",
+          "legalBasis",
+          "forms",
+          "eligibility",
+          "representatives",
+          "evidence",
+          "fee",
+          "channels",
+          "outcome",
+          "review",
+          "languages",
+          "accessibility",
+          "privacy",
+          "contact",
+          "lifeEvents",
+          "category",
+          "declared"
+        ]
+      },
+      "ServiceVersion": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "number"
+          },
+          "terms": {
+            "$ref": "#/components/schemas/ServiceTerms"
+          },
+          "proposedBy": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ]
+          },
+          "proposedAt": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "proposed",
+              "published",
+              "superseded",
+              "withdrawn"
+            ]
+          },
+          "publishedBy": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ]
+          },
+          "publishedAt": {
+            "type": "string"
+          },
+          "independence": {
+            "type": "string",
+            "enum": [
+              "accounts-only",
+              "identity-provider",
+              "unverified"
+            ]
+          },
+          "withdrawn": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "by",
+              "at",
+              "reason"
+            ]
+          }
+        },
+        "required": [
+          "n",
+          "terms",
+          "proposedBy",
+          "proposedAt",
+          "reason",
+          "state"
         ]
       },
       "ServicesView": {
@@ -136027,6 +140474,169 @@
           "checks"
         ]
       },
+      "Tracked": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "ref": {
+            "type": "string"
+          },
+          "procedure": {
+            "type": "string"
+          },
+          "service": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "string"
+          },
+          "stage": {
+            "type": "string"
+          },
+          "openedAt": {
+            "type": "string"
+          },
+          "closedAt": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "made by you for another",
+              "made for you",
+              "own"
+            ],
+            "description": "Made by or for whom (from this person's point of view)."
+          },
+          "deadlines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "due": {
+                  "type": "string"
+                },
+                "met": {
+                  "type": "string"
+                },
+                "lapsed": {
+                  "type": "string"
+                },
+                "sample": {
+                  "type": "boolean",
+                  "const": true
+                }
+              },
+              "required": [
+                "label",
+                "due"
+              ]
+            }
+          },
+          "decisions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "decision": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "decision",
+                "at"
+              ]
+            }
+          },
+          "certificates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "code",
+                "title",
+                "status"
+              ]
+            }
+          },
+          "challenge": {
+            "type": "object",
+            "properties": {
+              "available": {
+                "type": "boolean"
+              },
+              "why": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "available"
+            ]
+          },
+          "reconsiderations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ref": {
+                  "type": "string"
+                },
+                "outcome": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "ref"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "ref",
+          "procedure",
+          "institution",
+          "stage",
+          "openedAt",
+          "closedAt",
+          "role",
+          "deadlines",
+          "decisions",
+          "certificates",
+          "challenge",
+          "reconsiderations"
+        ]
+      },
       "TransactionView": {
         "description": "A transaction as an official sees it: the parties and the instrument's reference (a title or deed number names its holder) only with need.",
         "type": "object",
@@ -136177,6 +140787,108 @@
           "instrument",
           "partiesHidden",
           "receivingCount"
+        ]
+      },
+      "Transfer": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "string"
+          },
+          "archive": {
+            "type": "string"
+          },
+          "class": {
+            "type": "string"
+          },
+          "case": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ListedItem"
+            }
+          },
+          "manifest": {
+            "type": "string"
+          },
+          "authorised": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ]
+                }
+              },
+              "at": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "by",
+              "at"
+            ]
+          },
+          "received": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              },
+              "at": {
+                "type": "string"
+              },
+              "receipt": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "by",
+              "at",
+              "receipt"
+            ]
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "id",
+          "institution",
+          "archive",
+          "class",
+          "case",
+          "items",
+          "manifest",
+          "authorised"
         ]
       },
       "TransitionRulesValues": {
@@ -138367,6 +143079,20 @@
         ]
       },
       "Who_finance_register": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "Who_frontdoor_servicemanagement": {
         "type": "object",
         "properties": {
           "id": {

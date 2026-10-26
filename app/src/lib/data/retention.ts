@@ -32,6 +32,7 @@ import { flushAggregated } from '@/lib/audit/aggregate';
 import { disposeDocument, dueDocuments } from '@/lib/records/documents';
 import { pruneAccessLog } from '@/lib/records/access-log';
 import { anonymiseClosedCases } from '@/lib/casework/engine';
+import { holdCovering } from '@/lib/recordkeeping/register';
 
 export type RetentionCategory = 'permits' | 'cases' | 'procedure-cases' | 'documents' | 'access-log';
 export type RetentionAction = 'keep' | 'anonymise' | 'delete';
@@ -278,6 +279,8 @@ function sweepDocuments(rule: RetentionRule, now: number): { disposed: number; h
   const cutoff = new Date(now - rule.days * DAY).toISOString();
   for (const d of dueDocuments(cutoff)) {
     if (d.legalHold) { out.held++; continue; }
+    // A legal hold of the records management register (plan I13, lib/recordkeeping): on the document, its case or its record class.
+    if (holdCovering({ institution: d.institution, ...(d.retention ? { class: d.retention } : {}), document: d.id, ...(d.belongsTo.kind === 'case' ? { case: [d.belongsTo.id] } : {}) })) { out.held++; continue; }
     if (!('error' in disposeDocument(d.id, rule.basis ?? 'retention rule', 'retention schedule', new Date(now)))) out.disposed++;
   }
   return out;
@@ -296,7 +299,7 @@ export function runRetention(now = Date.now()): RetentionRun {
     at,
     permits: sweepPermits(rules.permits, now, at),
     cases: sweepCases(rules.cases, now, at),
-    procedureCases: { anonymised: rules['procedure-cases'].action === 'anonymise' && rules['procedure-cases'].days ? anonymiseClosedCases(new Date(now - rules['procedure-cases'].days * DAY).toISOString(), new Date(now)) : 0 },
+    procedureCases: { anonymised: rules['procedure-cases'].action === 'anonymise' && rules['procedure-cases'].days ? anonymiseClosedCases(new Date(now - rules['procedure-cases'].days * DAY).toISOString(), new Date(now), c => !!holdCovering({ institution: c.owner, case: [c.id, c.ref] })) : 0 },
     documents: sweepDocuments(rules.documents, now),
     accessLog: rules['access-log'].action === 'delete' && rules['access-log'].days ? pruneAccessLog(new Date(now - rules['access-log'].days * DAY).toISOString()) : { removed: 0 },
     subscriptions: { expired: sweepSubscriptions(now) },

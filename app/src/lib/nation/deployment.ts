@@ -33,7 +33,10 @@ export type AuthorityKey =
   | 'finance' | 'cabinetOffice' | 'procurementReview'
   // Human services (plan step I6, specification Part 2): bodies a nation may keep apart, each named by the nation;
   // empty until named, no case opens under a slot nobody is named for, and no stand-in acts for them.
-  | 'travelDocuments' | 'citizenship' | 'labour' | 'socialProtection';
+  | 'travelDocuments' | 'citizenship' | 'labour' | 'socialProtection'
+  // I13: the digital front door and records (plan step I13): the archive the nation's law names to receive records
+  // transferred for permanent preservation (lib/recordkeeping). Empty until named; nothing is transferred until then.
+  | 'archives';
 
 export type ModuleKey = 'law' | 'civil' | 'organisations' | 'accreditation' | 'licensing' | 'immigration' | 'police' | 'courts' | 'tax' | 'customs' | 'education' | 'health' | 'professions';
 
@@ -122,6 +125,8 @@ export const AUTHORITIES: { key: AuthorityKey; label: string; registers: string;
   { key: 'citizenship', label: 'Citizenship determination', registers: 'Citizenship and nationality applications and determinations (only where the nation\'s law names a competent authority)', optional: true },
   { key: 'labour', label: 'Labour and employment', registers: 'Employers and workplaces, employment registrations, vacancies and jobseekers, inspections and corrective orders, labour complaints, occupational injury notifications, mediation', optional: true },
   { key: 'socialProtection', label: 'Social protection and benefits', registers: 'Claimants and households, benefit claims and their calculations, entitlements, payment instructions, overpayments and appeals', optional: true },
+  // I13: records management (plan step I13): optional; until named, records whose schedule ends in transfer stay with their institution.
+  { key: 'archives', label: 'National archives', registers: 'Records transferred for permanent preservation from every institution, with each transfer\'s manifest and the archive\'s receipt', optional: true },
 ];
 /** Health bodies a nation may set apart from the health regulator: optional, provisionally stood in for until named (PROVISIONAL_FALLBACK). */
 export const HEALTH_SLOTS: AuthorityKey[] = ['medicinesRegulation', 'controlledSubstances', 'publicHealth'];

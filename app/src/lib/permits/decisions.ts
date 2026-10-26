@@ -69,6 +69,11 @@ const DEPLOYMENT_DOMAINS: [prefix: string, authority: string][] = [
   // Local and regional government (plan I7): each local government's own procedure (lg.<template>.<institution>): its council's
   // resolutions, its budget, its service requests and complaints, decided by its own officials under its own powers.
   ['lg', 'the local government whose own procedure it is'],
+  // I13 (plan step I13): each institution's own front-door procedures (svc.<template>.<institution>: appointments, service
+  // complaints, reconsideration of its own decisions, refunds of its own fees) and records management (rec.<template>.<institution>:
+  // retention schedules, legal holds, disposal, transfer to the archive, migrations), decided by its own officials.
+  ['svc', 'the institution whose own service procedure it is'],
+  ['rec', 'the institution whose own records procedure it is'],
 ];
 
 /** Classify a decision step; null when the platform cannot say which authority it rests on. */

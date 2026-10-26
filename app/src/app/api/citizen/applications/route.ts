@@ -12,6 +12,17 @@
 // (submitForm(), the same rules and messages as the form in the browser), a
 // refusal names the answers it concerns (`fieldErrors`), and the answer
 // carries the receipt. Officials of the responsible authority take it from there.
+//
+// Plan step I13 (the front door, lib/frontdoor/journey.ts): GET also lists the
+// published catalogue services that take applications online with their forms,
+// the person's applications as they follow them (own, made for them, made by
+// them for another: stage, deadlines, sealed decisions, whether a
+// reconsideration can be asked) and how they can prove who they are (the
+// nation's identity provider, or the lawful alternatives). POST { service,
+// fields, onBehalfOf? } applies for a catalogue service, routed to the
+// institution responsible (a representative only within the representation
+// the person granted); POST { op: 'reconsider', case, grounds } asks for a
+// decided application to be reconsidered by the institution that decided it.
 import { NextRequest, NextResponse } from 'next/server';
 import { currentCitizen } from '@/lib/auth/citizen';
 import { submitForm, listCases } from '@/lib/casework/engine';
@@ -20,6 +31,8 @@ import { certificatesFor } from '@/lib/records/certificates';
 import { formView } from '@/lib/forms/server';
 import { receiptOf } from '@/lib/forms/receipt';
 import '@/lib/casework/modules';
+import { publicCatalogue, getService, publishedVersion } from '@/lib/frontdoor/catalogue';
+import { applyForService, trackFor, requestReconsideration, identityRoute } from '@/lib/frontdoor/journey';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,13 +51,32 @@ export async function GET(req: NextRequest) {
     procedures: CITIZEN_PROCEDURES,
     // Each procedure's form in force: a form view, or null (no approved version: "not connected").
     forms: Object.fromEntries(CITIZEN_PROCEDURES.map(k => { const p = activePackage(k); return [k, p ? formView(p, locale) : null]; })),
+    // I13: the catalogue services that take applications online, each with its form in force; the person's applications as they follow them.
+    services: publicCatalogue().filter(x => (x.status === 'active' || x.status === 'pilot') && x.channels.some(ch => ch.key === 'online')).map(x => {
+      const proc = publishedVersion(getService(x.id)!)?.terms.procedure;
+      const p = proc ? activePackage(proc) : undefined;
+      return { id: x.id, name: x.name, owner: x.owner, status: x.status, representatives: x.representatives, form: p ? formView(p, locale) : null };
+    }),
+    tracked: trackFor({ sub: c.sub, name: c.name, demo: c.demo === true }),
+    identity: identityRoute(),
   });
 }
 
 export async function POST(req: NextRequest) {
   const c = await currentCitizen();
   if (!c) return NextResponse.json({ error: 'Sign in first' }, { status: 401 });
-  const b = (await req.json().catch(() => ({}))) as { procedure?: string; fields?: Record<string, unknown>; idempotencyKey?: string; declaration?: { version?: unknown }; locale?: unknown };
+  const b = (await req.json().catch(() => ({}))) as { procedure?: string; fields?: Record<string, unknown>; idempotencyKey?: string; declaration?: { version?: unknown }; locale?: unknown; service?: unknown; onBehalfOf?: unknown; op?: unknown; case?: unknown; grounds?: unknown; newEvidence?: unknown };
+  const me = { sub: c.sub, name: c.name, demo: c.demo === true };
+  // I13: a decided application reconsidered by the institution that decided it.
+  if (b.op === 'reconsider') {
+    const r = requestReconsideration(me, { case: b.case, grounds: b.grounds, newEvidence: b.newEvidence });
+    return 'error' in r ? NextResponse.json(r, { status: 422 }) : NextResponse.json({ application: { id: r.case.id, ref: r.case.ref }, routed: { institution: r.routing.institution } }, { status: 201 });
+  }
+  // I13: an application for a catalogue service, routed to the institution responsible.
+  if (typeof b.service === 'string') {
+    const r = await applyForService(me, { service: b.service, fields: b.fields ?? {}, declaration: b.declaration, locale: b.locale, idempotencyKey: b.idempotencyKey, onBehalfOf: b.onBehalfOf });
+    return 'error' in r ? NextResponse.json(r, { status: 422 }) : NextResponse.json({ application: { id: r.case.id, ref: r.case.ref }, receipt: receiptOf(r.case), routed: { institution: r.routing.institution } }, { status: 201 });
+  }
   if (!CITIZEN_PROCEDURES.includes(String(b.procedure))) return NextResponse.json({ error: `Citizens may start: ${CITIZEN_PROCEDURES.join(', ')}` }, { status: 422 });
   const pkg = activePackage(String(b.procedure));
   const r = await submitForm({
