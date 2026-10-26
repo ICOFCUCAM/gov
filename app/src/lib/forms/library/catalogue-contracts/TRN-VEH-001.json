@@ -1,0 +1,372 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "TRN-VEH-001",
+ "record_type": "transport.vehicle",
+ "form_version": 1,
+ "procedure_package_id": "transport.vehicle-registration",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-TRN-001: competent authorities and statutory responsibilities (the vehicleRegistration, roadAuthority and transportRegulator slots; none ship).",
+  "CFG-TRN-003: vehicle classifications, registration rules and inspection intervals (none ship).",
+  "CFG-DAT-001: retention and disclosure of the case and its personal data."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/PARTS-08-11.md",
+  "id": "TRN-VEH-001",
+  "part": 9,
+  "section": "2.1",
+  "line": 549,
+  "batch": 10
+ },
+ "library": {
+  "title": "Register a vehicle",
+  "intro": "Register a vehicle and its keeper. The identification number is checked (once only), the inspection recorded and a registration mark assigned by two officials.",
+  "owner": "vehicleRegistration",
+  "filled_by": "The keeper or a dealer; an official at an office.",
+  "authority": "Filed with the vehicle and driver licensing body the nation names (vehicleRegistration slot, shipped empty).",
+  "procedure": {
+   "key": "transport.vehicle-registration",
+   "stage": "received",
+   "action": "check",
+   "document": "ownership-evidence"
+  },
+  "lists": {},
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "slot-owner",
+    "what": "The competent body is the institution the nation names for its slot of the deployment profile (landRegistry, buildingControl, housing, vehicleRegistration, roadAuthority, transportRegulator), shipped empty; who holds each power over a decision comes from the permit authority registry, proposed and unapproved",
+    "why": "Authority comes from the deployment profile and the approved mappings, never a ministry by name; a production installation refuses a power no approved mapping covers.",
+    "rule": "CLAUDE.md Government operating model: authorityFor(); lib/permits/decisions.ts (plan I7)"
+   },
+   {
+    "id": "separate-records",
+    "what": "Vehicle registration, a driving licence, an operator licence and a road works permit are four records kept apart, each by the body the nation names",
+    "why": "Catalogue Part 9 §4.3: never one undifferentiated approved status.",
+    "rule": "lib/transport/register.ts"
+   },
+   {
+    "id": "two-officials",
+    "what": "Every registration and decision is proposed by one official and confirmed by a different person; the official who verified or reviewed does not decide",
+    "why": "Catalogue Part 8 §3.3 and Part 9 §5: dual control by distinct authorised individuals.",
+    "rule": "lib/casework/engine.ts act() (fourEyes, distinctFrom); lib/data/dual-control.ts dualControlRefusal()"
+   },
+   {
+    "id": "no-ai-decision",
+    "what": "No step is decided by a model, a score or a map: officials decide with reasons",
+    "why": "AI never makes a legally material decision.",
+    "rule": "CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   },
+   {
+    "id": "nation-lists",
+    "what": "Categories, classes and kinds the law decides are the nation's configured lists; none ship (a proposed list is marked proposed)",
+    "why": "CivicOS never invents authority or classifications.",
+    "rule": "lib/forms/contract.ts configured lists; lib/forms/publication.ts"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/PARTS-08-11.md",
+    "line": 549,
+    "quotes": [
+     "TRN-VEH-001",
+     "Vehicle registration",
+     "Vehicle record and registration status"
+    ],
+    "met_by": {
+     "fields": [
+      "vehicle.vin",
+      "vehicle.keeper"
+     ],
+     "procedure": "grant"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-08-11.md",
+    "line": 694,
+    "quotes": [
+     "Validate required evidence and authorized verification responses.",
+     "An inconclusive check must not automatically become a rejection."
+    ],
+    "met_by": {
+     "procedure": "check"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-08-11.md",
+    "line": 706,
+    "quotes": [
+     "Issue the relevant credential or registration evidence only after required approvals.",
+     "Record effective date, expiry, restrictions and delivery."
+    ],
+    "met_by": {
+     "procedure": "grant"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-08-11.md",
+    "line": 753,
+    "quotes": [
+     "REG-TRN-002",
+     "Vehicle register",
+     "Vehicle identifier, registration, recorded keepers or owners as defined by law, inspections and status"
+    ],
+    "met_by": {
+     "fields": [
+      "vehicle.vin",
+      "vehicle.keeper"
+     ],
+     "procedure": "record-inspection"
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "vehicle.vin",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 17
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Vehicle identification number (17 characters)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter vehicle identification number (17 characters).",
+     "length": "Vehicle identification number (17 characters) is too long."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "vehicle.make",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 80
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Make"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter make.",
+     "length": "Make is too long."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "vehicle.model",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 80
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Model"
+   },
+   "error_text": {
+    "en": {
+     "length": "Model is too long."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "vehicle.category",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "transport.country.vehicle_categories",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Vehicle category"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter vehicle category.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": "CFG-TRN-003: vehicle classifications, registration rules and inspection intervals; none ship"
+  },
+  {
+   "id": "vehicle.keeper",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.person_or_organisation",
+   "personal_data_class": "personal",
+   "evidence": [],
+   "label": {
+    "en": "Keeper (a person or an organisation of the registers)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter keeper (a person or an organisation of the registers).",
+     "reference_exists": "There is no record with that reference in the register."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "vehicle.import_reference",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 80
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Customs release reference, for an imported vehicle"
+   },
+   "error_text": {
+    "en": {
+     "length": "Customs release reference, for an imported vehicle is too long."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "vehicle.ownership",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "ownership-evidence",
+     "when": "when_the_form_asks_for_it"
+    }
+   ],
+   "label": {
+    "en": "Evidence of ownership or lawful keeping"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter evidence of ownership or lawful keeping."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "only": [
+    "declaration.text_version",
+    "declaration.confirmed",
+    "declaration.signed_at"
+   ],
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "vehicle.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

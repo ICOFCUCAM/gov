@@ -1297,3 +1297,80 @@ DPIA records are not built (`processor-register`, integration register 20.88).
 | The person kept apart and restricted; no suspect; no voter registration form | `catalogue-contracts.test.ts` "keeps the person who raised a matter restricted and apart from the case…" |
 | Audit finding and the response beside it | `catalogue-contracts.test.ts` "records an audit finding by criteria, condition, cause, effect, evidence and recommendation…" |
 | The procedures behind them | `lib/oversight/oversight.test.ts`, `app/api/oversight/route.test.ts` |
+
+## 18. Catalogue contracts, batch 10: territory and infrastructure (26 October 2026)
+
+Plan step I7 wrote the contracts of the forms its procedures carry: land
+dealings and disputes (catalogue Part 8 §3), housing, planning and building
+control (the supplement's Part 20), local and regional government (Part 19)
+and transport (Part 9). Thirty-six forms of `docs/forms-catalogue/PARTS-08-11.md`
+and the supplement, which were `contract_missing` (eight of them `given`, their
+JSON contract in §19.2 or §20.2, now written in the canonical format line by
+line), have a CivicOS contract with `batch: 10` in their `catalogue` block.
+The format, loader, gates and test are batch 1's (§8). The conformance test
+(`lib/forms/catalogue-contracts.test.ts`, source `F` added for Parts 8–11)
+holds the lines each form answers: Part 1's shared rules and the supplement's
+conventions and gates, as for every batch; the shared group of its family
+(`land`: Part 8 lines 24, 30, 31, 91, 118, 132, 134–142, 144, 461, 472, 479 and
+the specification's lines 2424 and 2449; `hpc`: the supplement's line 1082;
+`lrg`: line 974 and the specification's line 2522; `trn`: Part 9 lines 525,
+685, 729, 766, 767, 846 and 1003); and its own lines (its row, its JSON
+contract where the supplement gives one, its register and the
+specification's records and controls, `FORM_10` in the test).
+
+| Catalogue form | Title | Fields | Belongs to | Owner (slot) | Deviations (besides minimisation, evidence-requirement and scanning) |
+|---|---|---|---|---|---|
+| HPC-BLD-014 | Apply for a building permit | 10 and the declaration | `building.permit`, stage `received`, step `validate`, document `design-documents` | buildingControl | slot-owner, rules-version, distinct-states, two-officials, no-ai-decision |
+| HPC-BLD-015 | Submit building plans | 4 | `building.permit`, stage `plan-review`, step `submit-plans`, document `design-documents` | buildingControl | slot-owner, rules-version, distinct-states, two-officials, no-ai-decision |
+| HPC-BLD-016 | Record a structural or technical review | 5 | `building.permit`, stage `plan-review`, step `technical-review`, document `technical-review` | buildingControl | slot-owner, rules-version, distinct-states, two-officials, no-ai-decision |
+| HPC-BLD-017 | Notify the start of construction | 4 | `building.permit`, stage `permitted`, step `commence`, document `commencement-notice` | buildingControl | slot-owner, rules-version, distinct-states, two-officials, no-ai-decision |
+| HPC-BLD-018 | Record a building inspection | 10 | `building.permit`, stage `construction`, step `inspect`, document `inspection-evidence` | buildingControl | slot-owner, rules-version, distinct-states, two-officials, no-ai-decision |
+| HPC-BLD-019 | Record a stop-work or corrective action order | 5 | `building.permit`, stage `construction`, step `stop-work` | buildingControl | slot-owner, rules-version, distinct-states, two-officials, no-ai-decision |
+| HPC-BLD-020 | Apply for an occupancy or completion certificate | 7 and the declaration | `building.permit`, stage `construction`, step `complete`, document `completion-documents` | buildingControl | slot-owner, rules-version, distinct-states, two-officials, no-ai-decision |
+| HPC-HOU-001 | Register a housing programme | 7 | `housing.programme`, stage `received`, step `check`, document `programme-instrument` | housing | slot-owner, programme-terms, no-health-detail, two-officials, no-ai-decision |
+| HPC-HOU-002 | Apply for public or subsidised housing | 11 | `housing.application`, stage `received`, step `accept`, document `application` | housing | slot-owner, programme-terms, no-health-detail, two-officials, no-ai-decision |
+| HPC-HOU-003 | Assess housing eligibility | 7 | `housing.application`, stage `assessment`, step `assess-eligible` | housing | slot-owner, programme-terms, no-health-detail, two-officials, no-ai-decision |
+| HPC-HOU-004 | Record a housing allocation decision | 5 | `housing.application`, stage `waiting`, step `allocate` | housing | slot-owner, programme-terms, no-health-detail, two-officials, no-ai-decision |
+| HPC-PLN-009 | Apply for planning permission | 10 and the declaration | `building.planning`, stage `received`, step `validate`, document `site-plan` | buildingControl | slot-owner, rules-version, distinct-states, two-officials, no-ai-decision |
+| HPC-PLN-012 | Refer a planning application for an environmental or heritage opinion | 5 | `building.planning`, stage `consultation`, step `close-consultation`, document `referral-response` | buildingControl | slot-owner, rules-version, distinct-states, two-officials, no-ai-decision |
+| HPC-PLN-013 | Make a representation or objection on a planning application | 5 and the declaration | `building.planning`, stage `consultation`, step `close-consultation`, document `representation` | buildingControl | slot-owner, rules-version, distinct-states, two-officials, no-ai-decision |
+| LND-REG-005 | Refer a boundary dispute | 8 and the declaration | `land.dispute`, stage `lodged`, step `register`, document `dispute-submission` | landRegistry | slot-owner, rights-on-parcel, two-officials, dispute-holds, nation-lists |
+| LND-REG-007 | Transfer a registered interest in land | 17 and the declaration | `land.transfer`, stage `lodged`, step `lodge`, document `instrument` | landRegistry | slot-owner, rights-on-parcel, two-officials, dispute-holds, nation-lists |
+| LND-REG-008 | Register or amend a lease | 14 and the declaration | `land.encumbrance`, stage `lodged`, step `lodge`, document `instrument` | landRegistry | slot-owner, rights-on-parcel, two-officials, dispute-holds, nation-lists |
+| LND-REG-009 | Register a mortgage or other encumbrance | 14 and the declaration | `land.encumbrance`, stage `lodged`, step `lodge`, document `instrument` | landRegistry | slot-owner, rights-on-parcel, two-officials, dispute-holds, nation-lists |
+| LND-REG-010 | Discharge a mortgage | 10 and the declaration | `land.discharge`, stage `lodged`, step `lodge`, document `instrument` | landRegistry | slot-owner, rights-on-parcel, two-officials, dispute-holds, nation-lists |
+| LND-REG-011 | Register an easement or right of way | 14 and the declaration | `land.encumbrance`, stage `lodged`, step `lodge`, document `instrument` | landRegistry | slot-owner, rights-on-parcel, two-officials, dispute-holds, nation-lists |
+| LND-REG-012 | Register an interest on succession (inheritance) | 14 and the declaration | `land.transfer`, stage `lodged`, step `lodge`, document `succession-evidence` | landRegistry | slot-owner, rights-on-parcel, two-officials, dispute-holds, nation-lists |
+| LND-REG-016 | Correct a land record | 13 and the declaration | `land.correction`, stage `lodged`, step `lodge`, document `instrument` | landRegistry | slot-owner, rights-on-parcel, two-officials, dispute-holds, nation-lists |
+| LND-REG-017 | Report a duplicate or conflicting title | 8 and the declaration | `land.dispute`, stage `lodged`, step `register`, document `dispute-submission` | landRegistry | slot-owner, rights-on-parcel, two-officials, dispute-holds, nation-lists |
+| LND-REG-020 | Register a land transaction restriction (caveat) | 14 and the declaration | `land.encumbrance`, stage `lodged`, step `lodge`, document `instrument` | landRegistry | slot-owner, rights-on-parcel, two-officials, dispute-holds, nation-lists |
+| LND-REG-021 | Discharge a restriction or caveat | 10 and the declaration | `land.discharge`, stage `lodged`, step `lodge`, document `instrument` | landRegistry | slot-owner, rights-on-parcel, two-officials, dispute-holds, nation-lists |
+| LND-REG-022 | Object to a land registration | 8 and the declaration | `land.dispute`, stage `lodged`, step `register`, document `dispute-submission` | landRegistry | slot-owner, rights-on-parcel, two-officials, dispute-holds, nation-lists |
+| LRG-FIN-008 | Submit a local budget | 10 | `lg.budget`, stage `draft`, step `submit`, document `budget-document` | institution | institution-owned, two-officials, no-ai-decision, whole-minor-units |
+| LRG-ORG-004 | File a council meeting agenda and papers | 5 | `lg.resolution`, stage `moved`, step `record`, document `agenda` | institution | institution-owned, two-officials, no-ai-decision |
+| LRG-ORG-005 | Record a council resolution | 12 | `lg.resolution`, stage `moved`, step `record`, document `agenda` | institution | institution-owned, two-officials, no-ai-decision, quorum-rules |
+| LRG-SVC-013 | Request a local public service | 8 and the declaration | `lg.service`, stage `received`, step `triage`, document `evidence` | institution | institution-owned, two-officials, no-ai-decision, place-from-map |
+| LRG-SVC-014 | Make a local complaint or grievance | 8 and the declaration | `lg.complaint`, stage `received`, step `triage`, document `evidence` | institution | institution-owned, two-officials, no-ai-decision, place-from-map |
+| TRN-DRV-001 | Apply for a driving licence | 6 and the declaration | `transport.driving-licence`, stage `received`, step `check`, document `identity-evidence` | vehicleRegistration | slot-owner, separate-records, two-officials, no-ai-decision, nation-lists, medical-reference-only |
+| TRN-OPS-001 | Register a transport operator | 7 and the declaration | `transport.operator-licence`, stage `received`, step `check`, document `insurance-evidence` | transportRegulator | slot-owner, separate-records, two-officials, no-ai-decision, nation-lists |
+| TRN-ROAD-002 | Apply for a road excavation permit | 8 and the declaration | `transport.road-works`, stage `received`, step `check`, document `traffic-management-plan` | roadAuthority | slot-owner, separate-records, two-officials, no-ai-decision, nation-lists, place-from-map |
+| TRN-VEH-001 | Register a vehicle | 8 and the declaration | `transport.vehicle-registration`, stage `received`, step `check`, document `ownership-evidence` | vehicleRegistration | slot-owner, separate-records, two-officials, no-ai-decision, nation-lists |
+| TRN-VEH-002 | Change a vehicle's keeper | 4 and the declaration | `transport.vehicle-transfer`, stage `received`, step `check`, document `transfer-instrument` | vehicleRegistration | slot-owner, separate-records, two-officials, no-ai-decision, nation-lists |
+
+Owners are the slots the nation names (`landRegistry`, `buildingControl`,
+`housing`, `vehicleRegistration`, `roadAuthority`, `transportRegulator`, all
+shipped empty) or, for the five local-government forms, each local government
+itself (`institution`: the `lg.*` templates a subnational institution adopts as
+`lg.<template>.<institution>`; `procedure-link.ts` finds them adopted). Nothing
+a law decides is set: categories, uses, classes and checklists are configured
+lists or rules that ship empty; the other lists are marked proposed; no fee,
+day count or period. Medical fitness to drive is a sealed document's
+reference only; accessibility needs say what a home must have, never a
+medical detail.
+
+Left for later batches: the other land forms (LND-REG-001 … 004, 006, 013 …
+015, 018, 019 and the community-land forms), HPC-HOU-005 … 008, HPC-PLN-010
+and 011, HPC-BLD-021 and 022, HPC-REG-023 and 024, the Part 19 forms not
+listed above, the other transport forms (licence renewals, vehicle
+inspection, road reports, maritime and aviation) and every environment form
+(integration register 21.79).

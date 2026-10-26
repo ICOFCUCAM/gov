@@ -37,6 +37,16 @@ ACCEV = "lib/organisations/procedures.ts org.accreditation (higher-education acc
 OVSEV = KB.OVS + '; ' + KB.PIDEV
 TRANSEV = KB.TRANS + "; emergencies recorded as legal events cited from the laws register, confirmed by a different person, lapsing at expiry (lib/transitions/events.ts, state.ts)"
 INCID = "ministry incidents with recorded places (lib/data/incident-places.ts; test lib/data/incident-places.test.ts)"
+# Territory and infrastructure (plan I7, forms batch 10): reference procedures as drafts owned by the slots the nation names (landRegistry,
+# buildingControl, housing, vehicleRegistration, roadAuthority, transportRegulator; each local government its own); every decision by two
+# officials under proposed, unapproved mappings (lib/permits/decisions.ts); nothing a law decides shipped.
+LANDEV = "lib/land/procedures.ts (land.transfer, land.encumbrance, land.discharge, land.correction: lodge, verify against the register, register by two officials; land.dispute: registered disputes hold the interest until decided, a court order recorded or withdrawn), lib/data/parcels.ts applyRightsChange()/freezeInterest() (rights with references and rank, every version with its case, decision and effective date; rights only to their keepers, rightsKeepers()), lib/land/register.ts; tests lib/land/land.test.ts, app/api/parcels/parcels-privacy.test.ts"
+BLDEV = "lib/building/procedures.ts (building.planning: validation on a published parcel, consultation, decision by two officials; building.permit: plans by version and digest, technical review, grant against one approved design, inspections as findings with reasons against the rules' checklist, stop-work citing the law and lifted by a second official, variations, occupancy only after a passing final inspection), lib/building/register.ts (building control rules adopted through lib/law/policy-change.ts, version recorded on each decision); test lib/building/building.test.ts"
+HOUEV = "lib/housing/procedures.ts (housing.programme with terms approved by two officials citing the law; housing.application: criteria met or not with evidence, points from the terms in force, allocation by two officials with reasons, an out-of-order allocation recorded), lib/housing/register.ts; test lib/building/building.test.ts"
+LGEV = "lib/localgov/procedures.ts (lg.resolution, lg.budget, lg.service, lg.complaint templates adopted by each local government as its own, standing subnational), lib/localgov/register.ts (council rules through policy-change.ts, quorum and majority checked on the version in force; budgets in whole minor units; requests with places from the map); whole government reaches only under an approved relationship (roles.ts Boundaries.subnational); test lib/localgov/localgov.test.ts"
+TRNEV = "lib/transport/procedures.ts (transport.vehicle-registration, transport.vehicle-transfer, transport.driving-licence, transport.road-works, transport.operator-licence; checks, decisions by two officials), lib/transport/register.ts (vehicles and keepers with history, licences with medical fitness only as a sealed document reference, road works with place and period, operators of the organisations register); test lib/transport/transport.test.ts"
+B10 = "; library contract of batch 10 (app/src/lib/forms/library/catalogue-contracts/; docs/FORMS_CONFORMANCE.md §18)"
+B10MISS = "Adoption by the nation: the body named for its slot, its procedure approved by a second official, its decision mapping approved"
 DELEG = "lib/records/delegations.ts (who may act for whom, for which procedures, until when; granted by the verifying official, revocable, expiring, audited without names); test lib/records/delegations.test.ts"
 RET = "lib/data/retention.ts (rules proposed by one administrator, confirmed by another, legal basis recorded; legal hold respected; sweep audited with counts); tests lib/data/retention.test.ts, retention-oversight.test.ts"
 UPD = "lib/data/updates.ts decide() (named person per step, audit chain), lib/data/change-control.ts (four-eyes), lib/data/readiness.ts (preflight, UAT sign-off); tests lib/data/updates.test.ts, change-control.test.ts, readiness.test.ts"
@@ -151,6 +161,12 @@ D = {
     'internal-admin': ('Shared internal administration', 'I2', True, KB.ADMIN + '; ' + KB.DEPTS + '; ' + KB.WORKSPACE, 'Not yet'),
     'form-gov': ('Form design and governance', 'I1', True, "Procedure packages drafted by one official, tested, approved by another (lib/casework/packages.ts; test lib/casework/packages.test.ts); change control and releases (" + UPD + ")", 'Not yet'),
 }
+
+# Plan I7: the territory and infrastructure records exist (procedures, registers, decisions classified).
+D['land'] = ('Land and cadastre', 'I7', True, PARCEL + '; ' + LANDEV, 'Not yet')
+D['housing'] = ('Housing, planning and building control', 'I7', True, BLDEV + '; ' + HOUEV, 'Not yet')
+D['local-gov'] = ('Local and regional government', 'I7', True, LGEV, 'Not yet')
+D['transport'] = ('Transport', 'I7', True, TRNEV, 'Not yet')
 
 # (tag, part) -> [(section regex on the top section or 'sub', domain)] first match; tag = file tag
 def _m(*pairs):
@@ -300,6 +316,12 @@ def I(rx, status, ev, miss='', step=None, also='', lr=False, tag=None):
 
 
 # Land (catalogue Part 8 §3)
+# Plan I7: the forms the land and transport procedures carry (batch 10), before the earlier land rules.
+I(r'^LND-REG-0(05|07|08|09|10|11|12|16|17|20|21|22)$', 'Partial', LANDEV + B10, B10MISS + '; the nation\'s tenure types and instrument kinds (CFG-LND-001, CFG-LND-003)', 'I7')
+I(r'^TRN-(VEH-00[12]|DRV-001)$', 'Partial', TRNEV + B10, B10MISS + '; the nation\'s vehicle and licence categories (CFG-TRN-002, CFG-TRN-003)', 'I7')
+I(r'^TRN-ROAD-002$', 'Partial', TRNEV + B10, B10MISS + '; the road register and closure powers (CFG-TRN-005)', 'I7')
+I(r'^TRN-OPS-001$', 'Partial', TRNEV + '; ' + ORGLIC + B10, B10MISS + '; the nation\'s operator classes (CFG-TRN-004)', 'I7')
+I(r'^REG-TRN-00[123]$', 'Partial', TRNEV, 'Restrictions, inspections and compliance events as records; the register owner and legal authority recorded by the nation', 'I7')
 I(r'^LND-REG-001$', 'Partial', PARCEL, 'No application by a person: a parcel is recorded by the cadastre authority\'s official, not opened as an applicant\'s case with evidence and a decision record')
 I(r'^LND-REG-003$', 'Partial', PARCEL + ' (survey method, accuracy, survey date, surveyor and plan reference on each parcel version)', 'A survey submission as its own record with coordinates, precision evidence and the submitting surveyor\'s licence')
 I(r'^LND-REG-006$', 'Partial', PARCEL + '; land-title mapping proposed (' + PERMITMAP + ')', 'Title registration procedure (application, objection period, decision citing the law, certificate)')
@@ -473,6 +495,11 @@ I(r'^DGV-REP-003$', 'Partial', DELEG, 'Granted by the represented person or busi
 I(r'^DGV-DOC-004$', 'Partial', KB.CERT + '; ' + SEAL, 'Issuance as its own request', tag='SUP')
 I(r'^DGV-STA-006$', 'Partial', KB.TWIN, 'Statistical submissions per programme', 'I8', 'I3', tag='SUP')
 I(r'^DGV-SVC-001$', 'Partial', 'Citizen wallet permit application routed by type (demo and training only)', 'Service catalogue routing (I13)', tag='SUP')
+# Plan I7: the supplement's housing, planning, building control and local government forms the I7 procedures carry (batch 10).
+I(r'^HPC-HOU-00[1-4]$', 'Partial', HOUEV + B10, B10MISS + '; the programme\'s terms approved by two officials citing the law', 'I7', tag='SUP')
+I(r'^HPC-(PLN-009|PLN-01[23]|BLD-01[4-9]|BLD-020)$', 'Partial', BLDEV + B10, B10MISS + '; the building control rules adopted by two officials citing the law (CFG-INF-001)', 'I7', tag='SUP')
+I(r'^LRG-(ORG-00[45]|FIN-008|SVC-01[34])$', 'Partial', LGEV + B10, 'Adoption by each local government: its procedures approved by a second official of its own, its council rules adopted', 'I7', tag='SUP')
+I(r'^TRN-VEH-001$', 'Partial', TRNEV + B10, B10MISS, 'I7', tag='SUP')
 I(r'^(SAF-INC-001|SAF-CASE-002)$', 'Partial', POLICE + '; ' + INCID, 'One incident report across services; beyond intake only after legal review', 'I7', 'I11', tag='SUP')
 I(r'^(AGR-LIC-001|TRN-OPS-005|TRN-AVI-007|NAT-EXT-008)$', 'Partial', ORGLIC, 'The sector\'s licence register type, approved mapping and fields', tag='SUP')
 I(r'^LND-REG-003$', 'Partial', PARCEL, 'Registration or amendment as an applicant\'s case with evidence and decision', tag='SUP')

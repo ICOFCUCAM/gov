@@ -1,0 +1,231 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "HPC-PLN-012",
+ "record_type": "building.planning-referral",
+ "form_version": 1,
+ "procedure_package_id": "building.planning",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-INF-001: planning, construction and building-control requirements (the building control rules two officials adopt; none ship).",
+  "CFG-DAT-001: retention and disclosure of the case and its personal data."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+  "id": "HPC-PLN-012",
+  "part": 20,
+  "section": "20.1",
+  "line": 990,
+  "batch": 10
+ },
+ "library": {
+  "title": "Refer a planning application for an environmental or heritage opinion",
+  "intro": "Record that an application needs an environmental or heritage authority's opinion, and attach its response. The planning authority still decides.",
+  "owner": "buildingControl",
+  "filled_by": "An officer of the planning authority.",
+  "authority": "Filed with the planning and building control authority the nation names for its buildingControl slot (shipped empty); who holds each power comes from the permit authority registry, where a local government may lead for its area.",
+  "procedure": {
+   "key": "building.planning",
+   "stage": "consultation",
+   "action": "close-consultation",
+   "document": "referral-response"
+  },
+  "lists": {},
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "slot-owner",
+    "what": "The competent body is the institution the nation names for its slot of the deployment profile (landRegistry, buildingControl, housing, vehicleRegistration, roadAuthority, transportRegulator), shipped empty; who holds each power over a decision comes from the permit authority registry, proposed and unapproved",
+    "why": "Authority comes from the deployment profile and the approved mappings, never a ministry by name; a production installation refuses a power no approved mapping covers.",
+    "rule": "CLAUDE.md Government operating model: authorityFor(); lib/permits/decisions.ts (plan I7)"
+   },
+   {
+    "id": "rules-version",
+    "what": "Categories, uses, inspection stages and checklists and finding severities are the nation's building control rules, adopted by two officials citing the law; every decision records the version it applied",
+    "why": "Planning and building decisions record the applicable rule version (supplement Part 20); none ship.",
+    "rule": "lib/building/register.ts proposeBuildingRules(), confirmBuildingRules(), rulesRef()"
+   },
+   {
+    "id": "distinct-states",
+    "what": "Planning permission, building approval (against one approved design version), construction and occupancy are separate states of separate records, never one approved flag",
+    "why": "Specification Part 3 §D.13 controls and acceptance P3-11.",
+    "rule": "lib/building/register.ts BuildingPermit (permit, construction, occupancy)"
+   },
+   {
+    "id": "two-officials",
+    "what": "Every registration and decision is proposed by one official and confirmed by a different person; the official who verified or reviewed does not decide",
+    "why": "Catalogue Part 8 §3.3 and Part 9 §5: dual control by distinct authorised individuals.",
+    "rule": "lib/casework/engine.ts act() (fourEyes, distinctFrom); lib/data/dual-control.ts dualControlRefusal()"
+   },
+   {
+    "id": "no-ai-decision",
+    "what": "No step is decided by a model, a score or a map: officials decide with reasons",
+    "why": "AI never makes a legally material decision.",
+    "rule": "CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 990,
+    "quotes": [
+     "HPC-PLN-012",
+     "Environmental or heritage planning referral"
+    ],
+    "met_by": {
+     "fields": [
+      "referral.body",
+      "referral.response"
+     ],
+     "procedure": "close-consultation"
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "referral.application",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "building.registry.planning_cases",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The planning application (its case reference)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the planning application (its case reference).",
+     "reference_exists": "There is no record with that reference in the register."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "referral.body",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.institutions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Authority consulted (its id in the institution register)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter authority consulted (its id in the institution register).",
+     "reference_exists": "There is no record with that reference in the register."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "referral.question",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "What the authority is asked"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter what the authority is asked.",
+     "length": "What the authority is asked is too long."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "referral.response",
+   "type": "document",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [
+    {
+     "kind": "referral-response",
+     "when": "when_the_form_asks_for_it"
+    }
+   ],
+   "label": {
+    "en": "The authority's response"
+   },
+   "country_decision": null,
+   "multiple": true
+  },
+  {
+   "id": "referral.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

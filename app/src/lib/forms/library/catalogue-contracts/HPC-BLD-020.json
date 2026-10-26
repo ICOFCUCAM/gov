@@ -1,0 +1,421 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "HPC-BLD-020",
+ "record_type": "building.occupancy",
+ "form_version": 1,
+ "procedure_package_id": "building.permit",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-INF-001: planning, construction and building-control requirements (the building control rules two officials adopt; none ship).",
+  "CFG-DAT-001: retention and disclosure of the case and its personal data."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+  "id": "HPC-BLD-020",
+  "part": 20,
+  "section": "20.1",
+  "line": 998,
+  "batch": 10
+ },
+ "library": {
+  "title": "Apply for an occupancy or completion certificate",
+  "intro": "Apply for the certificate once the work is complete. It is decided by two officials only after a final inspection that passes; the permit, completion and occupancy stay separate records.",
+  "owner": "buildingControl",
+  "filled_by": "The permit holder or the responsible professional.",
+  "authority": "Filed with the planning and building control authority the nation names for its buildingControl slot (shipped empty); who holds each power comes from the permit authority registry, where a local government may lead for its area.",
+  "procedure": {
+   "key": "building.permit",
+   "stage": "construction",
+   "action": "complete",
+   "document": "completion-documents"
+  },
+  "lists": {},
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "slot-owner",
+    "what": "The competent body is the institution the nation names for its slot of the deployment profile (landRegistry, buildingControl, housing, vehicleRegistration, roadAuthority, transportRegulator), shipped empty; who holds each power over a decision comes from the permit authority registry, proposed and unapproved",
+    "why": "Authority comes from the deployment profile and the approved mappings, never a ministry by name; a production installation refuses a power no approved mapping covers.",
+    "rule": "CLAUDE.md Government operating model: authorityFor(); lib/permits/decisions.ts (plan I7)"
+   },
+   {
+    "id": "rules-version",
+    "what": "Categories, uses, inspection stages and checklists and finding severities are the nation's building control rules, adopted by two officials citing the law; every decision records the version it applied",
+    "why": "Planning and building decisions record the applicable rule version (supplement Part 20); none ship.",
+    "rule": "lib/building/register.ts proposeBuildingRules(), confirmBuildingRules(), rulesRef()"
+   },
+   {
+    "id": "distinct-states",
+    "what": "Planning permission, building approval (against one approved design version), construction and occupancy are separate states of separate records, never one approved flag",
+    "why": "Specification Part 3 §D.13 controls and acceptance P3-11.",
+    "rule": "lib/building/register.ts BuildingPermit (permit, construction, occupancy)"
+   },
+   {
+    "id": "two-officials",
+    "what": "Every registration and decision is proposed by one official and confirmed by a different person; the official who verified or reviewed does not decide",
+    "why": "Catalogue Part 8 §3.3 and Part 9 §5: dual control by distinct authorised individuals.",
+    "rule": "lib/casework/engine.ts act() (fourEyes, distinctFrom); lib/data/dual-control.ts dualControlRefusal()"
+   },
+   {
+    "id": "no-ai-decision",
+    "what": "No step is decided by a model, a score or a map: officials decide with reasons",
+    "why": "AI never makes a legally material decision.",
+    "rule": "CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 998,
+    "quotes": [
+     "HPC-BLD-020",
+     "Occupancy or completion certificate application"
+    ],
+    "met_by": {
+     "fields": [
+      "occupancy.documents"
+     ],
+     "procedure": "certify-occupancy"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1067,
+    "quotes": [
+     "\"form_id\": \"HPC-BLD-020\""
+    ],
+    "met_by": {
+     "fields": [
+      "occupancy.documents"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1068,
+    "quotes": [
+     "\"title\": \"Occupancy or Completion Certificate Application\""
+    ],
+    "met_by": {
+     "fields": [
+      "occupancy.documents"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1069,
+    "quotes": [
+     "\"fields\": ["
+    ],
+    "met_by": {
+     "fields": [
+      "occupancy.permit_case"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1070,
+    "quotes": [
+     "{\"key\": \"permit_case_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "occupancy.permit_case"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1071,
+    "quotes": [
+     "{\"key\": \"completion_date\", \"type\": \"date\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "occupancy.completion_date"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1072,
+    "quotes": [
+     "{\"key\": \"final_inspection_reference\", \"type\": \"entity_reference\", \"required\": false}"
+    ],
+    "met_by": {
+     "fields": [
+      "occupancy.final_inspection"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1073,
+    "quotes": [
+     "{\"key\": \"completion_documents\", \"type\": \"array\", \"required\": true, \"items_type\": \"document_reference\"}"
+    ],
+    "met_by": {
+     "fields": [
+      "occupancy.documents"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1074,
+    "quotes": [
+     "{\"key\": \"outstanding_conditions\", \"type\": \"array\", \"required\": false, \"items_type\": \"condition_reference\"}"
+    ],
+    "met_by": {
+     "fields": [
+      "occupancy.outstanding"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 1075,
+    "quotes": [
+     "{\"key\": \"responsible_professional_declaration\", \"type\": \"document_reference\", \"required\": false}"
+    ],
+    "met_by": {
+     "fields": [
+      "occupancy.declaration"
+     ]
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 2652,
+    "quotes": [
+     "Record inspections and completion or occupancy decisions as distinct events."
+    ],
+    "met_by": {
+     "deviation": "distinct-states",
+     "procedure": "certify-occupancy"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 2733,
+    "quotes": [
+     "Building approval, construction completion and occupancy remain distinct statuses."
+    ],
+    "met_by": {
+     "deviation": "distinct-states",
+     "platform": {
+      "file": "app/src/lib/building/building.test.ts",
+      "how": "Acceptance P3-11"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "occupancy.permit_case",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "building.registry.permit_cases",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The permit (its case reference)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the permit (its case reference).",
+     "reference_exists": "There is no record with that reference in the register."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "occupancy.completion_date",
+   "type": "date",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "date_not_in_future",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Date the work was completed"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter date the work was completed.",
+     "date_not_in_future": "The date cannot be in the future."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "occupancy.final_inspection",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "building.registry.inspections",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The final inspection (its number), where already made"
+   },
+   "error_text": {
+    "en": {
+     "reference_exists": "There is no record with that reference in the register."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "occupancy.documents",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [
+    {
+     "kind": "completion-documents",
+     "when": "when_the_form_asks_for_it"
+    }
+   ],
+   "label": {
+    "en": "Completion documents (as-built drawings, certificates)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter completion documents (as-built drawings, certificates)."
+    }
+   },
+   "country_decision": null,
+   "multiple": true
+  },
+  {
+   "id": "occupancy.outstanding",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Conditions still outstanding (one per line)"
+   },
+   "error_text": {
+    "en": {
+     "length": "Conditions still outstanding (one per line) is too long."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "occupancy.declaration",
+   "type": "document",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [
+    {
+     "kind": "professional-declaration",
+     "when": "when_the_form_asks_for_it"
+    }
+   ],
+   "label": {
+    "en": "Declaration of the responsible professional"
+   },
+   "country_decision": null
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "only": [
+    "declaration.text_version",
+    "declaration.confirmed",
+    "declaration.signed_at"
+   ],
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "occupancy.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

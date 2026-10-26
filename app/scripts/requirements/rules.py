@@ -92,7 +92,7 @@ R(None, None, r'risk score|risk-based selection|automated student risk score', '
 
 # framing sentences of the acceptance lists
 R(None, None, r'(tests should be mandatory|should demonstrate that|require evidence for each of the following|Use this as a working checklist|Ticking an item|I would not accept these institutions)', 'Met',
-  'docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (49 proven, 31 partial, 11 not yet); plan §3.5 makes it the definition of done', '', '—')
+  'docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (51 proven, 30 partial, 10 not yet); plan §3.5 makes it the definition of done', '', '—')
 R(3, r'^G$', r'not ready for production simply because its interface renders', 'Met', COMPLETE, '', '—')
 R(3, r'^G$', r'Each service needs evidence', 'Partial', COMPLETE + ' (per institution)', 'Evidence per service (legal grounding, configuration, staffing, records, security, integration, operational testing)', 'I2')
 R(1, r'^2$', r'(CivicOS should use international standards|It is a disclosure standard)', 'Lower priority', 'Plan §4 "Reference lists of standards. Informative; cited where a feature uses one."', '', 'Unassigned')
@@ -555,6 +555,18 @@ R(3, r'^B\.6$', r'^(Receive a verified or clearly labelled|Record the source, ti
 R(3, r'^B\.6$', r'connected source is unavailable', 'Partial', FOLD + '; register-sources says Not connected', 'Emergency dashboards on records', 'I7')
 R(3, r'^B\.6$', r'.', 'Not yet', 'Emergency screens (apps/emergency-response) generated', 'Emergency incident lifecycle', 'I7')
 # C.7 land
+# Plan I7: transfers, encumbrances, discharges, corrections and disputes through the land registry's procedures.
+LANDI7 = "lib/land/procedures.ts (land.transfer, land.encumbrance, land.discharge, land.correction, land.dispute: lodged, verified against the register, registered by two officials; a dispute holds the interest until decided, a court order recorded or withdrawn), lib/data/parcels.ts applyRightsChange() (rights with references, rank, registered case and effective date; every version kept), lib/land/register.ts; tests lib/land/land.test.ts (acceptance P3-06), app/api/parcels/parcels-privacy.test.ts"
+BLDI7 = "lib/building/procedures.ts (building.planning on a published parcel; building.permit: plans by version and digest, technical review, grant against one approved design, inspections as findings with reasons against the nation's checklist, stop-work citing the law, occupancy only after a passing final inspection), lib/building/register.ts (rules adopted through policy-change.ts; parcel and rules versions on each decision); test lib/building/building.test.ts (acceptance P3-11)"
+HOUI7 = "lib/housing/procedures.ts and register.ts (programme terms approved by two officials citing the law; eligibility criterion by criterion, points, allocation with reasons); test lib/building/building.test.ts"
+LGI7 = "lib/localgov/procedures.ts (each local government adopts lg.resolution, lg.budget, lg.service, lg.complaint as its own), lib/localgov/register.ts (council rules through policy-change.ts; quorum and majority checked; budgets; requests placed from the map); test lib/localgov/localgov.test.ts"
+TRNI7 = "lib/transport/procedures.ts and register.ts (vehicles and keepers with history, driving licences, road works with place and period, operators); test lib/transport/transport.test.ts"
+R(3, r'^C\.7$', r'^(Legal interests, ownership and tenure|Legal interest:)', 'Met', LANDI7, '', '—')
+R(3, r'^C\.7$', r'^(Registration of transfers|Transaction:|Receive the transaction|Verify the identity and authority|Check the parcel and current|Apply the applicable registration rules|Route disputes|Register the transfer only|Preserve the prior state)', 'Met', LANDI7, '', '—')
+R(3, r'^C\.7$', r'^(Notify connected services)', 'Partial', LANDI7, 'Exchange services to connected institutions (none defined)', 'I9')
+R(3, r'^C\.7$', r'^(Encumbrance|Dispute|Disputes and corrections)', 'Met', LANDI7, '', '—')
+R(3, r'^C\.7$', r'^(Planning restriction|Land-use restrictions)', 'Partial', LANDI7 + '; ' + BLDI7 + ' (planning decisions on the parcel)', 'Zoning plans as a register of the planning authority', 'I7')
+R(3, r'^C\.7$', r'^(Public extracts and title|Land valuation)', 'Not yet', LANDI7, 'Title extracts and valuation', 'I7')
 R(3, r'^C\.7$', r'^(Cadastral parcels and boundaries|Parcel:|Survey:|Survey submissions)', 'Met', 'lib/data/parcels.ts (stable parcel id, geometry, area computed, survey method/accuracy, CRS, versions, two officials); tests lib/data/parcels.test.ts, parcels-privacy.test.ts', '', '—')
 R(3, r'^C\.7$', r'^(Legal interests, ownership and tenure|Legal interest:)', 'Partial', 'ParcelRight {rrr, type, holder, share, source instrument} on parcel versions', 'Registration status and effective dates per interest; interests changed only by a transfer procedure', 'I7')
 R(3, r'^C\.7$', r'^(Registration of transfers|Transaction:|Receive the transaction|Verify the identity and authority|Check the parcel and current|Apply the applicable registration rules|Route disputes|Register the transfer only|Preserve the prior state|Notify connected services|Form land|authoritative_register|legal_basis|conflicts|history)', 'Partial', 'Parcel changes are versions confirmed by a different cadastre official (acceptance P3-06)', 'Land-transfer procedure with instrument, consents, dispute routing', 'I7')
@@ -568,12 +580,15 @@ R(3, r'^C\.8$', r'^(Licence|Known limitations|Geographic coverage|Resolution)$',
 R(3, r'^C\.8$', r'separate, traceable layers|silently mixed', 'Partial', 'Map credits per layer; DisputedLayer; CRS checks', 'Freshness/authority per layer in the map legend', 'I10')
 R(3, r'^C\.8$', r'.', 'Not yet', 'Address registers, metadata catalogue, imagery, surveyor registration absent', 'Not in I7 content', 'Unassigned')
 # C.9 local
+R(3, r'^C\.9$', r'(?i)(council|resolution|budget|service request|complaint|elected-body|own institutional workspace|planning applications)', 'Partial', LGI7, 'Bylaws, transfers, grants and returns as records of their own', 'I7')
 R(3, r'^C\.9$', r'unitary, federal, devolved', 'Met', 'Standing subnational, Boundaries.subnational (roles.ts); lib/nation/portability.test.ts', '', '—')
 R(3, r'^C\.9$', r'must not automatically acquire full write access|Access model', 'Met', 'Subnational outside whole-government reach; centre reads only under an approved relationship (negative-authorization.test.ts)', '', '—')
-R(3, r'^C\.9$', r'.', 'Not yet', 'onboardMunicipality() stores nothing (lib/data/store/permits.ts:158); no local procedures', 'Local government services', 'I7')
+R(3, r'^C\.9$', r'.', 'Not yet', LGI7, 'Local permits, inspections, assets, projects, fees and their indicators as records', 'I7')
 # D.10 transport
+R(3, r'^D\.10$', r'(Road closure|closure or traffic instruction)', 'Partial', TRNI7 + ' (road works permits with place, period and closure)', 'Road closure as its own instruction; road defect reports', 'I7')
+R(3, r'^D\.10$', r'(?i)(vehicle|driver|licen|operator|transport-service permits|transport service and permit)', 'Partial', TRNI7, 'Inspections, restrictions and compliance events as records', 'I7')
 R(3, r'^D\.10$', r'(road defect|Accept the report and its location|Mark the source as citizen|Triage according|Assign an inspection or maintenance|Record the verified condition|closure or traffic instruction|work completion|Close only after|Road closure|Transport asset and condition)', 'Not yet', SCREENS, 'Road report procedure', 'I7')
-R(3, r'^D\.10$', r'.', 'Not yet', SCREENS, 'Not in I7 content (road reports only)', 'Unassigned')
+R(3, r'^D\.10$', r'.', 'Not yet', SCREENS, 'Not in I7 content (road assets, collisions, traffic, defects)', 'Unassigned')
 # D.11 energy
 R(3, r'^D\.11$', r'control commands|operate a power grid|Boundary:', 'Partial', 'Acceptance P3-09: tasking limited (app/api/twin/tasking/tasks/route.test.ts); platform executes nothing', 'Test that utility dashboards expose no control commands', 'I7')
 R(3, r'^D\.11$', r'.', 'Not yet', SCREENS, 'Energy is in no step\'s content', 'Unassigned')
@@ -581,6 +596,9 @@ R(3, r'^D\.11$', r'.', 'Not yet', SCREENS, 'Energy is in no step\'s content', 'U
 R(3, r'^D\.12$', r'(single sensor reading|Sampling method, location, timestamp|monitoring observation|Sampling event|Laboratory result)', 'Partial', TWIN + ' (source, quality); acceptance P3-10', 'Sampling context on observations', 'I3', 'I7')
 R(3, r'^D\.12$', r'.', 'Not yet', SCREENS, 'Environment is in no step\'s content', 'Unassigned')
 # D.13 housing
+R(3, r'^D\.13$', r'(Building permits|Construction inspections|Occupancy and completion|building permit|link the relevant parcel|required drawings|planning and building requirements|technical assessments|review findings|legally authorised decision-maker|retain the approved document version|completion or occupancy|approved design version|separate legal states|Planning applications|permit, inspection, completion certificate)', 'Met', BLDI7, '', '—')
+R(3, r'^D\.13$', r'(Housing|housing)', 'Partial', HOUI7, 'Tenancies, repairs and housing inspections', 'I7')
+R(3, r'^D\.13$', r'(zoning|Zoning|enforcement|Enforcement)', 'Partial', BLDI7 + ' (stop-work orders citing the law)', 'Zoning plans as records', 'I7')
 R(3, r'^D\.13$', r'(Building permits|Construction inspections|Occupancy and completion|building permit|link the relevant parcel|required drawings|planning and building requirements|technical assessments|review findings|legally authorised decision-maker|retain the approved document version|completion or occupancy|approved design version|separate legal states|Planning applications|permit, inspection, completion certificate)', 'Not yet', ABSENT + ' (CityJSON buildings only: lib/data/cityjson.ts)', 'Building permit procedure with distinct states (acceptance P3-11)', 'I7')
 R(3, r'^D\.13$', r'.', 'Not yet', ABSENT, 'Housing programmes, zoning, enforcement in no step', 'Unassigned')
 # D.14 public works
@@ -589,11 +607,11 @@ R(3, r'^D\.14$', r'.', 'Not yet', ABSENT + ' (lib/gov/infrastructure.ts engine)'
 # E exchange table
 R(3, r'^E$', r'^Police:', 'Partial', 'Police referral as a case (referral.ts)', 'Prosecution absent', 'I11')
 R(3, r'^E$', r'^(Prosecution|Judiciary):', 'Lower priority', 'Prosecution/corrections absent (plan §4)', '', 'I11')
-R(3, r'^E$', r'^Land Registry', 'Partial', 'publicParcel() and OGC collection; canSeeParcelRights()', 'Title verification service for planning', 'I7')
+R(3, r'^E$', r'^Land Registry', 'Partial', 'publicParcel() and OGC collection; canSeeParcelRights(); ' + LANDI7 + '; planning decisions read the published parcel (' + BLDI7 + ')', 'Title verification as an exchange service', 'I9')
 R(3, r'^E$', r'^Mapping Authority', 'Met', 'Versioned boundaries read through loadNationGeography()/loadDistricts(); credits', '', '—')
 R(3, r'^E$', r'^Emergency Authority', 'Partial', 'Emergency recorded as legal event; nothing in roles.ts reads it (no access widening)', 'Incident assignments to police/utilities', 'I7')
 R(3, r'^E$', r'^Energy Regulator', 'Not yet', ABSENT, 'Energy regulation', 'Unassigned')
-R(3, r'^E$', r'^Municipal Government', 'Partial', 'Subnational reports only under relationships', 'Statutory submission service', 'I7')
+R(3, r'^E$', r'^Municipal Government', 'Partial', 'Subnational reports only under relationships; ' + LGI7 + ' (the centre reads a local record only under an approved relationship, logged)', 'Statutory submission service', 'I9')
 R(3, r'^E$', r'Every exchange must specify', 'Partial', EXCH, 'Legal basis and effective period per exchange from the relationship register', 'I9')
 R(3, r'^E$', r'.', 'Partial', RELS, '', 'I9')
 # F twin indicators
@@ -609,7 +627,7 @@ R(3, r'^H$', r'^Land and geospatial foundations', 'Met', 'Parcels, boundaries, f
 R(3, r'^H$', r'^Public works and asset management', 'Not yet', ABSENT, 'Public works', 'Unassigned', 'I7')
 R(3, r'^H$', r'^Emergency management\.', 'Partial', 'Incidents, emergency legal events', 'Warning authorisation, resources, recovery', 'I7')
 R(3, r'^H$', r'^Police, prosecution, courts and corrections', 'Partial', 'Police intake, courts', 'Prosecution and corrections', 'I11')
-R(3, r'^H$', r'^Transport, energy, environment and housing', 'Not yet', SCREENS, 'Transport, energy, environment and housing workflows (revised I7)', 'Unassigned', 'I7')
+R(3, r'^H$', r'^Transport, energy, environment and housing', 'Partial', TRNI7 + '; ' + BLDI7 + '; ' + HOUI7, 'Energy and environment workflows', 'Unassigned', 'I7')
 R(3, r'^H$', r'^Executive overreach', 'Met', ROLES + ' (acceptance P4-01)', '', '—')
 R(3, r'^H$', r'^Unlawful data linkage', 'Met', 'Exchange answers only declared facts per purpose; no record retrieval by identifier', '', '—')
 R(3, r'^H$', r'^Evidence corruption', 'Partial', AUDIT + '; documents versioned with sha256', 'Evidence custody register (P3-04)', 'I11')

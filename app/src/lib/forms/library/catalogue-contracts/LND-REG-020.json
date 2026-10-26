@@ -1,0 +1,631 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "LND-REG-020",
+ "record_type": "land.encumbrance",
+ "form_version": 1,
+ "procedure_package_id": "land.encumbrance",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-LND-001: land tenure types, authoritative registers and record ownership (who is named for the land registry and the cadastre; none ship).",
+  "CFG-LND-003: transfers, encumbrances, objections, corrections and appeals (the procedure versions and mappings the nation approves).",
+  "CFG-DAT-001: retention and disclosure of the case and its personal data."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/PARTS-08-11.md",
+  "id": "LND-REG-020",
+  "part": 8,
+  "section": "3.1",
+  "line": 113,
+  "batch": 10
+ },
+ "library": {
+  "title": "Register a land transaction restriction (caveat)",
+  "intro": "Ask the land registry to register a caveat or another restriction on dealings with a parcel. While it stands, a transfer is registered only with its holder's consent or after its discharge.",
+  "owner": "landRegistry",
+  "filled_by": "The holder of the parcel, or the person entitled to the interest (a lender, a lessee, a neighbour, a caveator); an official at an office.",
+  "authority": "Filed with the land registry the nation names for its landRegistry slot (shipped empty); the parcel is one the cadastre authority of the parcel policy published. Never a ministry by name.",
+  "procedure": {
+   "key": "land.encumbrance",
+   "stage": "lodged",
+   "action": "lodge",
+   "document": "instrument"
+  },
+  "lists": {
+   "civicos.land.instrument_kinds": {
+    "values": [
+     {
+      "value": "title",
+      "label": "Title or deed"
+     },
+     {
+      "value": "lease",
+      "label": "Lease agreement"
+     },
+     {
+      "value": "court-order",
+      "label": "Court order"
+     },
+     {
+      "value": "adjudication",
+      "label": "Adjudication record"
+     },
+     {
+      "value": "customary-record",
+      "label": "Customary record"
+     },
+     {
+      "value": "other",
+      "label": "Other document"
+     }
+    ],
+    "proposed": true
+   },
+   "civicos.land.holder_kinds": {
+    "values": [
+     {
+      "value": "person",
+      "label": "A person"
+     },
+     {
+      "value": "group",
+      "label": "Several people together"
+     },
+     {
+      "value": "organisation",
+      "label": "A company or organisation"
+     },
+     {
+      "value": "state",
+      "label": "The state or a public body"
+     },
+     {
+      "value": "community",
+      "label": "A community"
+     },
+     {
+      "value": "unknown",
+      "label": "Not yet known"
+     }
+    ],
+    "proposed": true
+   },
+   "civicos.land.encumbrance_types": {
+    "values": [
+     {
+      "value": "leasehold",
+      "label": "Lease"
+     },
+     {
+      "value": "occupancy",
+      "label": "Occupancy"
+     },
+     {
+      "value": "usufruct",
+      "label": "Usufruct"
+     },
+     {
+      "value": "easement",
+      "label": "Easement or right of way"
+     },
+     {
+      "value": "mortgage",
+      "label": "Mortgage or charge"
+     },
+     {
+      "value": "caveat",
+      "label": "Caveat"
+     },
+     {
+      "value": "use-restriction",
+      "label": "Restriction on use"
+     },
+     {
+      "value": "maintenance",
+      "label": "Maintenance duty"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "slot-owner",
+    "what": "The competent body is the institution the nation names for its slot of the deployment profile (landRegistry, buildingControl, housing, vehicleRegistration, roadAuthority, transportRegulator), shipped empty; who holds each power over a decision comes from the permit authority registry, proposed and unapproved",
+    "why": "Authority comes from the deployment profile and the approved mappings, never a ministry by name; a production installation refuses a power no approved mapping covers.",
+    "rule": "CLAUDE.md Government operating model: authorityFor(); lib/permits/decisions.ts (plan I7)"
+   },
+   {
+    "id": "rights-on-parcel",
+    "what": "Interests are named by their reference on the parcel (PCL-000001/R1), never by their holder; the rights stay on the parcel's own record, shown only to those who keep them, and change only by the land registry's decided cases as a new version with its effective date",
+    "why": "Rights and holders are personal data; a registered state is never silently overwritten.",
+    "rule": "lib/data/parcels.ts applyRightsChange(), rightsKeepers(); app/src/app/api/parcels/parcels-privacy.test.ts"
+   },
+   {
+    "id": "two-officials",
+    "what": "Every registration and decision is proposed by one official and confirmed by a different person; the official who verified or reviewed does not decide",
+    "why": "Catalogue Part 8 §3.3 and Part 9 §5: dual control by distinct authorised individuals.",
+    "rule": "lib/casework/engine.ts act() (fourEyes, distinctFrom); lib/data/dual-control.ts dualControlRefusal()"
+   },
+   {
+    "id": "dispute-holds",
+    "what": "A dispute, objection or conflicting title holds the interest it concerns from the moment it is registered until a decision, a recorded court order or a withdrawal by officials with reasons; nothing releases it on its own and the dispute decision never edits the parcel",
+    "why": "Specification Part 3 §C.7: a land dispute is never resolved by an administrator editing the parcel record.",
+    "rule": "lib/data/parcels.ts freezeInterest(), releaseInterest(); lib/land/procedures.ts land.dispute"
+   },
+   {
+    "id": "nation-lists",
+    "what": "Categories, classes and kinds the law decides are the nation's configured lists; none ship (a proposed list is marked proposed)",
+    "why": "CivicOS never invents authority or classifications.",
+    "rule": "lib/forms/contract.ts configured lists; lib/forms/publication.ts"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/PARTS-08-11.md",
+    "line": 113,
+    "quotes": [
+     "LND-REG-020",
+     "Land transaction restriction record",
+     "Authorized restriction registered"
+    ],
+    "met_by": {
+     "fields": [
+      "encumbrance.type",
+      "beneficiary.name"
+     ],
+     "procedure": "register"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-08-11.md",
+    "line": 126,
+    "quotes": [
+     "encumbrance_record",
+     "Encumbrance type, beneficiary reference, priority where applicable, status"
+    ],
+    "met_by": {
+     "fields": [
+      "encumbrance.type",
+      "beneficiary.name",
+      "encumbrance.terms"
+     ],
+     "platform": {
+      "file": "app/src/lib/data/parcels.ts",
+      "how": "A mortgage's rank is given in the order registered; discharge moves later ones up"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "parcel.reference",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.parcels",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The parcel (its national parcel id or record number)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the parcel (its national parcel id or record number).",
+     "reference_exists": "There is no record with that reference in the register."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The parcel"
+   }
+  },
+  {
+   "id": "encumbrance.type",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.land.encumbrance_types",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "What is registered (a caveat or restriction)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter what is registered (a caveat or restriction).",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "What is registered"
+   }
+  },
+  {
+   "id": "parcel.interest",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 60
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The interest it burdens, where it burdens one (its reference)"
+   },
+   "error_text": {
+    "en": {
+     "length": "The interest it burdens, where it burdens one (its reference) is too long."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The parcel"
+   }
+  },
+  {
+   "id": "beneficiary.name",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 200
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Holder of the interest: name"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter holder of the interest: name.",
+     "length": "Holder of the interest: name is too long."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Holder of the interest"
+   }
+  },
+  {
+   "id": "beneficiary.kind",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.land.holder_kinds",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Holder of the interest: kind of holder"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter holder of the interest: kind of holder.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Holder of the interest"
+   }
+  },
+  {
+   "id": "beneficiary.reference",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 80
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Holder of the interest: identity or organisation number"
+   },
+   "error_text": {
+    "en": {
+     "length": "Holder of the interest: identity or organisation number is too long."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Holder of the interest"
+   }
+  },
+  {
+   "id": "encumbrance.terms",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Its terms as the instrument states them"
+   },
+   "error_text": {
+    "en": {
+     "length": "Its terms as the instrument states them is too long."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "What is registered"
+   }
+  },
+  {
+   "id": "encumbrance.effective",
+   "type": "date",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Date the registration should take effect"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "instrument.kind",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.land.instrument_kinds",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Kind of instrument"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter kind of instrument.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Instrument"
+   }
+  },
+  {
+   "id": "instrument.reference",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 120
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Reference of the instrument"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter reference of the instrument.",
+     "length": "Reference of the instrument is too long."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Instrument"
+   }
+  },
+  {
+   "id": "instrument.date",
+   "type": "date",
+   "required": false,
+   "validation": [
+    {
+     "rule": "date_not_in_future",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Date of the instrument"
+   },
+   "error_text": {
+    "en": {
+     "date_not_in_future": "The date cannot be in the future."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Instrument"
+   }
+  },
+  {
+   "id": "instrument.document",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "instrument",
+     "when": "when_the_form_asks_for_it"
+    }
+   ],
+   "label": {
+    "en": "The signed instrument"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the signed instrument."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Instrument"
+   }
+  },
+  {
+   "id": "instrument.identity_evidence",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "identity-evidence",
+     "when": "when_the_form_asks_for_it"
+    }
+   ],
+   "label": {
+    "en": "Evidence of the parties' identity and authority to act"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter evidence of the parties' identity and authority to act."
+    }
+   },
+   "country_decision": null,
+   "multiple": true,
+   "section": {
+    "en": "Instrument"
+   }
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "only": [
+    "declaration.text_version",
+    "declaration.confirmed",
+    "declaration.signed_at"
+   ],
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "encumbrance.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

@@ -333,6 +333,43 @@ import con018 from './catalogue-contracts/DEM-CON-018.json';
 import con019 from './catalogue-contracts/DEM-CON-019.json';
 import con020 from './catalogue-contracts/DEM-CON-020.json';
 import pub009 from './catalogue-contracts/DEM-PUB-009.json';
+// Batch 10: territory and infrastructure (plan I7).
+import b10LndReg005 from './catalogue-contracts/LND-REG-005.json';
+import b10LndReg007 from './catalogue-contracts/LND-REG-007.json';
+import b10LndReg008 from './catalogue-contracts/LND-REG-008.json';
+import b10LndReg009 from './catalogue-contracts/LND-REG-009.json';
+import b10LndReg010 from './catalogue-contracts/LND-REG-010.json';
+import b10LndReg011 from './catalogue-contracts/LND-REG-011.json';
+import b10LndReg012 from './catalogue-contracts/LND-REG-012.json';
+import b10LndReg016 from './catalogue-contracts/LND-REG-016.json';
+import b10LndReg017 from './catalogue-contracts/LND-REG-017.json';
+import b10LndReg020 from './catalogue-contracts/LND-REG-020.json';
+import b10LndReg021 from './catalogue-contracts/LND-REG-021.json';
+import b10LndReg022 from './catalogue-contracts/LND-REG-022.json';
+import b10HpcHou001 from './catalogue-contracts/HPC-HOU-001.json';
+import b10HpcHou002 from './catalogue-contracts/HPC-HOU-002.json';
+import b10HpcHou003 from './catalogue-contracts/HPC-HOU-003.json';
+import b10HpcHou004 from './catalogue-contracts/HPC-HOU-004.json';
+import b10HpcPln009 from './catalogue-contracts/HPC-PLN-009.json';
+import b10HpcPln012 from './catalogue-contracts/HPC-PLN-012.json';
+import b10HpcPln013 from './catalogue-contracts/HPC-PLN-013.json';
+import b10HpcBld014 from './catalogue-contracts/HPC-BLD-014.json';
+import b10HpcBld015 from './catalogue-contracts/HPC-BLD-015.json';
+import b10HpcBld016 from './catalogue-contracts/HPC-BLD-016.json';
+import b10HpcBld017 from './catalogue-contracts/HPC-BLD-017.json';
+import b10HpcBld018 from './catalogue-contracts/HPC-BLD-018.json';
+import b10HpcBld019 from './catalogue-contracts/HPC-BLD-019.json';
+import b10HpcBld020 from './catalogue-contracts/HPC-BLD-020.json';
+import b10LrgOrg004 from './catalogue-contracts/LRG-ORG-004.json';
+import b10LrgOrg005 from './catalogue-contracts/LRG-ORG-005.json';
+import b10LrgFin008 from './catalogue-contracts/LRG-FIN-008.json';
+import b10LrgSvc013 from './catalogue-contracts/LRG-SVC-013.json';
+import b10LrgSvc014 from './catalogue-contracts/LRG-SVC-014.json';
+import b10TrnVeh001 from './catalogue-contracts/TRN-VEH-001.json';
+import b10TrnVeh002 from './catalogue-contracts/TRN-VEH-002.json';
+import b10TrnDrv001 from './catalogue-contracts/TRN-DRV-001.json';
+import b10TrnRoad002 from './catalogue-contracts/TRN-ROAD-002.json';
+import b10TrnOps001 from './catalogue-contracts/TRN-OPS-001.json';
 
 /** What meets a catalogue passage: fields of the contract, a documented deviation, a platform rule (with the file that enforces it), a country decision, a step of the linked procedure, an exchange service or a policy of the form. */
 export interface MetBy {
@@ -427,7 +464,11 @@ export const BATCH_6 = [
 ] as unknown as CatalogueContractJson[];
 /** Batch 7: independent oversight and accountability forms, catalogue Part 12 (owner approved, 21 October 2026; plan I8). */
 export const BATCH_7 = [con012, con013, con014, con018, con019, con020, pub009] as unknown as CatalogueContractJson[];
-/** The passages contracts answer the same way: every item applies to the forms in applies_to, an item with `for` only to that group (health: batches 1 and 2; tax: batch 3; adm: batch 5; oversight: batch 7). */
+/** Batch 10: territory and infrastructure: land dealings and disputes, housing, planning and building control, local and regional government, transport (catalogue Parts 8, 9 and the supplement's Parts 19 and 20; plan I7). */
+export const BATCH_10 = [
+  b10LndReg005, b10LndReg007, b10LndReg008, b10LndReg009, b10LndReg010, b10LndReg011, b10LndReg012, b10LndReg016, b10LndReg017, b10LndReg020, b10LndReg021, b10LndReg022, b10HpcHou001, b10HpcHou002, b10HpcHou003, b10HpcHou004, b10HpcPln009, b10HpcPln012, b10HpcPln013, b10HpcBld014, b10HpcBld015, b10HpcBld016, b10HpcBld017, b10HpcBld018, b10HpcBld019, b10HpcBld020, b10LrgOrg004, b10LrgOrg005, b10LrgFin008, b10LrgSvc013, b10LrgSvc014, b10TrnVeh001, b10TrnVeh002, b10TrnDrv001, b10TrnRoad002, b10TrnOps001,
+] as unknown as CatalogueContractJson[];
+/** The passages contracts answer the same way: every item applies to the forms in applies_to, an item with `for` only to that group (health: batches 1 and 2; tax: batch 3; adm: batch 5; oversight: batch 7; land, hpc, lrg, trn: batch 10). */
 export const COMMON_ITEMS = (common as unknown as { applies_to: string[]; groups: Record<string, string[]>; items: (CatalogueItem & { for?: string })[] });
 /** The shared items that apply to one contract. */
 export const commonItemsFor = (formId: string): CatalogueItem[] => (COMMON_ITEMS.applies_to.includes(formId) ? COMMON_ITEMS.items.filter(i => !i.for || COMMON_ITEMS.groups[i.for]?.includes(formId)).map(({ for: _for, ...i }) => i) : []);
@@ -435,6 +476,8 @@ export const commonItemsFor = (formId: string): CatalogueItem[] => (COMMON_ITEMS
 const INSTITUTION: Record<string, string> = {
   professionalRegulation: 'The professional regulator', tax: 'The tax authority', publicHealth: 'The public-health authority', institution: 'This institution',
   ombudsman: 'The ombudsman', humanRights: 'The human rights institution', anticorruption: 'The anti-corruption commission', supremeAudit: 'The public audit office', dataProtection: 'The data-protection authority',
+  landRegistry: 'The land registry', buildingControl: 'The planning and building control authority', housing: 'The housing authority',
+  vehicleRegistration: 'The vehicle and driver licensing authority', roadAuthority: 'The road authority', transportRegulator: 'The transport regulator',
 };
 
 function load(c: CatalogueContractJson, batch: number): CatalogueLibraryForm {
@@ -465,7 +508,7 @@ function load(c: CatalogueContractJson, batch: number): CatalogueLibraryForm {
 }
 
 /** Every catalogue contract CivicOS has written, as library drafts. */
-export const CATALOGUE_CONTRACTS: CatalogueLibraryForm[] = [...BATCH_1.map(c => load(c, 1)), ...BATCH_2.map(c => load(c, 2)), ...BATCH_3.map(c => load(c, 3)), ...BATCH_4.map(c => load(c, 4)), ...BATCH_5.map(c => load(c, 5)), ...BATCH_6.map(c => load(c, 6)), ...BATCH_7.map(c => load(c, 7))];
+export const CATALOGUE_CONTRACTS: CatalogueLibraryForm[] = [...BATCH_1.map(c => load(c, 1)), ...BATCH_2.map(c => load(c, 2)), ...BATCH_3.map(c => load(c, 3)), ...BATCH_4.map(c => load(c, 4)), ...BATCH_5.map(c => load(c, 5)), ...BATCH_6.map(c => load(c, 6)), ...BATCH_7.map(c => load(c, 7)), ...BATCH_10.map(c => load(c, 10))];
 
 /**
  * A catalogue contract by its identity (CATALOGUE:FORM-ID@VERSION; without
