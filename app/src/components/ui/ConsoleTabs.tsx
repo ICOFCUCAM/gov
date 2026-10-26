@@ -19,16 +19,16 @@ export function ConsoleTabs({ here, branches, pathname }: {
   const current = tabs.find(t => t.href === pathname.replace(/\/$/, '')) ?? here.tab;
   return (
     <div className="mb-3 border-b border-line">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{here.section}</p>
-      <h1 className="mt-0.5 text-[18px] font-semibold text-ink">{item.label}{current && current.label !== item.label ? <span className="text-ink-soft"> · {current.label}</span> : null}</h1>
-      <p className="mt-0.5 max-w-3xl text-[13px] text-ink-soft">{item.purpose}</p>
+      <p className="text-2xs font-semibold uppercase tracking-[0.12em] text-ink-muted">{here.section}</p>
+      <h1 className="mt-0.5 text-lg font-semibold text-ink">{item.label}{current && current.label !== item.label ? <span className="text-ink-soft"> · {current.label}</span> : null}</h1>
+      <p className="mt-0.5 max-w-3xl text-compact text-ink-soft">{item.purpose}</p>
       {tabs.length > 1 ? (
         <nav aria-label={`${item.label} sections`} className="-mb-px mt-2 flex flex-wrap gap-x-1">
           {tabs.map(t => {
             const on = current?.href === t.href;
             return (
               <Link key={t.href} href={t.href} aria-current={on ? 'page' : undefined}
-                className={`focus-ring border-b-2 px-2.5 py-1.5 text-[13px] no-underline ${on ? 'border-current font-semibold text-ink' : 'border-transparent text-ink-soft hover:text-ink'}`}
+                className={`focus-ring border-b-2 px-2.5 py-1.5 text-compact no-underline ${on ? 'border-current font-semibold text-ink' : 'border-transparent text-ink-soft hover:text-ink'}`}
                 title={'was' in t && t.was && t.was !== t.label ? `Formerly “${t.was}”` : undefined}>
                 {t.label}
               </Link>

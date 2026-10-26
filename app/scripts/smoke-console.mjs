@@ -123,6 +123,8 @@ const PAGES = [
   { path: '/gov/configuration/seal-keys', map: false, text: /who approves seal keys/i },
   // Plan step I3: the indicator register and one definition with its versions.
   { path: '/gov/twin/indicators', map: false, text: /indicator register/i },
+  // I10: the component-state gallery (every shared component in every state, on every ground).
+  { path: '/gov/help/states', map: false, text: /every state, on every ground/i },
   { path: '/gov/twin/indicators/civil.births_registered', map: false, text: /versions and approvals/i },
   // Plan I2: departments as records, the internal administration workspace, the capability manifest and completeness per item.
   { path: '/gov/institutions/departments', map: false, text: /accountable/i },

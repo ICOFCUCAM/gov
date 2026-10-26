@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { LoadingState } from '@/components/ui/States';
 import type { OpsTone } from '@/lib/api/types';
 
 /**
@@ -46,18 +47,29 @@ export function DataTable<T extends { id?: string }>({
   rows,
   empty = 'No records.',
   rowKey,
+  caption,
+  loading,
 }: {
   columns: Column<T>[];
   rows: T[];
   empty?: string;
   rowKey: (row: T, i: number) => string;
+  /** The table's name for screen readers (plan I10: every table is named). */
+  caption?: string;
+  /** Rows are on their way: a live loading state instead of "no records" (plan I10 component states). */
+  loading?: boolean;
 }) {
+  if (loading) {
+    return <LoadingState label={caption ? `Loading ${caption.toLowerCase()}` : 'Loading records'} rows={4} />;
+  }
   if (rows.length === 0) {
     return <EmptyState title={empty} glyph="▤" />;
   }
   return (
-    <div className="max-h-[70vh] overflow-auto rounded-sm border border-line">
+    // A scrolling region is reachable by keyboard (WCAG 2.1.1), named by the caption when there is one.
+    <div tabIndex={0} {...(caption ? { role: 'region', 'aria-label': caption } : {})} className="focus-ring max-h-[70vh] overflow-auto rounded-sm border border-line">
       <table className="w-full border-collapse text-sm tabular-nums">
+        {caption ? <caption className="sr-only">{caption}</caption> : null}
         <thead>
           <tr className="sticky top-0 z-10 bg-surface-2 text-left shadow-[0_1px_0_rgb(var(--c-line))]">
             {columns.map(c => (
@@ -357,7 +369,7 @@ export function EnterpriseTable<T extends { id?: string }>({
                   >
                     {c.header}
                     {c.sort ? (
-                      <span className="ml-1 text-[10px] text-ink-muted">
+                      <span className="ml-1 text-2xs text-ink-muted">
                         {sortKey === c.key
                           ? sortDir === 'asc'
                             ? '▲'

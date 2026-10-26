@@ -34,7 +34,7 @@ export function TaxServices() {
   const c = view?.counts;
   return (
     <div className="space-y-4 p-4">
-      <h1 className="text-xl font-semibold">Tax services</h1>
+      <h2 className="text-xl font-semibold">Tax services</h2>
       <p className="max-w-3xl text-sm text-ink-muted">
         How each tax service runs in this installation: returns and their amendment, objections, refunds, payment arrangements, voluntary disclosure,
         rulings, compliance reviews and changes to a registration. Each is a procedure the tax authority adapts to its law and a second official approves;

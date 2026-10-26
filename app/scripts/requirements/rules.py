@@ -43,6 +43,11 @@ COMPLETE = "lib/onboarding/completeness.ts institutionCompleteness() (items over
 CAPS = "lib/institution/capabilities.ts capabilityManifest() (responsibilities, registers, procedures in force and drafts, departments and administration functions, computed from records, never from the archetype; /gov/institutions/capabilities); test lib/onboarding/completeness.test.ts"
 TASKS = "lib/auth/roles.ts TASK_PERMISSIONS and taskRefusal() (the catalogue's task identifiers as package steps and rules at the responsible institution, never offices), attributeRefusal() (facility, jurisdiction and task scope, narrowing only) and delegationCovering() (a delegated act records delegate and delegator on the step and the sealed decision); test lib/auth/task-permissions.test.ts, lib/administration/administration.test.ts"
 NAVF = "lib/nav/console-nav.ts navFor() and pageRefusal() (the menu shows each official the pages roles.ts lets them use; every page stays reachable for someone allowed); test lib/nav/console-nav.test.ts"
+# Plan step I10 (workspace design system).
+NAVP = "I10: lib/nav/console-nav.ts PAGE_GROUNDS and NavContext (each page rule tied to the route it mirrors; the access log, the audit chain, permits and the pilot's gate by the routes' own functions); test lib/nav/console-nav-permission.test.ts (the menu walked for administrator, can sign, officer and auditor, one institution or the whole government, an independent court, a regional government, the data-protection authority: every tab shown is permitted, every permitted tab reachable, every whole-route GET guard accounted for)"
+TOKENS = "I10: lib/theme/tokens.ts TYPE_SCALE (11–30px in rem), TYPE_ROLES (the specification's roles on the scale), SPACE_SCALE (4px base), CONTROL (44px controls, 14px cards), FOCUS (3px amber ring with an ink halo, 3:1 on every ground), WORKSPACE ground; globals.css variables and Tailwind fontSize; tests lib/theme/tokens.test.ts, lib/theme/type-scale.test.ts (shared components and the I2–I13 screens on the scales, exceptions listed with reasons)"
+STATES = "I10: lib/ui/states.ts (the catalogue of states with word, shape, live region), components/ui/States.tsx (StateNotice, LoadingState, ErrorSummary), Button busy, field errors tied to their field, DataTable caption/loading/empty; /gov/help/states (every state on every ground); tests components/ui/component-states.test.ts and the console audit's focus pass (app/scripts/audit-console.mjs)"
+A11Y = "I10: app/scripts/audit-console.mjs on 69 console pages incl. every I2–I13 screen and the state gallery, desktop and phone: axe WCAG 2.2 A/AA, skip link, an automated reading-order check of the accessibility tree (one main, one h1 first, named navigation, no skipped heading level) and a focus pass; docs/USABILITY_TESTING.md (protocol, template, the automated run recorded; no human session held yet)"
 SCREENS = "screens only: panels from lib/gov/* engines, folded to Not connected in production (audit A §3)"
 ABSENT = "absent: no module, register or procedure (audit A §3)"
 PREFILL = "reference procedures pre-fill deadline and appeal day counts (e.g. lib/civil/procedures.ts:122-124, lib/courts/procedures.ts:91-92, lib/immigration/procedures.ts:89,116, lib/organisations/procedures.ts:203-204) — drafts, but typed numbers"
@@ -82,7 +87,7 @@ def R(p, s, t, status, ev='', miss='', step='', also='', kind=None, cat=None):
 R(None, None, r'system font stack|Font fallback without loading external fonts', 'Platform rule stricter',
   'CLAUDE.md "Typefaces are self-hosted under public/fonts (OFL); never load fonts or scripts from an outside service" — meets the spec\'s reason (no outside font service); plan §3.3 keeps self-hosted fonts first, system stack as fallback', '', '—')
 R(6, r'^B$', r'#[0-9A-F]{6}|Warm canvas|Surface —|Sovereign green|Copper|Primary text|Secondary text', 'Platform rule stricter',
-  'CLAUDE.md "Colours come from lib/theme/tokens.ts ... Do not add new raw hex colours to console code; add a token" and tokens.test.ts 4.5:1; plan §3.3: values kept as a WORKSPACE ground', 'No WORKSPACE ground in lib/theme/tokens.ts yet (grounds: LIGHT, SOV, CONSOLE, INSTITUTIONAL, NIGHT); secondary text #6B7470 is 4.48:1 on the canvas and must be darkened (plan §3.3)', 'I10')
+  'CLAUDE.md "Colours come from lib/theme/tokens.ts ... Do not add new raw hex colours to console code; add a token" and tokens.test.ts 4.5:1; plan §3.3: the values are the WORKSPACE ground of lib/theme/tokens.ts (I10; .ws in globals.css), secondary text darkened from #6B7470 (4.48:1 on the canvas) to 4.5:1 on every workspace ground; tests lib/theme/tokens.test.ts', '', '—')
 R(1, r'^7\.4$', r'must not require two signatures', 'Platform rule stricter',
   'CLAUDE.md "Two officials are needed for the platform minimum in lib/casework/dual-control-policy.ts whatever a procedure says; the country adds steps, never removes them" — a collective decision is recorded in addition, never instead', 'A collective-decision (board vote) step type for case packages does not exist; legislature has one (lib/legislature/register.ts Majority)', 'I11')
 R(None, None, r'Refugee or protection-related administration|Returns and removal proceedings|asylum', 'Platform rule stricter',
@@ -918,13 +923,14 @@ R(6, r'^intro$', r'public-facing websites already have their own design', 'Met',
 R(6, r'^intro$', r'.', 'Partial', 'Console design (docs/CONSOLE_DESIGN.md)', 'Workspace design system', 'I10')
 R(6, r'^A$', r'^Direction 3', 'Met', 'Existing CONSOLE ground (lib/theme/tokens.ts) for situation room and command', '', '—')
 R(6, r'^A$', r'^Direction', 'Lower priority', 'Plan §4: three alternative directions informative; one chosen (§3.3)', '', 'I10')
-R(6, r'^A$', r'single CivicOS design system', 'Not yet', 'No workspace ground', 'WORKSPACE ground', 'I10')
+R(6, r'^A$', r'single CivicOS design system', 'Partial', 'WORKSPACE ground with type and spacing scales (' + TOKENS + ')', 'No screen is repainted with the workspace ground yet: an owner\'s design decision (docs/CONSOLE_DESIGN.md §1)', 'I10')
 R(6, r'^A$', r'Do not assign each ministry', 'Met', 'One console design; nation colour via ConsoleMark', '', '—')
 R(6, r'^A$', r'.', 'Partial', '', '', 'I10')
-R(6, r'^B$', r'not communicated by colour alone|WCAG 2\.2 AA contrast|semantically', 'Partial', 'tokens.test.ts 4.5:1; STATUS tones', 'Icons/text labels on every status', 'I10')
-R(6, r'^B$', r'^(Body|Compact table text|Page title|Section heading|Small label|Base spacing|Common control height|Standard card radius|Keyboard focus):', 'Not yet', 'No type/spacing tokens in lib/theme/tokens.ts (colours only)', 'Typography and spacing tokens', 'I10')
+R(6, r'^B$', r'WCAG 2\.2 AA contrast', 'Met', 'tokens.test.ts (every text colour 4.5:1 on every ground, the workspace ground included); ' + STATES + ' (state words and badges 4.5:1 on their fills); axe colour-contrast on 69 console pages (' + A11Y + ')', '', '—')
+R(6, r'^B$', r'not communicated by colour alone|semantically', 'Partial', 'tokens.test.ts 4.5:1; STATUS tones with TONE_SHAPE and TONE_WORD; ' + STATES + ' (every state a word and a shape)', 'Older screens\' own status colours move to the shared states file by file', 'I10')
+R(6, r'^B$', r'^(Body|Compact table text|Page title|Section heading|Small label|Base spacing|Common control height|Standard card radius|Keyboard focus):', 'Met', TOKENS + '; the dense console\'s page title and section labels are its declared choice (TYPE_ROLES command)', '', '—')
 R(6, r'^B$', r'.', 'Partial', 'lib/theme/tokens.ts', '', 'I10')
-R(6, r'^C$', r'reflect the user\'s assigned permissions', 'Met', NAVF + '; the backend still enforces every request', '', '—')
+R(6, r'^C$', r'reflect the user\'s assigned permissions|Do not display navigation items merely', 'Met', NAVF + '; ' + NAVP + '; the backend still enforces every request', '', '—')
 R(6, r'^C$', r'.', 'Partial', 'Console shell (CommandShell, console-nav, ConsoleMark)', 'Workspace shell per spec (context panel with legal basis)', 'I10')
 R(6, r'^D\.4$', r'(Versioning and publication approval|Forms must be versioned|form version 1\.0)', 'Met', 'Packages versioned, approved by another official; cases keep version', '', '—')
 R(6, r'^D\.4$', r'^(Field types and validation|Controlled vocabularies|Document attachments)$', 'Partial', FIELDSPEC + '; DocumentSpec; choice options', 'valuesSource, named validation rules, evidence classes (I1)', 'I1')
@@ -945,7 +951,8 @@ R(6, r'^D', r'.', 'Partial', 'Console pages', 'Shared screen patterns', 'I10')
 R(6, r'^E$', r'Logical CSS', 'Partial', 'Public sites use logical CSS', 'Console/workspace logical CSS', 'I10')
 R(6, r'^E$', r'(machine translation|Human review of legal translations)', 'Met', 'Translations through review (lib/public-sites/translation.ts); laws keep authoritative text', '', '—')
 R(6, r'^E$', r'Reduced-motion', 'Met', 'prefers-reduced-motion in globals.css; cover skips under reduced motion', '', '—')
-R(6, r'^E$', r'.', 'Partial', 'axe wcag22aa scans (acceptance P6-17/18/19)', 'Workspace WCAG 2.2 AA assessment, RTL review', 'I10')
+R(6, r'^E$', r'(Full keyboard access|Semantic headings|Screen-reader announcements|Error summaries linked|No reliance on colour)', 'Partial', A11Y + '; ' + STATES, 'Keyboard and screen-reader sessions by people (docs/USABILITY_TESTING.md protocol); older screens adopt the shared states', 'I10')
+R(6, r'^E$', r'.', 'Partial', 'axe wcag22aa scans (acceptance P6-17/18/19); ' + A11Y, 'Workspace WCAG 2.2 AA assessment by people, RTL review', 'I10')
 R(6, r'^F$', r'(Live records|Controlled simulation|Illustrative data|never look like a real government|Do not rely on a coloured banner)', 'Met', MODE + '; training/demo banner; Simulation notice', '', '—')
 R(6, r'^F$', r'(Prevent training or demo credentials|Keep demo identities)', 'Met', 'Demo cast refused at every sign-in in production (demo-cast.test.ts)', '', '—')
 R(6, r'^F$', r'Block real payments, notifications, signatures', 'Met', 'I0.2: payBill() records simulated receipts and refuses in production; notifications and webhooks recorded as simulated in training and demo, no request made (lib/messaging/deliver.ts sendVia(), lib/events/deliver.ts deliverOutbox(), lib/events/substrate-webhook.ts; test lib/messaging/simulation.test.ts); sample cases and their register entries marked sample (sample-isolation.test.ts); development keys sign only outside production (developmentKeyRefusal())', '', '—')
@@ -960,12 +967,14 @@ R(6, r'^F$', r'integration boundaries', 'Partial', MODE + '; exchange refuses un
 R(6, r'^F$', r'.', 'Met', MODE, '', '—')
 R(6, r'^G$', r'^(Treasury|Health|Justice|Police|Land|Electoral Commission|National Statistics Office):', 'Partial', 'Apps per institution with charters', 'Workspaces reflecting real functions from records', 'I10', 'I2')
 R(6, r'^G$', r'.', 'Partial', 'Charters (lib/institution/charters/), apps', 'Navigation from department records', 'I10', 'I2')
-R(6, r'^H$', r'(normal, loading, empty|Empty:|Unavailable:|Denied:|Validation error|Conflict:|Stale data|Partial success|Integrity failure|Session expiry)', 'Not yet', 'No component-state test (plan §3.3)', 'Component states checked like PublicSite.test.ts', 'I10')
+R(6, r'^H$', r'^(Empty:|Unavailable:|Denied:|Validation error|Conflict:|Stale data|Partial success|Integrity failure|Session expiry)', 'Met', STATES, '', '—')
+R(6, r'^H$', r'normal, loading, empty', 'Partial', STATES, 'The shared components define every state; older screens adopt them file by file (as the colours did, docs/CONSOLE_DESIGN.md step 9)', 'I10')
+R(6, r'^H$', r'^(Use design tokens|Feedback:|Accessibility:)', 'Partial', TOKENS + '; ' + STATES, 'Older screens move to the tokens and states file by file', 'I10')
 R(6, r'^H$', r'.', 'Partial', 'components/ui', 'Component inventory', 'I10')
 R(6, r'^I$', r'^Roadmap 01', 'Met', 'docs/reviews/2026-10-institutional-baseline-audit.md (I0 done)', '', '—')
 R(6, r'^I$', r'^Roadmap 02', 'Met', 'Constitutional phases', '', '—')
 R(6, r'^I$', r'^Roadmap 03', 'Partial', 'Kernel and I0.1', '', 'I9')
-R(6, r'^I$', r'^Roadmap 04', 'Not yet', '', '', 'I10')
+R(6, r'^I$', r'^Roadmap 04', 'Partial', TOKENS + '; ' + STATES + '; ' + A11Y, 'Shell, casework, registers, forms, approvals, documents and audit as shared screen patterns; the exit gate (a representative workflow end to end on desktop and mobile) checked by people', 'I10')
 R(6, r'^I$', r'^Roadmap 05 — Exit gate', 'Partial', 'Health chosen (plan I4); ' + GATE + '; on /admin/onboarding (track pilot) and /gov/health-regulation/pilot', 'Met only by a production installation\'s own records: authorised officials completing real cases (a deployment act, never shipped)', 'I4')
 R(6, r'^I$', r'^Roadmap 05', 'Partial', 'Health chosen (plan I4); ' + EDITION + '; ' + PORTABLE + '; ' + GATE, 'The nation\'s real workflow configuration, migration and user acceptance testing', 'I4')
 R(6, r'^I$', r'^Roadmap 06', 'Not yet', '', '', 'I9')

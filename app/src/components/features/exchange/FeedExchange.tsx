@@ -13,7 +13,7 @@ import { useOfficial } from '@/lib/official';
 interface Exchange { id: string; at: string; method: string; status: number; result: string; requestDigest: string; signature: 'verified' | 'absent' | 'refused'; signatureKeyId?: string; receiptId: string }
 interface Key { keyId: string; registeredAt: string; registeredBy: string }
 
-const btn = 'focus-ring rounded-[3px] border border-line px-2.5 py-1 text-[12px] font-semibold text-ink hover:bg-surface-2 disabled:opacity-50';
+const btn = 'focus-ring rounded-[3px] border border-line px-2.5 py-1 text-xs font-semibold text-ink hover:bg-surface-2 disabled:opacity-50';
 const when = (iso: string) => new Date(iso).toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
 const SIG: Record<Exchange['signature'], string> = { verified: 'Signed, verified', absent: 'Not signed', refused: 'Signature refused' };
 
@@ -51,7 +51,7 @@ export function FeedExchange({ kind, ministryId, feedId, canManage }: { kind: 'c
   };
 
   return (
-    <details className="mt-1 text-[12px]" onToggle={e => setOpen((e.currentTarget as HTMLDetailsElement).open)}>
+    <details className="mt-1 text-xs" onToggle={e => setOpen((e.currentTarget as HTMLDetailsElement).open)}>
       <summary className="cursor-pointer text-link">Signing key and recent exchanges</summary>
       <div className="mt-1.5 space-y-2 rounded-[3px] border border-line-soft p-2">
         {msg ? <p role="status" className="text-ink-soft">{msg}</p> : null}
@@ -63,7 +63,7 @@ export function FeedExchange({ kind, ministryId, feedId, canManage }: { kind: 'c
         {canManage ? (
           <form className="flex flex-wrap items-end gap-2" onSubmit={e => { e.preventDefault(); void act(() => call(keyUrl, { method: 'POST', body: JSON.stringify({ publicKey: pem, by: official }) }), 'Key registered: requests must now be signed with it.'); }}>
             <label className="text-ink-soft">Public key (PEM)
-              <textarea className="focus-ring mt-1 block w-80 rounded-[3px] border border-line bg-surface px-2 py-1 font-mono text-[11px]" rows={3} value={pem} onChange={e => setPem(e.currentTarget.value)} placeholder="-----BEGIN PUBLIC KEY-----" required />
+              <textarea className="focus-ring mt-1 block w-80 rounded-[3px] border border-line bg-surface px-2 py-1 font-mono text-2xs" rows={3} value={pem} onChange={e => setPem(e.currentTarget.value)} placeholder="-----BEGIN PUBLIC KEY-----" required />
             </label>
             <button className={btn}>{key ? 'Replace key' : 'Register key'}</button>
             {key ? <button type="button" className={btn} onClick={() => void act(() => call(keyUrl, { method: 'DELETE', body: JSON.stringify({ by: official }) }), 'Key removed: the bearer key alone is accepted again.')}>Remove key</button> : null}

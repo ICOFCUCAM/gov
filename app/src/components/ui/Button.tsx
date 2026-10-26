@@ -6,6 +6,8 @@ type Variant = 'primary' | 'secondary' | 'ghost' | 'warn';
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
   asChild?: boolean;
+  /** Working (plan I10 component states): the button is not pressable, says so to screen readers and shows a shape. */
+  busy?: boolean;
 }
 
 const base =
@@ -22,8 +24,12 @@ const variantClasses: Record<Variant, string> = {
 };
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant = 'primary', className, ...props }, ref) => (
-    <button ref={ref} className={cn(base, variantClasses[variant], className)} {...props} />
+  ({ variant = 'primary', className, busy, disabled, children, ...props }, ref) => (
+    <button ref={ref} className={cn(base, variantClasses[variant], className)} disabled={disabled || busy}
+      {...(busy ? { 'aria-busy': true, 'data-state': 'loading' } : {})} {...props}>
+      {busy ? <span aria-hidden className="motion-safe:animate-pulse">◌</span> : null}
+      {children}
+    </button>
   ),
 );
 Button.displayName = 'Button';

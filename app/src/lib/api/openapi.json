@@ -2299,6 +2299,38 @@
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "navigation": {
+                      "type": "object",
+                      "properties": {
+                        "dataProtection": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "string"
+                            }
+                          ]
+                        },
+                        "permitHolders": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "pilot": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "dataProtection",
+                        "permitHolders",
+                        "pilot"
+                      ]
+                    },
                     "official": {
                       "anyOf": [
                         {
@@ -2519,6 +2551,15 @@
                   "schema": {
                     "summary": "Generated from the schema",
                     "value": {
+                      "navigation": {
+                        "dataProtection": "string",
+                        "permitHolders": [
+                          "string"
+                        ],
+                        "pilot": [
+                          "string"
+                        ]
+                      },
                       "official": {
                         "standing": "customary-or-religious",
                         "institutionName": "Example",
@@ -2926,13 +2967,6 @@
                         "role": "administrator",
                         "attributes": {},
                         "institution": "string",
-                        "email": "official@example.gov",
-                        "office": "string",
-                        "createdAt": "2026-01-15T09:30:00.000Z",
-                        "createdBy": "A. Official",
-                        "disabled": true,
-                        "lastSignIn": "string",
-                        "passwordChangedAt": "2026-01-15T09:30:00.000Z",
                         "identity": {
                           "issuer": "string",
                           "claim": "string",
@@ -2940,6 +2974,13 @@
                           "linkedAt": "2026-01-15T09:30:00.000Z",
                           "linkedBy": "A. Official"
                         },
+                        "email": "official@example.gov",
+                        "office": "string",
+                        "createdAt": "2026-01-15T09:30:00.000Z",
+                        "createdBy": "A. Official",
+                        "disabled": true,
+                        "lastSignIn": "string",
+                        "passwordChangedAt": "2026-01-15T09:30:00.000Z",
                         "noPassword": true,
                         "demo": true,
                         "twoStepSince": "string",
@@ -3693,13 +3734,6 @@
                         "role": "administrator",
                         "attributes": {},
                         "institution": "string",
-                        "email": "official@example.gov",
-                        "office": "string",
-                        "createdAt": "2026-01-15T09:30:00.000Z",
-                        "createdBy": "A. Official",
-                        "disabled": true,
-                        "lastSignIn": "string",
-                        "passwordChangedAt": "2026-01-15T09:30:00.000Z",
                         "identity": {
                           "issuer": "string",
                           "claim": "string",
@@ -3707,6 +3741,13 @@
                           "linkedAt": "2026-01-15T09:30:00.000Z",
                           "linkedBy": "A. Official"
                         },
+                        "email": "official@example.gov",
+                        "office": "string",
+                        "createdAt": "2026-01-15T09:30:00.000Z",
+                        "createdBy": "A. Official",
+                        "disabled": true,
+                        "lastSignIn": "string",
+                        "passwordChangedAt": "2026-01-15T09:30:00.000Z",
                         "noPassword": true,
                         "demo": true,
                         "twoStepSince": "string",
@@ -131774,28 +131815,6 @@
             "type": "string",
             "description": "Ministry id; absent for officials serving the whole government."
           },
-          "email": {
-            "type": "string"
-          },
-          "office": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string"
-          },
-          "createdBy": {
-            "type": "string"
-          },
-          "disabled": {
-            "type": "boolean"
-          },
-          "lastSignIn": {
-            "type": "string"
-          },
-          "passwordChangedAt": {
-            "type": "string",
-            "description": "When the password last changed: sessions issued before it no longer count."
-          },
           "identity": {
             "type": "object",
             "properties": {
@@ -131823,6 +131842,28 @@
               "linkedBy"
             ],
             "description": "The official's identity at the government's identity provider (lib/auth/oidc.ts), linked by an administrator or by a verified email."
+          },
+          "email": {
+            "type": "string"
+          },
+          "office": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "disabled": {
+            "type": "boolean"
+          },
+          "lastSignIn": {
+            "type": "string"
+          },
+          "passwordChangedAt": {
+            "type": "string",
+            "description": "When the password last changed: sessions issued before it no longer count."
           },
           "noPassword": {
             "type": "boolean",

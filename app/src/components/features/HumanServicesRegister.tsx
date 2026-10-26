@@ -79,7 +79,7 @@ export function HumanServicesRegister({ kind }: { kind: Kind }) {
   const records = found ? (found.records ?? found.documents ?? found.found ?? null) : null;
   return (
     <div className="space-y-4 p-4">
-      <h1 className="text-xl font-semibold">{spec.title}</h1>
+      <h2 className="text-xl font-semibold">{spec.title}</h2>
       <p className="max-w-3xl text-sm text-ink-muted">{spec.intro} These records are restricted: only the institution that keeps them reads them, and every search is recorded in the <Link className="underline" href="/gov/access-log">access log</Link>.{spec.exchange ? <> Other institutions learn only the answer of the exchange service <code>{spec.exchange}</code>.</> : null}</p>
       {msg ? <p role="alert" className="text-sm text-alert">{msg}</p> : null}
       {data ? (

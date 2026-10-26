@@ -81,7 +81,7 @@ export function TerritoryDesk({ area }: { area: Area }) {
   const caseRows = cases.map(c => [<Link key="r" className="underline" href={`/gov/cases/${c.id}`}>{c.ref}</Link>, c.package.key, c.stage, sample({ sample: c.source === 'sample' })]);
   return (
     <div className="space-y-5 p-4">
-      <h1 className="text-xl font-semibold">{TITLE[area]}</h1>
+      <h2 className="text-xl font-semibold">{TITLE[area]}</h2>
       <p className="max-w-3xl text-sm text-ink-muted">{INTRO[area]}</p>
       {err ? <p role="alert" className="text-sm text-alert">{err}</p> : null}
       {data ? <AreaView area={area} data={data} /> : <p className="text-sm text-ink-muted">Reading the register…</p>}

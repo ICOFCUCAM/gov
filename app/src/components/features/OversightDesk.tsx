@@ -132,7 +132,7 @@ export function OversightDesk() {
   const stages = data?.labels.stages ?? {};
   return (
     <div className="space-y-4 p-4">
-      <h1 className="text-xl font-semibold">Independent oversight</h1>
+      <h2 className="text-xl font-semibold">Independent oversight</h2>
       <p className="max-w-3xl text-sm text-ink-muted">
         Complaints, protected disclosures, audit engagements and data-protection requests, each worked only by the independent body the nation names under{' '}
         <Link className="underline" href="/gov/configuration/responsible#who-is-responsible">Who is responsible</Link>. Officials serving the whole government, auditors and administrators do not read or act on these cases.

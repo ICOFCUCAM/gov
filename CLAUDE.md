@@ -773,6 +773,23 @@ What has been built is locked. Work only upgrades it toward the vision in
   unset). Approved values reach the twin only through `lib/indicators/twin.ts`: the internal source
   and `indicator.` metrics take computed runs only (`lib/twin/computed.ts`). A changed computation is
   a new method version in `methods.ts`; a generated panel moves to computed or stays folded.
+- Workspace design system (plan I10): type, spacing, control and focus
+  tokens sit beside the colours in `lib/theme/tokens.ts` (`TYPE_SCALE`,
+  `SPACE_SCALE`, `CONTROL`, `FOCUS`, the `WORKSPACE` ground). Console code
+  takes text sizes from the scale (`text-2xs` … `text-3xl`), never
+  `text-[Npx]`; `type-scale.test.ts` lists the files held to it (a file joins
+  `CHECKED` when it moves) and each exception's reason. States (loading,
+  empty, refused, out of date …) use the shared components in
+  `components/ui/States.tsx` from the catalogue `lib/ui/states.ts`: a word and
+  a shape, never colour alone, never an invented "last update"; a new state
+  joins the catalogue and the gallery (`/gov/help/states`,
+  `component-states.test.ts`). A page rule in `console-nav.ts` is tied to its
+  route in `PAGE_GROUNDS`, and `console-nav-permission.test.ts` walks the menu
+  for every kind of official. A screen under `CommandShell` has no h1 of its
+  own (the frame gives it); the console audit (`audit-console.mjs`) checks
+  reading order and focus. Usability and screen-reader sessions are recorded
+  only in `docs/USABILITY_TESTING.md`; automated runs are labelled automated
+  and never counted as sessions with people.
 - The console menu is `lib/nav/console-nav.ts` (plain language, about 30
   entries; related pages are tabs of one item). A new console page joins an
   item as a tab (with `was` if it replaces an earlier name) instead of

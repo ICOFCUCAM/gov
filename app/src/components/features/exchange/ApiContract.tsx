@@ -31,7 +31,7 @@ export function ApiContract({ family }: { family?: string }) {
       </nav>
       {shown.map(f => (
         <Section key={f.family} title={f.family} meta={`${f.endpoints} endpoints · ${f.paths} paths · ${f.means}`}>
-          <div className="overflow-x-auto">
+          <div tabIndex={0} role="region" aria-label={`${f.family} endpoints (table)`} className="focus-ring overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead><tr><th scope="col">Endpoint</th><th scope="col">Authentication</th><th scope="col">Permission</th><th scope="col">Purpose</th><th scope="col">Refusals</th><th scope="col">Idempotency · rate · audit</th></tr></thead>
               <tbody>
