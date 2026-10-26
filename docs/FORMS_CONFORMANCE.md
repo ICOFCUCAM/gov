@@ -1662,4 +1662,4 @@ the relationship binding is enforced by `callService()` for every call, not yet
 as a form-level check. Left for later batches: the other Part 3 §3.6 exchange
 forms (trade authority, customs permit response, investment approval,
 procurement and financial references) and the Part 13 §2.2 directive forms
-(integration register 24.11).
+(integration register 24.12).
