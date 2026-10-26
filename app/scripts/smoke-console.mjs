@@ -82,6 +82,8 @@ const PAGES = [
   { path: '/gov/oversight', map: false, text: /independent oversight/i },
   // I12: security governance and resilience (metadata only; classification status, records by need to know).
   { path: '/gov/security/resilience', map: false, text: /cyber and resilience/i },
+  // Forms batch 13 (I12): a security library form with its catalogue row and publication gates.
+  { path: '/gov/law/procedures/forms/SEC-CYB-001', map: false, text: /register status/i },
   // Territory and infrastructure (plan I7): land dealings and disputes, building control and housing, local governments, transport.
   { path: '/gov/land', map: false, text: /land dealings and disputes/i },
   { path: '/gov/building', map: false, text: /planning, building control and housing/i },
