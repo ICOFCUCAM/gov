@@ -49,7 +49,7 @@ const doc = (caseId: string, cls: string, who: Actor) => { const d = addDocument
 async function step(id: string, action: string, who: Actor, extra: Record<string, unknown> = {}) { const r = await act(id, { action, ...extra }, who); if ('error' in r) throw new Error(`${action}: ${r.error}`); return r; }
 /** A two-official step: proposed by one, confirmed by a different one. */
 async function both(id: string, action: string, a: Actor, b: Actor, extra: Record<string, unknown> = {}) { expect(await step(id, action, a, extra)).toMatchObject({ pending: true }); return step(id, action, b); }
-const ok = <T,>(r: T | { error: string }): T => { if (r && typeof r === 'object' && 'error' in r) throw new Error((r as { error: string }).error); return r as T; };
+const ok = <T,>(r: T): Exclude<T, { error: unknown }> => { if (r && typeof r === 'object' && 'error' in r) throw new Error(String((r as { error: unknown }).error)); return r as Exclude<T, { error: unknown }>; };
 const LISTS: Record<string, string[]> = {
   'security.country.cyber_incident_categories': ['ransomware', 'service-disruption'], 'security.country.cyber_severity_scale': ['level-1', 'level-2', 'level-3'],
   'security.country.infrastructure_sectors': ['energy', 'water'],

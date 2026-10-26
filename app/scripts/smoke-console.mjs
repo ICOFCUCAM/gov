@@ -80,6 +80,8 @@ const PAGES = [
   { path: '/gov/health-regulation/programmes', map: false, text: /public-health programmes and workforce/i },
   // Independent oversight (plan I8): complaints, disclosures, audit engagements and data-protection requests; protected identities hidden.
   { path: '/gov/oversight', map: false, text: /independent oversight/i },
+  // I12: security governance and resilience (metadata only; classification status, records by need to know).
+  { path: '/gov/security/resilience', map: false, text: /cyber and resilience/i },
   // Territory and infrastructure (plan I7): land dealings and disputes, building control and housing, local governments, transport.
   { path: '/gov/land', map: false, text: /land dealings and disputes/i },
   { path: '/gov/building', map: false, text: /planning, building control and housing/i },
