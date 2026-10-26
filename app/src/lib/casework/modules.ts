@@ -17,6 +17,12 @@ import '@/lib/health/products/procedures';
 import '@/lib/health/programmes/procedures';
 import '@/lib/health/complaints/procedures';
 import '@/lib/oversight/procedures';
+// Human services (plan step I6): identity, passports and travel documents, citizenship, labour, social protection.
+import '@/lib/identity/procedures';
+import '@/lib/passports/procedures';
+import '@/lib/citizenship/procedures';
+import '@/lib/labour/procedures';
+import '@/lib/social/procedures';
 // Internal administration (plan I2): each institution's own procedures, drafted from templates on request.
 import '@/lib/administration/procedures';
 // The decision guard: every decision rests on a named authority (lib/permits/decisions.ts).
@@ -41,6 +47,11 @@ import { installProductProcedures } from '@/lib/health/products/procedures';
 import { installProgrammeProcedures } from '@/lib/health/programmes/procedures';
 import { installComplaintProcedures } from '@/lib/health/complaints/procedures';
 import { installOversightProcedures } from '@/lib/oversight/procedures';
+import { installIdentityProcedures } from '@/lib/identity/procedures';
+import { installPassportProcedures } from '@/lib/passports/procedures';
+import { installCitizenshipProcedures } from '@/lib/citizenship/procedures';
+import { installLabourProcedures } from '@/lib/labour/procedures';
+import { installSocialProcedures } from '@/lib/social/procedures';
 export { REFERENCE_PROCEDURES } from '@/lib/civil/procedures';
 export { ORGANISATION_PROCEDURES } from '@/lib/organisations/procedures';
 export { IMMIGRATION_PROCEDURES } from '@/lib/immigration/procedures';
@@ -55,9 +66,15 @@ export { PRODUCT_PROCEDURES } from '@/lib/health/products/procedures';
 export { PROGRAMME_PROCEDURES } from '@/lib/health/programmes/procedures';
 export { COMPLAINT_PROCEDURES } from '@/lib/health/complaints/procedures';
 export { INDEPENDENT_OVERSIGHT_PROCEDURES } from '@/lib/oversight/procedures';
+export { IDENTITY_PROCEDURES } from '@/lib/identity/procedures';
+export { PASSPORT_PROCEDURES } from '@/lib/passports/procedures';
+export { CITIZENSHIP_PROCEDURES } from '@/lib/citizenship/procedures';
+export { LABOUR_PROCEDURES } from '@/lib/labour/procedures';
+export { SOCIAL_PROCEDURES } from '@/lib/social/procedures';
 
-/** Draft every reference procedure (civil registration, organisations, immigration, police intake, courts, tax, education, professions, health, customs, medicines and devices, public-health programmes, health complaints, independent oversight) the installation does not have yet. */
+/** Draft every reference procedure (civil registration, organisations, immigration, police intake, courts, tax, education, professions, health, customs, medicines and devices, public-health programmes, health complaints, independent oversight, and since plan step I6 identity, passports, citizenship, labour and social protection) the installation does not have yet. */
 export function installReferenceProcedures(by: string): { drafted: string[]; present: string[] } {
-  const all = [installCivil(by), installOrganisationProcedures(by), installImmigrationProcedures(by), installPoliceProcedures(by), installCourtProcedures(by), installTaxProcedures(by), installEducationProcedures(by), installProfessionProcedures(by), installHealthProcedures(by), installCustomsProcedures(by), installProductProcedures(by), installProgrammeProcedures(by), installComplaintProcedures(by), installOversightProcedures(by)];
+  const all = [installCivil(by), installOrganisationProcedures(by), installImmigrationProcedures(by), installPoliceProcedures(by), installCourtProcedures(by), installTaxProcedures(by), installEducationProcedures(by), installProfessionProcedures(by), installHealthProcedures(by), installCustomsProcedures(by), installProductProcedures(by), installProgrammeProcedures(by), installComplaintProcedures(by), installOversightProcedures(by),
+    installIdentityProcedures(by), installPassportProcedures(by), installCitizenshipProcedures(by), installLabourProcedures(by), installSocialProcedures(by)];
   return { drafted: all.flatMap(x => x.drafted), present: all.flatMap(x => x.present) };
 }

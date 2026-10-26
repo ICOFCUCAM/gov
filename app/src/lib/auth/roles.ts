@@ -1268,6 +1268,26 @@ export function canReadProduct(s: Scope, authority: string | undefined): string 
     : 'No medicines authority is named under Who is responsible: nobody reads full product records until the nation names it';
 }
 
+/**
+ * Human services (plan step I6): the identity register, travel documents, the
+ * labour register and the social protection register are read by the officials
+ * of the institution the nation names for each (identity, travelDocuments,
+ * labour, socialProtection), and by auditors with a stated purpose; never by
+ * the whole government or an administrator elsewhere by default. Every search
+ * and read, allowed or refused, is written to the access log by the route.
+ * Other institutions learn only an exchange answer (identity.verify,
+ * travel-document.status, employer.standing).
+ */
+function humanServicesRead(s: Scope, authority: string | undefined, purpose: string | undefined, what: string, exchange: string): string | null {
+  if (roleOf(s) === 'auditor') return purpose?.trim() ? null : `Say why you need to read ${what}`;
+  if (authority && s.institution === authority) return null;
+  return authority ? `${what[0]!.toUpperCase()}${what.slice(1)} are read by the authority that keeps them; other institutions ${exchange}` : `No institution is named for ${what} under Who is responsible: nobody reads them until the nation names it`;
+}
+export const canReadIdentity = (s: Scope, authority: string | undefined, purpose?: string) => humanServicesRead(s, authority, purpose, 'identity records', 'check a credential through the exchange (identity.verify)');
+export const canReadTravelDocuments = (s: Scope, authority: string | undefined, purpose?: string) => humanServicesRead(s, authority, purpose, 'travel document records', 'check a document through the exchange (travel-document.status)');
+export const canReadLabour = (s: Scope, authority: string | undefined, purpose?: string) => humanServicesRead(s, authority, purpose, 'labour records', 'check an employer through the exchange (employer.standing)');
+export const canReadSocial = (s: Scope, authority: string | undefined, purpose?: string) => humanServicesRead(s, authority, purpose, 'social protection records', 'receive nothing from them but what a law and an approved exchange allow');
+
 /** Visas and residence permits (lib/immigration/register.ts): the immigration authority's officials; auditors with a purpose. Never the whole government by default (directions 15.1). */
 export function canReadImmigration(s: Scope, authority: string | undefined, purpose?: string): string | null {
   if (roleOf(s) === 'auditor') return purpose?.trim() ? null : 'Say why you need to read immigration records';

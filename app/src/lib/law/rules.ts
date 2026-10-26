@@ -11,6 +11,14 @@
 //
 // Amounts are integers in minor units (cents); rates are percentages with at
 // most four decimals; results are rounded half up to the minor unit.
+//
+// Plan step I6 adds two kinds for human services: a schedule of fixed amounts
+// by code (a fee for each kind of passport or travel document, an amount for
+// each benefit category) and a means-tested amount (a base amount, an amount
+// for each further household member, a taper on assessed means and a limit
+// at which nothing is due) from which a benefit's eligibility and amount are
+// calculated. Like every rule they ship empty: the nation's law sets each
+// figure, cited, tested and approved by a second official.
 
 import { dualControlRefusal } from '@/lib/data/dual-control';
 import { createHash } from 'node:crypto';
@@ -20,10 +28,19 @@ import { uuid7 } from '@/lib/data/uuid7';
 import { cite, type Citation } from './register';
 import type { AuthorityKey } from '@/lib/nation/deployment';
 
-export type RuleKind = 'flat-rate' | 'rate-bands' | 'tariff';
+export type RuleKind = 'flat-rate' | 'rate-bands' | 'tariff' | 'fixed-amounts' | 'means-tested';
 export interface Band { from: number; to?: number; rate: number }
 export interface TariffLine { code: string; rate: number; description?: string }
-export interface RuleTest { name: string; input: { amountMinor: number; code?: string }; expectMinor: number }
+/** fixed-amounts: one amount for each code (a fee per document type, an amount per benefit category). */
+export interface AmountLine { code: string; amountMinor: number; description?: string }
+/**
+ * means-tested: what is due for assessed means M (minor units) and a household
+ * of N members: nothing when M is at or above `limitMinor`; otherwise
+ * baseMinor + perMemberMinor x (N - 1) - taperRate% x M, never below zero.
+ */
+export interface MeansTest { limitMinor: number; baseMinor: number; perMemberMinor: number; taperRate: number }
+export interface RuleInputValues { amountMinor: number; code?: string; members?: number }
+export interface RuleTest { name: string; input: RuleInputValues; expectMinor: number }
 
 export interface RuleVersion {
   id: string;
@@ -39,8 +56,12 @@ export interface RuleVersion {
   rate?: number;
   bands?: Band[];
   lines?: TariffLine[];
+  /** fixed-amounts: the amount for each code. */
+  amounts?: AmountLine[];
+  /** means-tested: the terms of the calculation. */
+  means?: MeansTest;
   tests: RuleTest[];
-  /** SHA-256 of the rule's content (kind, rate, bands, lines): what a calculation cites. */
+  /** SHA-256 of the rule's content (kind, rate, bands, lines, amounts, means): what a calculation cites. */
   digest: string;
   state: 'draft' | 'approved' | 'withdrawn';
   draftedBy: string; draftedById?: string; draftedAt: string;
@@ -56,14 +77,35 @@ const KEY = /^[a-z][a-z0-9.-]{2,80}$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const CODE = /^[0-9]{2,10}$/;
 const okRate = (r: unknown): r is number => typeof r === 'number' && Number.isFinite(r) && r >= 0 && r <= 1000 && Math.round(r * 10_000) === r * 10_000;
-const digestOf = (r: Pick<RuleVersion, 'kind' | 'rate' | 'bands' | 'lines'>) => createHash('sha256').update(JSON.stringify([r.kind, r.rate ?? null, r.bands ?? null, r.lines ?? null]), 'utf8').digest('hex');
+const AMOUNT_CODE = /^[a-z0-9][a-z0-9.-]{0,60}$/;
+const okMinor = (n: unknown): n is number => typeof n === 'number' && Number.isInteger(n) && n >= 0 && n <= 1e13;
+/** The kinds before plan step I6 keep their digest exactly; the new kinds add their own content. */
+const digestOf = (r: Pick<RuleVersion, 'kind' | 'rate' | 'bands' | 'lines' | 'amounts' | 'means'>) => createHash('sha256').update(JSON.stringify(
+  r.kind === 'fixed-amounts' || r.kind === 'means-tested' ? [r.kind, r.amounts ?? null, r.means ?? null] : [r.kind, r.rate ?? null, r.bands ?? null, r.lines ?? null]), 'utf8').digest('hex');
 
 /** Half-up rounding of amount × rate% to minor units. */
 const pct = (amountMinor: number, rate: number) => Math.round((amountMinor * rate) / 100);
 
 /** Apply one version to an input (no state is read: used by tests and calculate()). */
-export function applyRule(r: Pick<RuleVersion, 'kind' | 'rate' | 'bands' | 'lines'>, input: { amountMinor: number; code?: string }): { amountMinor: number; steps: string[] } | { error: string } {
+export function applyRule(r: Pick<RuleVersion, 'kind' | 'rate' | 'bands' | 'lines' | 'amounts' | 'means'>, input: RuleInputValues): { amountMinor: number; steps: string[] } | { error: string } {
   if (!Number.isInteger(input.amountMinor) || input.amountMinor < 0) return { error: 'The base amount is a whole, non-negative number of minor units' };
+  if (r.kind === 'fixed-amounts') {
+    const code = (input.code ?? '').trim();
+    if (!code) return { error: 'A schedule of amounts needs the code of the line that applies' };
+    const line = r.amounts!.find(l => l.code === code);
+    if (!line) return { error: `No line of the schedule covers ${code}` };
+    return { amountMinor: line.amountMinor, steps: [`${code}: ${line.amountMinor}`] };
+  }
+  if (r.kind === 'means-tested') {
+    const m = r.means!;
+    const members = input.members ?? 1;
+    if (!Number.isInteger(members) || members < 1 || members > 100) return { error: 'The household has a whole number of members, from 1' };
+    if (input.amountMinor >= m.limitMinor) return { amountMinor: 0, steps: [`means ${input.amountMinor} at or above the limit ${m.limitMinor}: nothing due`] };
+    const before = m.baseMinor + m.perMemberMinor * (members - 1);
+    const taper = pct(input.amountMinor, m.taperRate);
+    const due = Math.max(0, before - taper);
+    return { amountMinor: due, steps: [`${m.baseMinor} + ${m.perMemberMinor} x ${members - 1} = ${before}`, `less ${m.taperRate}% of means ${input.amountMinor} = ${taper}`, `due ${due}`] };
+  }
   if (r.kind === 'flat-rate') return { amountMinor: pct(input.amountMinor, r.rate!), steps: [`${input.amountMinor} × ${r.rate}%`] };
   if (r.kind === 'rate-bands') {
     let total = 0; const steps: string[] = [];
@@ -83,7 +125,7 @@ export function applyRule(r: Pick<RuleVersion, 'kind' | 'rate' | 'bands' | 'line
   return { amountMinor: pct(input.amountMinor, line.rate), steps: [`code ${code} → line ${line.code} at ${line.rate}%: ${input.amountMinor} × ${line.rate}%`] };
 }
 
-export interface RuleInput { key?: unknown; title?: unknown; kind?: unknown; owner?: unknown; effectiveFrom?: unknown; effectiveTo?: unknown; citations?: unknown; rate?: unknown; bands?: unknown; lines?: unknown; tests?: unknown }
+export interface RuleInput { key?: unknown; title?: unknown; kind?: unknown; owner?: unknown; effectiveFrom?: unknown; effectiveTo?: unknown; citations?: unknown; rate?: unknown; bands?: unknown; lines?: unknown; amounts?: unknown; means?: unknown; tests?: unknown }
 
 function check(input: RuleInput): Omit<RuleVersion, 'id' | 'version' | 'citations' | 'digest' | 'state' | 'draftedBy' | 'draftedById' | 'draftedAt'> | { error: string } {
   const key = typeof input.key === 'string' ? input.key.trim() : '';
@@ -91,7 +133,7 @@ function check(input: RuleInput): Omit<RuleVersion, 'id' | 'version' | 'citation
   const title = typeof input.title === 'string' ? input.title.trim().slice(0, 200) : '';
   if (title.length < 3) return { error: 'Give the rule its name' };
   const kind = input.kind as RuleKind;
-  if (!['flat-rate', 'rate-bands', 'tariff'].includes(kind)) return { error: 'A rule is a flat rate, rate bands or a tariff' };
+  if (!['flat-rate', 'rate-bands', 'tariff', 'fixed-amounts', 'means-tested'].includes(kind)) return { error: 'A rule is a flat rate, rate bands, a tariff, a schedule of fixed amounts or a means-tested amount' };
   const owner = typeof input.owner === 'string' ? input.owner.trim() : '';
   if (!owner) return { error: 'Name the authority that owns the rule' };
   const effectiveFrom = String(input.effectiveFrom ?? '');
@@ -99,8 +141,24 @@ function check(input: RuleInput): Omit<RuleVersion, 'id' | 'version' | 'citation
   const effectiveTo = typeof input.effectiveTo === 'string' && input.effectiveTo ? input.effectiveTo : undefined;
   if (effectiveTo && (!DATE.test(effectiveTo) || effectiveTo <= effectiveFrom)) return { error: 'An end date is after the start date' };
   const base = { key, title, kind, owner, effectiveFrom, ...(effectiveTo ? { effectiveTo } : {}) };
-  let content: Pick<RuleVersion, 'rate' | 'bands' | 'lines'>;
-  if (kind === 'flat-rate') {
+  let content: Pick<RuleVersion, 'rate' | 'bands' | 'lines' | 'amounts' | 'means'>;
+  if (kind === 'fixed-amounts') {
+    const lines = Array.isArray(input.amounts) ? input.amounts as AmountLine[] : [];
+    if (!lines.length || lines.length > 500) return { error: 'Give the amounts (1 to 500 lines)' };
+    const seen = new Set<string>();
+    for (const l of lines) {
+      if (!AMOUNT_CODE.test(String(l.code))) return { error: `Code ${l.code}: lowercase letters, digits, dots and dashes` };
+      if (seen.has(l.code)) return { error: `Code ${l.code} appears twice` };
+      if (!okMinor(l.amountMinor)) return { error: `Code ${l.code}: the amount is a whole, non-negative number of minor units` };
+      seen.add(l.code);
+    }
+    content = { amounts: lines.map(l => ({ code: String(l.code), amountMinor: l.amountMinor, ...(l.description ? { description: String(l.description).slice(0, 200) } : {}) })) };
+  } else if (kind === 'means-tested') {
+    const m = (input.means ?? {}) as Partial<MeansTest>;
+    for (const k of ['limitMinor', 'baseMinor', 'perMemberMinor'] as const) if (!okMinor(m[k])) return { error: `${k} is a whole, non-negative number of minor units` };
+    if (!okRate(m.taperRate)) return { error: 'The taper is a percentage from 0 to 1000 with at most four decimals' };
+    content = { means: { limitMinor: m.limitMinor!, baseMinor: m.baseMinor!, perMemberMinor: m.perMemberMinor!, taperRate: m.taperRate! } };
+  } else if (kind === 'flat-rate') {
     if (!okRate(input.rate)) return { error: 'The rate is a percentage from 0 to 1000 with at most four decimals' };
     content = { rate: input.rate };
   } else if (kind === 'rate-bands') {
@@ -135,7 +193,7 @@ function check(input: RuleInput): Omit<RuleVersion, 'id' | 'version' | 'citation
     if ('error' in r) return { error: `Test ${t.name}: ${r.error}` };
     if (r.amountMinor !== t.expectMinor) return { error: `Test ${t.name}: gives ${r.amountMinor}, expected ${t.expectMinor}` };
   }
-  return { ...base, ...content, tests: tests.map(t => ({ name: String(t.name ?? 'test').slice(0, 100), input: { amountMinor: t.input.amountMinor, ...(t.input.code ? { code: t.input.code } : {}) }, expectMinor: t.expectMinor })) };
+  return { ...base, ...content, tests: tests.map(t => ({ name: String(t.name ?? 'test').slice(0, 100), input: { amountMinor: t.input.amountMinor, ...(t.input.code ? { code: t.input.code } : {}), ...(t.input.members !== undefined ? { members: t.input.members } : {}) }, expectMinor: t.expectMinor })) };
 }
 
 /** Draft the next version of a rule; its tests run now and must pass. */
@@ -184,10 +242,24 @@ export function ruleInForce(key: string, on = new Date().toISOString().slice(0, 
 
 export const listRules = (key?: string): RuleVersion[] => db().rules.filter(r => !key || r.key === key).map(clone);
 
+/**
+ * Re-apply one exact rule version (in force, superseded or since ended) to
+ * recorded inputs: how a decision's calculation is reproduced (acceptance
+ * P2-07). Refuses when the version's content no longer matches the digest the
+ * decision recorded, or the version was never approved.
+ */
+export function recalculate(ref: { key: string; version: number; digest: string }, input: RuleInputValues): { amountMinor: number; steps: string[] } | { error: string } {
+  const r = db().rules.find(x => x.key === ref.key && x.version === ref.version);
+  if (!r) return { error: `Rule ${ref.key} version ${ref.version} is not in the register` };
+  if (r.state !== 'approved') return { error: `Rule ${ref.key} version ${ref.version} was never approved` };
+  if (digestOf(r) !== ref.digest || r.digest !== ref.digest) return { error: `Rule ${ref.key} version ${ref.version} does not match the digest the calculation recorded` };
+  return applyRule(r, input);
+}
+
 export interface Calculation { amountMinor: number; rule: { key: string; version: number; digest: string; citations: Citation[] }; on: string; steps: string[] }
 
 /** Apply the approved rule in force on a date; refuses when none is approved (an official then enters the amount with reasons). */
-export function calculate(key: string, input: { amountMinor: number; code?: string }, on = new Date().toISOString().slice(0, 10)): Calculation | { error: string } {
+export function calculate(key: string, input: RuleInputValues, on = new Date().toISOString().slice(0, 10)): Calculation | { error: string } {
   const r = ruleInForce(key, on);
   if (!r) return { error: `No approved rule ${key} applies on ${on}: enter the amount with its reasons, or have the rule approved` };
   const a = applyRule(r, input);

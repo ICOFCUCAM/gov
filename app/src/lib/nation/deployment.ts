@@ -22,7 +22,10 @@ export type AuthorityKey =
   // Health bodies the nation's law may set apart from the health regulator (owner's direction 2026-10-21,
   // docs/forms-catalogue/DIRECTION-2026-10-21-HEALTH-INTEGRATION.md §3): empty until named. Until then a
   // form that names one is owned provisionally (provisionalOwner()), never as proof of legal competence.
-  | 'medicinesRegulation' | 'controlledSubstances' | 'publicHealth';
+  | 'medicinesRegulation' | 'controlledSubstances' | 'publicHealth'
+  // Human services (plan step I6, specification Part 2): bodies a nation may keep apart, each named by the nation;
+  // empty until named, no case opens under a slot nobody is named for, and no stand-in acts for them.
+  | 'travelDocuments' | 'citizenship' | 'labour' | 'socialProtection';
 
 export type ModuleKey = 'law' | 'civil' | 'organisations' | 'accreditation' | 'licensing' | 'immigration' | 'police' | 'courts' | 'tax' | 'customs' | 'education' | 'health' | 'professions';
 
@@ -94,6 +97,12 @@ export const AUTHORITIES: { key: AuthorityKey; label: string; registers: string;
   { key: 'medicinesRegulation', label: 'Medicines and medical devices regulation', registers: 'Authorised medicines and medical devices, manufacturing sites, imports, safety reports and recalls', optional: true },
   { key: 'controlledSubstances', label: 'Controlled substances authority', registers: 'Authorisations to handle controlled medicines (only where the nation\'s law names a body apart from the medicines regulator)', optional: true },
   { key: 'publicHealth', label: 'Public health authority', registers: 'Public-health programmes and the aggregate returns they receive (never an individual case)', optional: true },
+  // Human services (plan step I6): optional, so an installation set up before them stays complete; until the nation names one,
+  // its procedures open no case and its register stays empty (the nation may name the same institution as for immigration).
+  { key: 'travelDocuments', label: 'Passports and travel documents', registers: 'Passports and other travel documents: applications, issuance, custody, status and production reconciliation', optional: true },
+  { key: 'citizenship', label: 'Citizenship determination', registers: 'Citizenship and nationality applications and determinations (only where the nation\'s law names a competent authority)', optional: true },
+  { key: 'labour', label: 'Labour and employment', registers: 'Employers and workplaces, employment registrations, vacancies and jobseekers, inspections and corrective orders, labour complaints, occupational injury notifications, mediation', optional: true },
+  { key: 'socialProtection', label: 'Social protection and benefits', registers: 'Claimants and households, benefit claims and their calculations, entitlements, payment instructions, overpayments and appeals', optional: true },
 ];
 /** Health bodies a nation may set apart from the health regulator: optional, provisionally stood in for until named (PROVISIONAL_FALLBACK). */
 export const HEALTH_SLOTS: AuthorityKey[] = ['medicinesRegulation', 'controlledSubstances', 'publicHealth'];

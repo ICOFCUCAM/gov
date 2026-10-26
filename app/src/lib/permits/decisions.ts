@@ -33,6 +33,11 @@ import { PRODUCT_PERMIT_TYPES, PROCEDURE_PERMITS } from '@/lib/health/products/p
 import { PROGRAMME_PERMITS } from '@/lib/health/programmes/procedures';
 import { OVERSIGHT_PERMITS } from '@/lib/oversight/procedures';
 import { TAX_PERMITS } from '@/lib/tax/procedures';
+import { IDENTITY_PERMITS } from '@/lib/identity/procedures';
+import { PASSPORT_PERMITS } from '@/lib/passports/procedures';
+import { CITIZENSHIP_PERMITS } from '@/lib/citizenship/procedures';
+import { LABOUR_PERMITS } from '@/lib/labour/procedures';
+import { SOCIAL_PERMITS } from '@/lib/social/procedures';
 import { mappingInForce, powerRefusal, type Power } from './authority';
 import type { ActionSpec, Case, CasePackage } from '@/lib/casework/types';
 
@@ -94,6 +99,9 @@ export function classifyDecision(c: Case, a: ActionSpec, pkg: Pick<CasePackage, 
   // Independent oversight (plan I8, lib/oversight): admissibility, issued findings and recommendations, approved audit reports and the
   // data-protection authority's decisions, each family under its own permit type (lead: the body's slot). Proposed, unapproved.
   for (const [prefix, permitType] of Object.entries(OVERSIGHT_PERMITS)) if (key.startsWith(prefix)) return mapped(permitType);
+  // Human services (plan step I6): identity, passports and travel documents, citizenship, labour and social protection, each
+  // family under its own permit type (lead: the slot the nation names). Proposed, unapproved: refused in production until approved.
+  for (const permits of [IDENTITY_PERMITS, PASSPORT_PERMITS, CITIZENSHIP_PERMITS, LABOUR_PERMITS, SOCIAL_PERMITS]) for (const [k, permitType] of Object.entries(permits)) if (is(key, k)) return mapped(permitType);
   for (const [prefix, authority] of DEPLOYMENT_DOMAINS) if (key.startsWith(`${prefix}.`)) return { kind: 'deployment', authority };
   return mapped(pkg.authority?.permitType);
 }
