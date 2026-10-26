@@ -38,6 +38,7 @@ What stays distinct:
 | 7 | Champagne in the console's authority moments: the signing dialog (hairline and seal); constitutional desk and audit verification next | Started |
 | 8 | Accessibility layer: the menu in the CommandShell and Situation Room headers; text size enlarges the console (zoom, width compensated); high contrast lightens the console's greys. `<html lang>` stays English because console text is English | Done (rem-based type in components: later, with step 9) |
 | 9 | Officer apps and the remaining raw hex values: `npm run scan:colours` (CI) fails if the count rises above 3,166; components move to tokens file by file | Started |
+| 10 | Plan step I10: type, spacing, control and focus tokens beside the colours (`TYPE_SCALE`, `SPACE_SCALE`, `CONTROL`, `FOCUS`; `type-scale.test.ts` holds the shared components and the I2–I13 screens to them, older screens join file by file); the `WORKSPACE` ground (not applied to a screen yet); the shared states and their gallery (`/gov/help/states`); keyboard focus with an ink halo so it reads on light grounds too | Started |
 
 ## 3. National digital twin, phase 0
 

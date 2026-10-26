@@ -24,15 +24,15 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | 3 | 84 | 173 | 221 | 23 | 2 | 79 | 582 |
 | 4 | 178 | 146 | 105 | 0 | 1 | 50 | 480 |
 | 5 | 109 | 185 | 4 | 0 | 18 | 0 | 316 |
-| 6 | 91 | 168 | 34 | 8 | 8 | 2 | 311 |
-| **All** | **714** | **1189** | **652** | **52** | **41** | **179** | **2827** |
+| 6 | 111 | 169 | 13 | 8 | 8 | 2 | 311 |
+| **All** | **734** | **1190** | **631** | **52** | **41** | **179** | **2827** |
 
 
 ### By plan step
 
 | Step | Met | Partial | Not yet | Platform rule stricter | Country decision | Lower priority | Total |
 |---|---|---|---|---|---|---|---|
-| — | 714 | 0 | 0 | 39 | 5 | 0 | 758 |
+| — | 734 | 2 | 0 | 45 | 5 | 0 | 786 |
 | I1 | 0 | 59 | 14 | 0 | 3 | 0 | 76 |
 | I2 | 0 | 109 | 3 | 0 | 0 | 0 | 112 |
 | I3 | 0 | 123 | 30 | 0 | 0 | 0 | 153 |
@@ -42,11 +42,11 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | I7 | 0 | 65 | 208 | 0 | 0 | 0 | 273 |
 | I8 | 0 | 63 | 105 | 0 | 0 | 0 | 168 |
 | I9 | 0 | 239 | 11 | 0 | 17 | 0 | 267 |
-| I10 | 0 | 147 | 22 | 6 | 0 | 2 | 177 |
+| I10 | 0 | 146 | 1 | 0 | 0 | 2 | 149 |
 | I11 | 0 | 44 | 5 | 3 | 0 | 166 | 218 |
 | I12 | 0 | 5 | 0 | 0 | 0 | 0 | 5 |
 | Throughout | 0 | 4 | 0 | 0 | 0 | 9 | 13 |
-| **All** | **714** | **1189** | **652** | **52** | **41** | **179** | **2827** |
+| **All** | **734** | **1190** | **631** | **52** | **41** | **179** | **2827** |
 
 
 ### By sector
@@ -121,14 +121,14 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Hosting | 1 | 5 | 0 | 0 | 17 | 0 | 23 |
 | Migration | 0 | 28 | 0 | 0 | 0 | 0 | 28 |
 | Completeness model | 15 | 9 | 0 | 0 | 0 | 0 | 24 |
-| Design system | 2 | 39 | 19 | 7 | 0 | 2 | 69 |
-| Workspace shell and screens | 20 | 75 | 11 | 0 | 0 | 0 | 106 |
+| Design system | 21 | 39 | 0 | 7 | 0 | 2 | 69 |
+| Workspace shell and screens | 21 | 74 | 11 | 0 | 0 | 0 | 106 |
 | Accessibility and localisation | 3 | 26 | 0 | 1 | 0 | 0 | 30 |
 | Production, training, demo | 12 | 5 | 0 | 0 | 0 | 0 | 17 |
-| Roadmap | 23 | 9 | 4 | 0 | 8 | 0 | 44 |
+| Roadmap | 23 | 11 | 2 | 0 | 8 | 0 | 44 |
 | Risks | 14 | 8 | 0 | 0 | 0 | 0 | 22 |
 | Launch checklist | 17 | 6 | 0 | 0 | 0 | 0 | 23 |
-| **All** | **714** | **1189** | **652** | **52** | **41** | **179** | **2827** |
+| **All** | **734** | **1190** | **631** | **52** | **41** | **179** | **2827** |
 
 
 ### By category
@@ -137,21 +137,21 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 |---|---|---|---|---|---|---|---|
 | KPI | 1 | 96 | 76 | 1 | 0 | 21 | 195 |
 | acceptance | 60 | 24 | 7 | 0 | 0 | 0 | 91 |
-| architecture | 105 | 154 | 7 | 0 | 25 | 0 | 291 |
+| architecture | 105 | 156 | 5 | 0 | 25 | 0 | 291 |
 | department | 0 | 179 | 152 | 13 | 0 | 47 | 391 |
-| design | 26 | 122 | 30 | 8 | 0 | 2 | 188 |
+| design | 45 | 122 | 11 | 8 | 0 | 2 | 188 |
 | exchange | 29 | 68 | 7 | 0 | 0 | 2 | 106 |
 | fieldwork | 1 | 15 | 8 | 0 | 0 | 0 | 24 |
 | form | 1 | 58 | 13 | 1 | 0 | 0 | 73 |
 | procedure | 135 | 97 | 167 | 4 | 0 | 39 | 442 |
-| prose-rule | 126 | 141 | 34 | 16 | 15 | 30 | 362 |
+| prose-rule | 127 | 140 | 34 | 16 | 15 | 30 | 362 |
 | register | 99 | 110 | 120 | 8 | 0 | 32 | 369 |
 | risk | 18 | 11 | 0 | 0 | 0 | 0 | 29 |
 | role | 13 | 37 | 0 | 1 | 0 | 4 | 55 |
 | security | 45 | 36 | 2 | 0 | 1 | 0 | 84 |
 | service | 3 | 12 | 13 | 0 | 0 | 0 | 28 |
 | twin | 52 | 29 | 16 | 0 | 0 | 2 | 99 |
-| **All** | **714** | **1189** | **652** | **52** | **41** | **179** | **2827** |
+| **All** | **734** | **1190** | **631** | **52** | **41** | **179** | **2827** |
 
 
 ## Plan gaps closed by the revised plan
@@ -3165,7 +3165,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 ## Part 6
 
 
-### Design system — Met 2, Partial 39, Not yet 19, Platform rule stricter 7, Lower priority 2
+### Design system — Met 21, Partial 39, Platform rule stricter 7, Lower priority 2
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
@@ -3178,24 +3178,24 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S6-A-04 | 4107 | design | Do not assign each ministry a completely different product design. | Met | One console design; nation colour via ConsoleMark |  | — |
 | S6-A-05 | 4107 | design | Give institutions a consistent foundation and allow limited sector-specific accents, terminology, navigation and workflow components. | Partial |  |  | I10 |
 | S6-B-01 | 4111 | design | They should be validated against real screens, accessibility tests and user research before becoming the permanent design system. | Partial | lib/theme/tokens.ts |  | I10 |
-| S6-B-02 | 4115-4119 | design | Warm canvas — #F7F7F2: Main application background | Platform rule stricter | CLAUDE.md "Colours come from lib/theme/tokens.ts ... Do not add new raw hex colours to console code; add a token" and tokens.test.ts 4.5:1; plan §3.3: | No WORKSPACE ground in lib/theme/tokens.ts yet (grounds: LIGHT, SOV, CONSOLE, INSTITUTIONAL, NIGHT); secondary text #6B7470 is 4.48:1 on the canvas an | I10 |
-| S6-B-03 | 4121-4125 | design | Surface — #FFFFFF: Cards, tables and forms | Platform rule stricter | CLAUDE.md "Colours come from lib/theme/tokens.ts ... Do not add new raw hex colours to console code; add a token" and tokens.test.ts 4.5:1; plan §3.3: | No WORKSPACE ground in lib/theme/tokens.ts yet (grounds: LIGHT, SOV, CONSOLE, INSTITUTIONAL, NIGHT); secondary text #6B7470 is 4.48:1 on the canvas an | I10 |
-| S6-B-04 | 4127-4131 | design | Sovereign green — #193B35: Primary actions and navigation accents | Platform rule stricter | CLAUDE.md "Colours come from lib/theme/tokens.ts ... Do not add new raw hex colours to console code; add a token" and tokens.test.ts 4.5:1; plan §3.3: | No WORKSPACE ground in lib/theme/tokens.ts yet (grounds: LIGHT, SOV, CONSOLE, INSTITUTIONAL, NIGHT); secondary text #6B7470 is 4.48:1 on the canvas an | I10 |
-| S6-B-05 | 4133-4137 | design | Copper — #A85D42: Limited emphasis and selected details | Platform rule stricter | CLAUDE.md "Colours come from lib/theme/tokens.ts ... Do not add new raw hex colours to console code; add a token" and tokens.test.ts 4.5:1; plan §3.3: | No WORKSPACE ground in lib/theme/tokens.ts yet (grounds: LIGHT, SOV, CONSOLE, INSTITUTIONAL, NIGHT); secondary text #6B7470 is 4.48:1 on the canvas an | I10 |
-| S6-B-06 | 4139-4143 | design | Primary text — #252B29: Headings and body copy | Platform rule stricter | CLAUDE.md "Colours come from lib/theme/tokens.ts ... Do not add new raw hex colours to console code; add a token" and tokens.test.ts 4.5:1; plan §3.3: | No WORKSPACE ground in lib/theme/tokens.ts yet (grounds: LIGHT, SOV, CONSOLE, INSTITUTIONAL, NIGHT); secondary text #6B7470 is 4.48:1 on the canvas an | I10 |
-| S6-B-07 | 4145-4149 | design | Secondary text — #6B7470: Supporting labels and metadata | Platform rule stricter | CLAUDE.md "Colours come from lib/theme/tokens.ts ... Do not add new raw hex colours to console code; add a token" and tokens.test.ts 4.5:1; plan §3.3: | No WORKSPACE ground in lib/theme/tokens.ts yet (grounds: LIGHT, SOV, CONSOLE, INSTITUTIONAL, NIGHT); secondary text #6B7470 is 4.48:1 on the canvas an | I10 |
-| S6-B-08 | 4151 | design | Use colour semantically, not decoratively. | Partial | tokens.test.ts 4.5:1; STATUS tones | Icons/text labels on every status | I10 |
+| S6-B-02 | 4115-4119 | design | Warm canvas — #F7F7F2: Main application background | Platform rule stricter | CLAUDE.md "Colours come from lib/theme/tokens.ts ... Do not add new raw hex colours to console code; add a token" and tokens.test.ts 4.5:1; plan §3.3: |  | — |
+| S6-B-03 | 4121-4125 | design | Surface — #FFFFFF: Cards, tables and forms | Platform rule stricter | CLAUDE.md "Colours come from lib/theme/tokens.ts ... Do not add new raw hex colours to console code; add a token" and tokens.test.ts 4.5:1; plan §3.3: |  | — |
+| S6-B-04 | 4127-4131 | design | Sovereign green — #193B35: Primary actions and navigation accents | Platform rule stricter | CLAUDE.md "Colours come from lib/theme/tokens.ts ... Do not add new raw hex colours to console code; add a token" and tokens.test.ts 4.5:1; plan §3.3: |  | — |
+| S6-B-05 | 4133-4137 | design | Copper — #A85D42: Limited emphasis and selected details | Platform rule stricter | CLAUDE.md "Colours come from lib/theme/tokens.ts ... Do not add new raw hex colours to console code; add a token" and tokens.test.ts 4.5:1; plan §3.3: |  | — |
+| S6-B-06 | 4139-4143 | design | Primary text — #252B29: Headings and body copy | Platform rule stricter | CLAUDE.md "Colours come from lib/theme/tokens.ts ... Do not add new raw hex colours to console code; add a token" and tokens.test.ts 4.5:1; plan §3.3: |  | — |
+| S6-B-07 | 4145-4149 | design | Secondary text — #6B7470: Supporting labels and metadata | Platform rule stricter | CLAUDE.md "Colours come from lib/theme/tokens.ts ... Do not add new raw hex colours to console code; add a token" and tokens.test.ts 4.5:1; plan §3.3: |  | — |
+| S6-B-08 | 4151 | design | Use colour semantically, not decoratively. | Partial | tokens.test.ts 4.5:1; STATUS tones with TONE_SHAPE and TONE_WORD; I10: lib/ui/states.ts (the catalogue of states with word, shape, live region), compo | Older screens' own status colours move to the shared states file by file | I10 |
 | S6-B-09 | 4151 | design | Success, warning, failure and informational states should use a consistent palette with text labels and icons so meaning is never communicated by colour alone. | Partial | lib/theme/tokens.ts |  | I10 |
-| S6-B-10 | 4151 | design | Test actual foreground/background combinations for WCAG 2.2 AA contrast; the suggested palette is not itself proof of compliance. | Partial | tokens.test.ts 4.5:1; STATUS tones | Icons/text labels on every status | I10 |
-| S6-B-11 | 4157 | design | Body: Proposed value: 14–16 px · Use: Default text and forms | Not yet | No type/spacing tokens in lib/theme/tokens.ts (colours only) | Typography and spacing tokens | I10 |
-| S6-B-12 | 4158 | design | Compact table text: Proposed value: 13–14 px · Use: Dense operational tables, with adequate zoom support | Not yet | No type/spacing tokens in lib/theme/tokens.ts (colours only) | Typography and spacing tokens | I10 |
-| S6-B-13 | 4159 | design | Page title: Proposed value: 28–32 px · Use: Primary workspace heading | Not yet | No type/spacing tokens in lib/theme/tokens.ts (colours only) | Typography and spacing tokens | I10 |
-| S6-B-14 | 4160 | design | Section heading: Proposed value: 18–22 px · Use: Major content groups | Not yet | No type/spacing tokens in lib/theme/tokens.ts (colours only) | Typography and spacing tokens | I10 |
-| S6-B-15 | 4161 | design | Small label: Proposed value: 12–13 px · Use: Metadata, timestamps and helper labels | Not yet | No type/spacing tokens in lib/theme/tokens.ts (colours only) | Typography and spacing tokens | I10 |
-| S6-B-16 | 4162 | design | Base spacing: Proposed value: 4 px · Use: Consistent spacing scale | Not yet | No type/spacing tokens in lib/theme/tokens.ts (colours only) | Typography and spacing tokens | I10 |
-| S6-B-17 | 4163 | design | Common control height: Proposed value: 40–44 px · Use: Inputs and actions; larger where needed | Not yet | No type/spacing tokens in lib/theme/tokens.ts (colours only) | Typography and spacing tokens | I10 |
-| S6-B-18 | 4164 | design | Standard card radius: Proposed value: 10–14 px · Use: Subtle, consistent containers | Not yet | No type/spacing tokens in lib/theme/tokens.ts (colours only) | Typography and spacing tokens | I10 |
-| S6-B-19 | 4165 | design | Keyboard focus: Proposed value: Clearly visible, high-contrast outline · Use: Every interactive element | Not yet | No type/spacing tokens in lib/theme/tokens.ts (colours only) | Typography and spacing tokens | I10 |
+| S6-B-10 | 4151 | design | Test actual foreground/background combinations for WCAG 2.2 AA contrast; the suggested palette is not itself proof of compliance. | Met | tokens.test.ts (every text colour 4.5:1 on every ground, the workspace ground included); I10: lib/ui/states.ts (the catalogue of states with word, sha |  | — |
+| S6-B-11 | 4157 | design | Body: Proposed value: 14–16 px · Use: Default text and forms | Met | I10: lib/theme/tokens.ts TYPE_SCALE (11–30px in rem), TYPE_ROLES (the specification's roles on the scale), SPACE_SCALE (4px base), CONTROL (44px contr |  | — |
+| S6-B-12 | 4158 | design | Compact table text: Proposed value: 13–14 px · Use: Dense operational tables, with adequate zoom support | Met | I10: lib/theme/tokens.ts TYPE_SCALE (11–30px in rem), TYPE_ROLES (the specification's roles on the scale), SPACE_SCALE (4px base), CONTROL (44px contr |  | — |
+| S6-B-13 | 4159 | design | Page title: Proposed value: 28–32 px · Use: Primary workspace heading | Met | I10: lib/theme/tokens.ts TYPE_SCALE (11–30px in rem), TYPE_ROLES (the specification's roles on the scale), SPACE_SCALE (4px base), CONTROL (44px contr |  | — |
+| S6-B-14 | 4160 | design | Section heading: Proposed value: 18–22 px · Use: Major content groups | Met | I10: lib/theme/tokens.ts TYPE_SCALE (11–30px in rem), TYPE_ROLES (the specification's roles on the scale), SPACE_SCALE (4px base), CONTROL (44px contr |  | — |
+| S6-B-15 | 4161 | design | Small label: Proposed value: 12–13 px · Use: Metadata, timestamps and helper labels | Met | I10: lib/theme/tokens.ts TYPE_SCALE (11–30px in rem), TYPE_ROLES (the specification's roles on the scale), SPACE_SCALE (4px base), CONTROL (44px contr |  | — |
+| S6-B-16 | 4162 | design | Base spacing: Proposed value: 4 px · Use: Consistent spacing scale | Met | I10: lib/theme/tokens.ts TYPE_SCALE (11–30px in rem), TYPE_ROLES (the specification's roles on the scale), SPACE_SCALE (4px base), CONTROL (44px contr |  | — |
+| S6-B-17 | 4163 | design | Common control height: Proposed value: 40–44 px · Use: Inputs and actions; larger where needed | Met | I10: lib/theme/tokens.ts TYPE_SCALE (11–30px in rem), TYPE_ROLES (the specification's roles on the scale), SPACE_SCALE (4px base), CONTROL (44px contr |  | — |
+| S6-B-18 | 4164 | design | Standard card radius: Proposed value: 10–14 px · Use: Subtle, consistent containers | Met | I10: lib/theme/tokens.ts TYPE_SCALE (11–30px in rem), TYPE_ROLES (the specification's roles on the scale), SPACE_SCALE (4px base), CONTROL (44px contr |  | — |
+| S6-B-19 | 4165 | design | Keyboard focus: Proposed value: Clearly visible, high-contrast outline · Use: Every interactive element | Met | I10: lib/theme/tokens.ts TYPE_SCALE (11–30px in rem), TYPE_ROLES (the specification's roles on the scale), SPACE_SCALE (4px base), CONTROL (44px contr |  | — |
 | S6-B-20 | 4167 | design | Use a system font stack rather than requiring an external font service. | Platform rule stricter | CLAUDE.md "Typefaces are self-hosted under public/fonts (OFL); never load fonts or scripts from an outside service" — meets the spec's reason (no outs |  | — |
 | S6-G-01 | 4509 | design | CivicOS should have one design system, but its workspaces should reflect the responsibilities of their institutions. | Partial | Charters (lib/institution/charters/), apps | Navigation from department records | I10 (+I2) |
 | S6-G-02 | 4513 | design | Treasury: budget execution, commitments, reconciliations, approvals and financial controls. | Partial | Apps per institution with charters | Workspaces reflecting real functions from records | I10 (+I2) |
@@ -3215,7 +3215,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S6-G-16 | 4529 | design | A shared interaction language for save, submit, approve, refuse, correct and appeal. | Partial | Charters (lib/institution/charters/), apps | Navigation from department records | I10 (+I2) |
 | S6-G-17 | 4531 | design | Sector accents can help recognition, but avoid assigning a completely different colour palette or interaction model to every ministry. | Partial | Charters (lib/institution/charters/), apps | Navigation from department records | I10 (+I2) |
 | S6-G-18 | 4531 | design | Users who work across institutions should not have to relearn the application every time. | Partial | Charters (lib/institution/charters/), apps | Navigation from department records | I10 (+I2) |
-| S6-H-01 | 4535 | design | Use design tokens and reusable components rather than scattered one-off styles. | Partial | components/ui | Component inventory | I10 |
+| S6-H-01 | 4535 | design | Use design tokens and reusable components rather than scattered one-off styles. | Partial | I10: lib/theme/tokens.ts TYPE_SCALE (11–30px in rem), TYPE_ROLES (the specification's roles on the scale), SPACE_SCALE (4px base), CONTROL (44px contr | Older screens move to the tokens and states file by file | I10 |
 | S6-H-02 | 4541 | design | Application shell: Header, sidebar, breadcrumbs, command/search panel, notification centre | Partial | components/ui | Component inventory | I10 |
 | S6-H-03 | 4542 | design | Data presentation: Data table, pagination, filters, empty states, data freshness indicator | Partial | components/ui | Component inventory | I10 |
 | S6-H-04 | 4543 | design | Casework: Case header, timeline, evidence list, related records, assignment panel | Partial | components/ui | Component inventory | I10 |
@@ -3224,22 +3224,22 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S6-H-07 | 4546 | design | Documents: Document viewer, version history, signature status, verification result | Partial | components/ui | Component inventory | I10 |
 | S6-H-08 | 4547 | design | Audit: Event timeline, integrity status, access event, export manifest | Partial | components/ui | Component inventory | I10 |
 | S6-H-09 | 4548 | design | Maps: Layer selector, legend, source and freshness metadata, accessible list alternative | Partial | components/ui | Component inventory | I10 |
-| S6-H-10 | 4549 | design | Feedback: Inline errors, warning banners, confirmations, retry actions, escalation states | Partial | components/ui | Component inventory | I10 |
+| S6-H-10 | 4549 | design | Feedback: Inline errors, warning banners, confirmations, retry actions, escalation states | Partial | I10: lib/theme/tokens.ts TYPE_SCALE (11–30px in rem), TYPE_ROLES (the specification's roles on the scale), SPACE_SCALE (4px base), CONTROL (44px contr | Older screens move to the tokens and states file by file | I10 |
 | S6-H-11 | 4550 | design | Administration: Institution settings, role assignments, delegations, policy configuration, integration status | Partial | components/ui | Component inventory | I10 |
-| S6-H-12 | 4551 | design | Accessibility: Focus management, screen-reader announcements, accessible dialogs and keyboard navigation | Partial | components/ui | Component inventory | I10 |
-| S6-H-13 | 4555 | design | Every component should define its normal, loading, empty, unavailable, denied, failed and recovery states. | Not yet | No component-state test (plan §3.3) | Component states checked like PublicSite.test.ts | I10 |
-| S6-H-14 | 4559 | design | Empty: “No cases match these filters.” Offer a useful next action. | Not yet | No component-state test (plan §3.3) | Component states checked like PublicSite.test.ts | I10 |
-| S6-H-15 | 4560 | design | Unavailable: “The source system is not responding. Last successful update: [actual timestamp].” | Not yet | No component-state test (plan §3.3) | Component states checked like PublicSite.test.ts | I10 |
-| S6-H-16 | 4561 | design | Denied: “You do not have permission to perform this action.” Where safe, explain the appropriate request process without disclosing restricted data. | Not yet | No component-state test (plan §3.3) | Component states checked like PublicSite.test.ts | I10 |
-| S6-H-17 | 4562 | design | Validation error: identify the exact field and how to correct it. | Not yet | No component-state test (plan §3.3) | Component states checked like PublicSite.test.ts | I10 |
-| S6-H-18 | 4563 | design | Conflict: show the conflicting versions and route the record to authorised review. | Not yet | No component-state test (plan §3.3) | Component states checked like PublicSite.test.ts | I10 |
-| S6-H-19 | 4564 | design | Stale data: identify the source and last update; do not present it as current. | Not yet | No component-state test (plan §3.3) | Component states checked like PublicSite.test.ts | I10 |
-| S6-H-20 | 4565 | design | Partial success: identify which operations succeeded, which failed and whether retrying is safe. | Not yet | No component-state test (plan §3.3) | Component states checked like PublicSite.test.ts | I10 |
-| S6-H-21 | 4566 | design | Integrity failure: clearly warn that verification failed and prevent the record from being presented as verified. | Not yet | No component-state test (plan §3.3) | Component states checked like PublicSite.test.ts | I10 |
-| S6-H-22 | 4567 | design | Session expiry: preserve unsaved work where safe, explain what happened and provide secure re-authentication. | Not yet | No component-state test (plan §3.3) | Component states checked like PublicSite.test.ts | I10 |
+| S6-H-12 | 4551 | design | Accessibility: Focus management, screen-reader announcements, accessible dialogs and keyboard navigation | Partial | I10: lib/theme/tokens.ts TYPE_SCALE (11–30px in rem), TYPE_ROLES (the specification's roles on the scale), SPACE_SCALE (4px base), CONTROL (44px contr | Older screens move to the tokens and states file by file | I10 |
+| S6-H-13 | 4555 | design | Every component should define its normal, loading, empty, unavailable, denied, failed and recovery states. | Partial | I10: lib/ui/states.ts (the catalogue of states with word, shape, live region), components/ui/States.tsx (StateNotice, LoadingState, ErrorSummary), But | The shared components define every state; older screens adopt them file by file (as the colours did, docs/CONSOLE_DESIGN.md step 9) | I10 |
+| S6-H-14 | 4559 | design | Empty: “No cases match these filters.” Offer a useful next action. | Met | I10: lib/ui/states.ts (the catalogue of states with word, shape, live region), components/ui/States.tsx (StateNotice, LoadingState, ErrorSummary), But |  | — |
+| S6-H-15 | 4560 | design | Unavailable: “The source system is not responding. Last successful update: [actual timestamp].” | Met | I10: lib/ui/states.ts (the catalogue of states with word, shape, live region), components/ui/States.tsx (StateNotice, LoadingState, ErrorSummary), But |  | — |
+| S6-H-16 | 4561 | design | Denied: “You do not have permission to perform this action.” Where safe, explain the appropriate request process without disclosing restricted data. | Met | I10: lib/ui/states.ts (the catalogue of states with word, shape, live region), components/ui/States.tsx (StateNotice, LoadingState, ErrorSummary), But |  | — |
+| S6-H-17 | 4562 | design | Validation error: identify the exact field and how to correct it. | Met | I10: lib/ui/states.ts (the catalogue of states with word, shape, live region), components/ui/States.tsx (StateNotice, LoadingState, ErrorSummary), But |  | — |
+| S6-H-18 | 4563 | design | Conflict: show the conflicting versions and route the record to authorised review. | Met | I10: lib/ui/states.ts (the catalogue of states with word, shape, live region), components/ui/States.tsx (StateNotice, LoadingState, ErrorSummary), But |  | — |
+| S6-H-19 | 4564 | design | Stale data: identify the source and last update; do not present it as current. | Met | I10: lib/ui/states.ts (the catalogue of states with word, shape, live region), components/ui/States.tsx (StateNotice, LoadingState, ErrorSummary), But |  | — |
+| S6-H-20 | 4565 | design | Partial success: identify which operations succeeded, which failed and whether retrying is safe. | Met | I10: lib/ui/states.ts (the catalogue of states with word, shape, live region), components/ui/States.tsx (StateNotice, LoadingState, ErrorSummary), But |  | — |
+| S6-H-21 | 4566 | design | Integrity failure: clearly warn that verification failed and prevent the record from being presented as verified. | Met | I10: lib/ui/states.ts (the catalogue of states with word, shape, live region), components/ui/States.tsx (StateNotice, LoadingState, ErrorSummary), But |  | — |
+| S6-H-22 | 4567 | design | Session expiry: preserve unsaved work where safe, explain what happened and provide secure re-authentication. | Met | I10: lib/ui/states.ts (the catalogue of states with word, shape, live region), components/ui/States.tsx (StateNotice, LoadingState, ErrorSummary), But |  | — |
 | S6-H-23 | 4569 | design | A premium product is not one with no error states. | Partial | components/ui | Component inventory | I10 |
 
-### Workspace shell and screens — Met 20, Partial 75, Not yet 11
+### Workspace shell and screens — Met 21, Partial 74, Not yet 11
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
@@ -3252,7 +3252,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S6-C-07 | 4218 | prose-rule | Main workspace: page title, breadcrumbs, status, primary action, filters and relevant content. | Partial | Console shell (CommandShell, console-nav, ConsoleMark) | Workspace shell per spec (context panel with legal basis) | I10 |
 | S6-C-08 | 4219 | prose-rule | Context panel: legal basis, ownership, activity history or supporting evidence where it materially helps the current task. | Partial | Console shell (CommandShell, console-nav, ConsoleMark) | Workspace shell per spec (context panel with legal basis) | I10 |
 | S6-C-09 | 4220 | prose-rule | Responsive navigation: collapsible sidebar on desktop and a compact drawer or bottom navigation for suitable mobile workflows. | Partial | Console shell (CommandShell, console-nav, ConsoleMark) | Workspace shell per spec (context panel with legal basis) | I10 |
-| S6-C-10 | 4222 | prose-rule | Do not display navigation items merely because they exist in the code. | Partial | Console shell (CommandShell, console-nav, ConsoleMark) | Workspace shell per spec (context panel with legal basis) | I10 |
+| S6-C-10 | 4222 | prose-rule | Do not display navigation items merely because they exist in the code. | Met | lib/nav/console-nav.ts navFor() and pageRefusal() (the menu shows each official the pages roles.ts lets them use; every page stays reachable for someo |  | — |
 | S6-C-11 | 4222 | prose-rule | Navigation should reflect the user's assigned permissions, while the backend independently enforces the same restrictions. | Met | lib/nav/console-nav.ts navFor() and pageRefusal() (the menu shows each official the pages roles.ts lets them use; every page stays reachable for someo |  | — |
 | S6-D-01 | 4226 | design | CivicOS should have a reusable set of high-quality screen patterns. | Partial | Console pages | Shared screen patterns | I10 |
 | S6-D-02 | 4226 | design | Every ministry should not invent its own dashboard, form builder, case table or approval screen. | Partial | Console pages | Shared screen patterns | I10 |
@@ -3354,33 +3354,33 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
-| S6-E-01 | 4419 | design | Accessibility is a product requirement, not a final polish pass. | Partial | axe wcag22aa scans (acceptance P6-17/18/19) | Workspace WCAG 2.2 AA assessment, RTL review | I10 |
-| S6-E-02 | 4419 | design | CivicOS should target WCAG 2.2 AA for the authenticated workspaces and service forms, with automated testing supplemented by keyboard, screen-reader and human usability testing. | Partial | axe wcag22aa scans (acceptance P6-17/18/19) | Workspace WCAG 2.2 AA assessment, RTL review | I10 |
-| S6-E-03 | 4423-4425 | design | Desktop: Full navigation, wide tables, multi-column case views, comparison and review panels. | Partial | axe wcag22aa scans (acceptance P6-17/18/19) | Workspace WCAG 2.2 AA assessment, RTL review | I10 |
-| S6-E-04 | 4427-4429 | design | Tablet: Collapsible navigation, responsive tables, stacked details and practical fieldwork workflows. | Partial | axe wcag22aa scans (acceptance P6-17/18/19) | Workspace WCAG 2.2 AA assessment, RTL review | I10 |
-| S6-E-05 | 4431-4433 | design | Mobile: Single-column workflows, large touch targets, simplified record summaries and offline-aware field capture. | Partial | axe wcag22aa scans (acceptance P6-17/18/19) | Workspace WCAG 2.2 AA assessment, RTL review | I10 |
-| S6-E-06 | 4435-4437 | design | RTL and localisation: Mirrored navigation where appropriate, correct text direction, local formats and translated content. | Partial | axe wcag22aa scans (acceptance P6-17/18/19) | Workspace WCAG 2.2 AA assessment, RTL review | I10 |
-| S6-E-07 | 4441 | role | Full keyboard access and visible focus indicators | Partial | axe wcag22aa scans (acceptance P6-17/18/19) | Workspace WCAG 2.2 AA assessment, RTL review | I10 |
-| S6-E-08 | 4442 | role | Semantic headings, landmarks, labels and table structures | Partial | axe wcag22aa scans (acceptance P6-17/18/19) | Workspace WCAG 2.2 AA assessment, RTL review | I10 |
-| S6-E-09 | 4443 | role | Screen-reader announcements for status changes and validation errors | Partial | axe wcag22aa scans (acceptance P6-17/18/19) | Workspace WCAG 2.2 AA assessment, RTL review | I10 |
-| S6-E-10 | 4444 | role | Error summaries linked to the affected fields | Partial | axe wcag22aa scans (acceptance P6-17/18/19) | Workspace WCAG 2.2 AA assessment, RTL review | I10 |
-| S6-E-11 | 4445 | role | No reliance on colour, position or icons alone | Partial | axe wcag22aa scans (acceptance P6-17/18/19) | Workspace WCAG 2.2 AA assessment, RTL review | I10 |
-| S6-E-12 | 4446 | role | Text resizing and zoom without loss of functionality | Partial | axe wcag22aa scans (acceptance P6-17/18/19) | Workspace WCAG 2.2 AA assessment, RTL review | I10 |
+| S6-E-01 | 4419 | design | Accessibility is a product requirement, not a final polish pass. | Partial | axe wcag22aa scans (acceptance P6-17/18/19); I10: app/scripts/audit-console.mjs on 69 console pages incl. every I2–I13 screen and the state gallery, d | Workspace WCAG 2.2 AA assessment by people, RTL review | I10 |
+| S6-E-02 | 4419 | design | CivicOS should target WCAG 2.2 AA for the authenticated workspaces and service forms, with automated testing supplemented by keyboard, screen-reader and human usability testing. | Partial | axe wcag22aa scans (acceptance P6-17/18/19); I10: app/scripts/audit-console.mjs on 69 console pages incl. every I2–I13 screen and the state gallery, d | Workspace WCAG 2.2 AA assessment by people, RTL review | I10 |
+| S6-E-03 | 4423-4425 | design | Desktop: Full navigation, wide tables, multi-column case views, comparison and review panels. | Partial | axe wcag22aa scans (acceptance P6-17/18/19); I10: app/scripts/audit-console.mjs on 69 console pages incl. every I2–I13 screen and the state gallery, d | Workspace WCAG 2.2 AA assessment by people, RTL review | I10 |
+| S6-E-04 | 4427-4429 | design | Tablet: Collapsible navigation, responsive tables, stacked details and practical fieldwork workflows. | Partial | axe wcag22aa scans (acceptance P6-17/18/19); I10: app/scripts/audit-console.mjs on 69 console pages incl. every I2–I13 screen and the state gallery, d | Workspace WCAG 2.2 AA assessment by people, RTL review | I10 |
+| S6-E-05 | 4431-4433 | design | Mobile: Single-column workflows, large touch targets, simplified record summaries and offline-aware field capture. | Partial | axe wcag22aa scans (acceptance P6-17/18/19); I10: app/scripts/audit-console.mjs on 69 console pages incl. every I2–I13 screen and the state gallery, d | Workspace WCAG 2.2 AA assessment by people, RTL review | I10 |
+| S6-E-06 | 4435-4437 | design | RTL and localisation: Mirrored navigation where appropriate, correct text direction, local formats and translated content. | Partial | axe wcag22aa scans (acceptance P6-17/18/19); I10: app/scripts/audit-console.mjs on 69 console pages incl. every I2–I13 screen and the state gallery, d | Workspace WCAG 2.2 AA assessment by people, RTL review | I10 |
+| S6-E-07 | 4441 | role | Full keyboard access and visible focus indicators | Partial | I10: app/scripts/audit-console.mjs on 69 console pages incl. every I2–I13 screen and the state gallery, desktop and phone: axe WCAG 2.2 A/AA, skip lin | Keyboard and screen-reader sessions by people (docs/USABILITY_TESTING.md protocol); older screens adopt the shared states | I10 |
+| S6-E-08 | 4442 | role | Semantic headings, landmarks, labels and table structures | Partial | I10: app/scripts/audit-console.mjs on 69 console pages incl. every I2–I13 screen and the state gallery, desktop and phone: axe WCAG 2.2 A/AA, skip lin | Keyboard and screen-reader sessions by people (docs/USABILITY_TESTING.md protocol); older screens adopt the shared states | I10 |
+| S6-E-09 | 4443 | role | Screen-reader announcements for status changes and validation errors | Partial | I10: app/scripts/audit-console.mjs on 69 console pages incl. every I2–I13 screen and the state gallery, desktop and phone: axe WCAG 2.2 A/AA, skip lin | Keyboard and screen-reader sessions by people (docs/USABILITY_TESTING.md protocol); older screens adopt the shared states | I10 |
+| S6-E-10 | 4444 | role | Error summaries linked to the affected fields | Partial | I10: app/scripts/audit-console.mjs on 69 console pages incl. every I2–I13 screen and the state gallery, desktop and phone: axe WCAG 2.2 A/AA, skip lin | Keyboard and screen-reader sessions by people (docs/USABILITY_TESTING.md protocol); older screens adopt the shared states | I10 |
+| S6-E-11 | 4445 | role | No reliance on colour, position or icons alone | Partial | I10: app/scripts/audit-console.mjs on 69 console pages incl. every I2–I13 screen and the state gallery, desktop and phone: axe WCAG 2.2 A/AA, skip lin | Keyboard and screen-reader sessions by people (docs/USABILITY_TESTING.md protocol); older screens adopt the shared states | I10 |
+| S6-E-12 | 4446 | role | Text resizing and zoom without loss of functionality | Partial | axe wcag22aa scans (acceptance P6-17/18/19); I10: app/scripts/audit-console.mjs on 69 console pages incl. every I2–I13 screen and the state gallery, d | Workspace WCAG 2.2 AA assessment by people, RTL review | I10 |
 | S6-E-13 | 4447 | role | Reduced-motion support | Met | prefers-reduced-motion in globals.css; cover skips under reduced motion |  | — |
-| S6-E-14 | 4448 | role | Adequate touch targets and spacing | Partial | axe wcag22aa scans (acceptance P6-17/18/19) | Workspace WCAG 2.2 AA assessment, RTL review | I10 |
-| S6-E-15 | 4449 | role | Accessible document previews and signature verification | Partial | axe wcag22aa scans (acceptance P6-17/18/19) | Workspace WCAG 2.2 AA assessment, RTL review | I10 |
-| S6-E-16 | 4450 | role | Plain-language instructions and meaningful confirmation messages | Partial | axe wcag22aa scans (acceptance P6-17/18/19) | Workspace WCAG 2.2 AA assessment, RTL review | I10 |
-| S6-E-17 | 4451 | role | Accessible authentication and recovery paths | Partial | axe wcag22aa scans (acceptance P6-17/18/19) | Workspace WCAG 2.2 AA assessment, RTL review | I10 |
-| S6-E-18 | 4452 | role | Alternative methods for people who cannot use a digital-only process | Partial | axe wcag22aa scans (acceptance P6-17/18/19) | Workspace WCAG 2.2 AA assessment, RTL review | I10 |
-| S6-E-19 | 4456 | design | Do not treat translation as replacing strings. | Partial | axe wcag22aa scans (acceptance P6-17/18/19) | Workspace WCAG 2.2 AA assessment, RTL review | I10 |
-| S6-E-20 | 4456 | design | The design system must support: | Partial | axe wcag22aa scans (acceptance P6-17/18/19) | Workspace WCAG 2.2 AA assessment, RTL review | I10 |
+| S6-E-14 | 4448 | role | Adequate touch targets and spacing | Partial | axe wcag22aa scans (acceptance P6-17/18/19); I10: app/scripts/audit-console.mjs on 69 console pages incl. every I2–I13 screen and the state gallery, d | Workspace WCAG 2.2 AA assessment by people, RTL review | I10 |
+| S6-E-15 | 4449 | role | Accessible document previews and signature verification | Partial | axe wcag22aa scans (acceptance P6-17/18/19); I10: app/scripts/audit-console.mjs on 69 console pages incl. every I2–I13 screen and the state gallery, d | Workspace WCAG 2.2 AA assessment by people, RTL review | I10 |
+| S6-E-16 | 4450 | role | Plain-language instructions and meaningful confirmation messages | Partial | axe wcag22aa scans (acceptance P6-17/18/19); I10: app/scripts/audit-console.mjs on 69 console pages incl. every I2–I13 screen and the state gallery, d | Workspace WCAG 2.2 AA assessment by people, RTL review | I10 |
+| S6-E-17 | 4451 | role | Accessible authentication and recovery paths | Partial | axe wcag22aa scans (acceptance P6-17/18/19); I10: app/scripts/audit-console.mjs on 69 console pages incl. every I2–I13 screen and the state gallery, d | Workspace WCAG 2.2 AA assessment by people, RTL review | I10 |
+| S6-E-18 | 4452 | role | Alternative methods for people who cannot use a digital-only process | Partial | axe wcag22aa scans (acceptance P6-17/18/19); I10: app/scripts/audit-console.mjs on 69 console pages incl. every I2–I13 screen and the state gallery, d | Workspace WCAG 2.2 AA assessment by people, RTL review | I10 |
+| S6-E-19 | 4456 | design | Do not treat translation as replacing strings. | Partial | axe wcag22aa scans (acceptance P6-17/18/19); I10: app/scripts/audit-console.mjs on 69 console pages incl. every I2–I13 screen and the state gallery, d | Workspace WCAG 2.2 AA assessment by people, RTL review | I10 |
+| S6-E-20 | 4456 | design | The design system must support: | Partial | axe wcag22aa scans (acceptance P6-17/18/19); I10: app/scripts/audit-console.mjs on 69 console pages incl. every I2–I13 screen and the state gallery, d | Workspace WCAG 2.2 AA assessment by people, RTL review | I10 |
 | S6-E-21 | 4458 | design | Logical CSS properties such as margin-inline-start | Partial | Public sites use logical CSS | Console/workspace logical CSS | I10 |
-| S6-E-22 | 4459 | design | Right-to-left and left-to-right text in the same document | Partial | axe wcag22aa scans (acceptance P6-17/18/19) | Workspace WCAG 2.2 AA assessment, RTL review | I10 |
-| S6-E-23 | 4460 | design | Correct alignment and ordering for mixed-language names and identifiers | Partial | axe wcag22aa scans (acceptance P6-17/18/19) | Workspace WCAG 2.2 AA assessment, RTL review | I10 |
-| S6-E-24 | 4461 | design | Localised dates, numbers, currencies and measurement units | Partial | axe wcag22aa scans (acceptance P6-17/18/19) | Workspace WCAG 2.2 AA assessment, RTL review | I10 |
-| S6-E-25 | 4462 | design | Language-specific search and sorting | Partial | axe wcag22aa scans (acceptance P6-17/18/19) | Workspace WCAG 2.2 AA assessment, RTL review | I10 |
-| S6-E-26 | 4463 | design | Translated error messages and service guidance | Partial | axe wcag22aa scans (acceptance P6-17/18/19) | Workspace WCAG 2.2 AA assessment, RTL review | I10 |
-| S6-E-27 | 4464 | design | Localised legal terms with links to the authoritative original text | Partial | axe wcag22aa scans (acceptance P6-17/18/19) | Workspace WCAG 2.2 AA assessment, RTL review | I10 |
+| S6-E-22 | 4459 | design | Right-to-left and left-to-right text in the same document | Partial | axe wcag22aa scans (acceptance P6-17/18/19); I10: app/scripts/audit-console.mjs on 69 console pages incl. every I2–I13 screen and the state gallery, d | Workspace WCAG 2.2 AA assessment by people, RTL review | I10 |
+| S6-E-23 | 4460 | design | Correct alignment and ordering for mixed-language names and identifiers | Partial | axe wcag22aa scans (acceptance P6-17/18/19); I10: app/scripts/audit-console.mjs on 69 console pages incl. every I2–I13 screen and the state gallery, d | Workspace WCAG 2.2 AA assessment by people, RTL review | I10 |
+| S6-E-24 | 4461 | design | Localised dates, numbers, currencies and measurement units | Partial | axe wcag22aa scans (acceptance P6-17/18/19); I10: app/scripts/audit-console.mjs on 69 console pages incl. every I2–I13 screen and the state gallery, d | Workspace WCAG 2.2 AA assessment by people, RTL review | I10 |
+| S6-E-25 | 4462 | design | Language-specific search and sorting | Partial | axe wcag22aa scans (acceptance P6-17/18/19); I10: app/scripts/audit-console.mjs on 69 console pages incl. every I2–I13 screen and the state gallery, d | Workspace WCAG 2.2 AA assessment by people, RTL review | I10 |
+| S6-E-26 | 4463 | design | Translated error messages and service guidance | Partial | axe wcag22aa scans (acceptance P6-17/18/19); I10: app/scripts/audit-console.mjs on 69 console pages incl. every I2–I13 screen and the state gallery, d | Workspace WCAG 2.2 AA assessment by people, RTL review | I10 |
+| S6-E-27 | 4464 | design | Localised legal terms with links to the authoritative original text | Partial | axe wcag22aa scans (acceptance P6-17/18/19); I10: app/scripts/audit-console.mjs on 69 console pages incl. every I2–I13 screen and the state gallery, d | Workspace WCAG 2.2 AA assessment by people, RTL review | I10 |
 | S6-E-28 | 4465 | design | Font fallback without loading external fonts | Platform rule stricter | CLAUDE.md "Typefaces are self-hosted under public/fonts (OFL); never load fonts or scripts from an outside service" — meets the spec's reason (no outs |  | — |
 | S6-E-29 | 4466 | design | Human review of legal translations | Met | Translations through review (lib/public-sites/translation.ts); laws keep authoritative text |  | — |
 | S6-E-30 | 4468 | design | The language of the interface should not change the identity of the authoritative legal instrument or silently replace the official text with a machine translation. | Met | Translations through review (lib/public-sites/translation.ts); laws keep authoritative text |  | — |
@@ -3407,7 +3407,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S6-F-16 | 4505 | security | Critical rule: a production dashboard must never silently fall back to demo data when a real integration fails. | Met | Production folds to Not connected (Generated.test.ts; lib/twin/read.test.ts) |  | — |
 | S6-F-17 | 4505 | security | It should display the missing data, the last successful update and the reason for the degraded state. | Partial | components/ui/SampleFold, Generated (production folds generated panels to Not connected); tests components/ui/Generated.test.ts, SampleFold.test.ts (N | Last successful update and reason on degraded panels outside the indicator register | I3 (+I10) |
 
-### Roadmap — Met 23, Partial 9, Not yet 4, Country decision 8
+### Roadmap — Met 23, Partial 11, Not yet 2, Country decision 8
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
@@ -3418,8 +3418,8 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S6-I-05 | 4591 | architecture | Roadmap 02 — Exit gate: authority and ownership rules validated by the designated legal and institutional owners. | Met | Constitutional phases |  | — |
 | S6-I-06 | 4593-4599 | architecture | Roadmap 03 — Security, audit and workflow kernel: Enforce access, purpose limitation, high-impact approval, versioned decisions, audit integrity, record correction and production/demo separation. | Partial | Kernel and I0.1 |  | I9 |
 | S6-I-07 | 4599 | architecture | Roadmap 03 — Exit gate: automated negative tests demonstrate that unauthorised actions are blocked. | Partial | Kernel and I0.1 |  | I9 |
-| S6-I-08 | 4601-4607 | architecture | Roadmap 04 — Premium design system and shared workspace: Implement the shell, casework, registers, forms, approval screens, documents, audit, empty/error states and accessible responsive patterns. | Not yet |  |  | I10 |
-| S6-I-09 | 4607 | architecture | Roadmap 04 — Exit gate: a representative workflow works end to end on desktop and mobile. | Not yet |  |  | I10 |
+| S6-I-08 | 4601-4607 | architecture | Roadmap 04 — Premium design system and shared workspace: Implement the shell, casework, registers, forms, approval screens, documents, audit, empty/error states and accessible responsive patterns. | Partial | I10: lib/theme/tokens.ts TYPE_SCALE (11–30px in rem), TYPE_ROLES (the specification's roles on the scale), SPACE_SCALE (4px base), CONTROL (44px contr | Shell, casework, registers, forms, approvals, documents and audit as shared screen patterns; the exit gate (a representative workflow end to end on de | I10 |
+| S6-I-09 | 4607 | architecture | Roadmap 04 — Exit gate: a representative workflow works end to end on desktop and mobile. | Partial | I10: lib/theme/tokens.ts TYPE_SCALE (11–30px in rem), TYPE_ROLES (the specification's roles on the scale), SPACE_SCALE (4px base), CONTROL (44px contr | Shell, casework, registers, forms, approvals, documents and audit as shared screen patterns; the exit gate (a representative workflow end to end on de | I10 |
 | S6-I-10 | 4609-4615 | architecture | Roadmap 05 — One pilot institution: Select an institution with clear authority, manageable integrations and a meaningful operational service. Complete real workflow configuration, record ownership, migration and user acc | Partial | Health chosen (plan I4); lib/nation/edition.ts (Institutional Edition in the deployment profile; outside it: no case, exchange answers not connected,  | The nation's real workflow configuration, migration and user acceptance testing | I4 |
 | S6-I-11 | 4615 | architecture | Roadmap 05 — Exit gate: authorised users complete the service with real records and verifiable audit evidence. | Partial | Health chosen (plan I4); lib/pilot/exit-gate.ts (computed from records: approved procedures, real completed cases, verifying seals with approved keys, | Met only by a production installation's own records: authorised officials completing real cases (a deployment act, never shipped) | I4 |
 | S6-I-12 | 4617-4623 | architecture | Roadmap 06 — Federation and institutional expansion: Connect the pilot to one other authorised institution. Test requests, denials, events, reconciliation, revocation, export and failure recovery before expanding the net | Not yet |  |  | I9 |
@@ -3506,8 +3506,8 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S6-K-17 | 4717 | acceptance | Incident response and support owners assigned | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-14: `app/src/app/api/ops/incidents/*/route.test.ts` (ack, escalate, resolve); `app/src/lib/data/support.test.ts`;  |  | — |
 | S6-K-18 | 4719 | acceptance | Monitoring and integration failures tested | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-15: `app/src/lib/ops/cron-runs.test.ts` "retries a failed job … and alerts once after the last attempt"; `app/src/ |  | — |
 | S6-K-19 | 4721 | acceptance | Export and exit process verified | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-16: `app/src/lib/portability/export.test.ts` "carries the institution's own records and nothing of another's, seal |  | — |
-| S6-K-20 | 4725 | acceptance | Keyboard and screen-reader testing completed | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P6-17: `app/scripts/audit-console.mjs` (first Tab stop is the skip link; CI "console audit"); `app/scripts/audit-publ | Keyboard checks are automated (skip link only). No screen-reader testing is recorded, and institutional workspace screens are mostly outside the audit | I10 |
-| S6-K-21 | 4727 | acceptance | WCAG 2.2 AA assessment performed | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P6-18: axe-core with `wcag22aa` tags in `app/scripts/audit-public-sites.mjs` and `app/scripts/audit-console.mjs` (CI) | This is an automated rule scan of the listed pages, not a WCAG 2.2 AA assessment of every screen. | I10 |
+| S6-K-20 | 4725 | acceptance | Keyboard and screen-reader testing completed | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P6-17: `app/scripts/audit-console.mjs` (first Tab stop is the skip link; CI "console audit"); `app/scripts/audit-publ | Automated checks only. No session with a screen reader or with keyboard-only users has been held: the protocol and the session template are in `docs/U | — |
+| S6-K-21 | 4727 | acceptance | WCAG 2.2 AA assessment performed | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P6-18: axe-core with `wcag22aa` tags in `app/scripts/audit-public-sites.mjs` and `app/scripts/audit-console.mjs` (CI) | Still an automated rule scan of the listed pages plus tests of the shared components, not an assessment of every screen by a qualified assessor (integ | — |
 | S6-K-22 | 4729 | acceptance | RTL and required languages reviewed | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P6-19: `app/src/lib/public-sites/translation.test.ts` "is complete when every string is translated from its current t | Proven for public sites and for forms' translations as a publication gate. Console and workspace RTL are not tested. | I10 |
 | S6-K-23 | 4731 | acceptance | Assisted and offline procedures tested where applicable | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P6-20: Step I1: `app/src/lib/forms/contract.test.ts` "records an assisted application: who assisted, the identity evi | The assisted channel is proven (and refused where `deployment.identity.assisted` is off). Offline: a self-service draft is kept in the browser and res | I6 |
 
