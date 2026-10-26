@@ -45,6 +45,8 @@ import { PASSPORT_PERMITS } from '@/lib/passports/procedures';
 import { CITIZENSHIP_PERMITS } from '@/lib/citizenship/procedures';
 import { LABOUR_PERMITS } from '@/lib/labour/procedures';
 import { SOCIAL_PERMITS } from '@/lib/social/procedures';
+// I12: security governance and resilience.
+import { SECURITY_PERMITS } from '@/lib/security/procedures';
 import { mappingInForce, powerRefusal, type Power } from './authority';
 import type { ActionSpec, Case, CasePackage } from '@/lib/casework/types';
 
@@ -130,6 +132,9 @@ export function classifyDecision(c: Case, a: ActionSpec, pkg: Pick<CasePackage, 
   // Human services (plan step I6): identity, passports and travel documents, citizenship, labour and social protection, each
   // family under its own permit type (lead: the slot the nation names). Proposed, unapproved: refused in production until approved.
   for (const permits of [IDENTITY_PERMITS, PASSPORT_PERMITS, CITIZENSHIP_PERMITS, LABOUR_PERMITS, SOCIAL_PERMITS]) for (const [k, permitType] of Object.entries(permits)) if (is(key, k)) return mapped(permitType);
+  // I12: security governance and resilience (lib/security): each family under its own permit type (lead: the slot the nation names).
+  // Proposed, unapproved: refused in production until approved.
+  for (const [k, permitType] of Object.entries(SECURITY_PERMITS)) if (is(key, k)) return mapped(permitType);
   for (const [prefix, authority] of DEPLOYMENT_DOMAINS) if (key.startsWith(`${prefix}.`)) return { kind: 'deployment', authority };
   return mapped(pkg.authority?.permitType);
 }

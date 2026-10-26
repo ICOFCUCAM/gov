@@ -26,8 +26,10 @@ export type ProfileStatus =
   | 'active' | 'superseded' | 'disputed' | 'suspended_pending_review' | 'withdrawn' | 'set_aside';
 
 /** The parts a profile bundles: each kept and changed on its own (lib/constitution/parts.ts). */
-export type PartKey = 'classification' | 'institutions' | 'authorities' | 'offices' | 'relationships' | 'dualControl' | 'suspension' | 'competences' | 'transitionRules' | 'sealKeys' | 'cabinetRules';
-export const PART_KEYS: PartKey[] = ['classification', 'institutions', 'authorities', 'offices', 'relationships', 'dualControl', 'suspension', 'competences', 'transitionRules', 'sealKeys', 'cabinetRules'];
+export type PartKey = 'classification' | 'institutions' | 'authorities' | 'offices' | 'relationships' | 'dualControl' | 'suspension' | 'competences' | 'transitionRules' | 'sealKeys' | 'cabinetRules'
+  // I12: the nation's security classification scheme and the installation's declared accreditation.
+  | 'securityClassification';
+export const PART_KEYS: PartKey[] = ['classification', 'institutions', 'authorities', 'offices', 'relationships', 'dualControl', 'suspension', 'competences', 'transitionRules', 'sealKeys', 'cabinetRules', 'securityClassification'];
 
 /**
  * The change process (policy-change.ts `audit` key) of each part: a dispute
@@ -50,6 +52,8 @@ export const PART_AUDIT: Record<PartKey, string> = {
   sealKeys: 'seal-key.rules',
   // The Cabinet's composition, quorum and decision rule (plan step I5, lib/cabinet/register.ts): a part only once adopted.
   cabinetRules: 'cabinet.rules',
+  // I12 (lib/security/classification.ts): a part only once the nation adopts a scheme or declares an accreditation.
+  securityClassification: 'security.classification',
 };
 export const PART_LABELS: Record<PartKey, string> = {
   classification: 'Classification of the state',
@@ -63,6 +67,7 @@ export const PART_LABELS: Record<PartKey, string> = {
   transitionRules: 'Rules for transitions and emergencies',
   sealKeys: 'Who approves the state\'s seal keys',
   cabinetRules: 'Cabinet composition, quorum and decision rule',
+  securityClassification: 'Security classification scheme and the installation\'s accreditation',
 };
 
 /** One part as a profile holds it: the version in force when captured (the count of adopted changes) and the digest of its values. */

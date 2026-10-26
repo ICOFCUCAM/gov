@@ -37,6 +37,9 @@ import '@/lib/administration/procedures';
 import '@/lib/finance/procedures';
 import '@/lib/cabinet/procedures';
 import '@/lib/procurement/procedures';
+// I12: security governance and resilience (cyber incidents, vulnerabilities, suppliers, exceptions, exercises, critical
+// infrastructure, clearances as metadata).
+import '@/lib/security/procedures';
 // The decision guard: every decision rests on a named authority (lib/permits/decisions.ts).
 import '@/lib/permits/decisions';
 // Publication gates: a form takes submissions in production only once its release is approved (lib/forms/publication.ts).
@@ -71,6 +74,7 @@ import { installPassportProcedures } from '@/lib/passports/procedures';
 import { installCitizenshipProcedures } from '@/lib/citizenship/procedures';
 import { installLabourProcedures } from '@/lib/labour/procedures';
 import { installSocialProcedures } from '@/lib/social/procedures';
+import { installSecurityProcedures } from '@/lib/security/procedures';
 export { REFERENCE_PROCEDURES } from '@/lib/civil/procedures';
 export { ORGANISATION_PROCEDURES } from '@/lib/organisations/procedures';
 export { IMMIGRATION_PROCEDURES } from '@/lib/immigration/procedures';
@@ -97,6 +101,7 @@ export { PASSPORT_PROCEDURES } from '@/lib/passports/procedures';
 export { CITIZENSHIP_PROCEDURES } from '@/lib/citizenship/procedures';
 export { LABOUR_PROCEDURES } from '@/lib/labour/procedures';
 export { SOCIAL_PROCEDURES } from '@/lib/social/procedures';
+export { SECURITY_PROCEDURES } from '@/lib/security/procedures';
 
 /** Draft every reference procedure (civil registration, organisations, immigration, police intake, courts, tax, education, professions, health, customs, medicines and devices, public-health programmes, health complaints, independent oversight, land, building, housing and transport, budget and treasury, the Cabinet office, procurement review, identity, passports, citizenship, labour and social protection) the installation does not have yet. */
 export function installReferenceProcedures(by: string): { drafted: string[]; present: string[] } {
@@ -106,6 +111,8 @@ export function installReferenceProcedures(by: string): { drafted: string[]; pre
     // Plan step I5: budget and treasury, the Cabinet office, the procurement review body (procurement itself: each institution's own templates).
     installFinanceProcedures(by), installCabinetProcedures(by), installProcurementReviewProcedures(by),
     // Plan step I6: human services.
-    installIdentityProcedures(by), installPassportProcedures(by), installCitizenshipProcedures(by), installLabourProcedures(by), installSocialProcedures(by)];
+    installIdentityProcedures(by), installPassportProcedures(by), installCitizenshipProcedures(by), installLabourProcedures(by), installSocialProcedures(by),
+    // I12: security governance and resilience.
+    installSecurityProcedures(by)];
   return { drafted: all.flatMap(x => x.drafted), present: all.flatMap(x => x.present) };
 }

@@ -501,6 +501,11 @@ const OFFICIAL_WORK: RegExp[] = [
   // official, logged), and what the institution concerned adds beside the body's record (a response, evidence, a controller's answer);
   // each checked against the record in lib/oversight. Cases themselves move only through /api/cases.
   /^\/api\/oversight$/,
+  // I12: security governance and resilience (lib/security): reading a security record (need to know, a purpose, the action and,
+  // for a marked record, a valid clearance; every read logged), naming who needs to know, the classification scheme and
+  // accreditation (an administrator proposes, a different official confirms), security directives and cross-domain transfer
+  // records (two officials). Each checked in lib/security against the record. Cases move only through /api/cases.
+  /^\/api\/security$/,
   // The economic group (plan I5): a sealed bid received and withdrawn, a committee member's own declaration of interests and its
   // management, an institution adopting the procurement templates (lib/procurement); progress on a Cabinet action and its closure,
   // the Cabinet rules proposed and confirmed (lib/cabinet). Each checked in the route against the record and the rules below.
@@ -1062,6 +1067,65 @@ export function caseReadRefusal(s: CaseScope, c: CaseFacts, purpose?: string): s
   if (own && (assignedTo(s, c) || supervises(s, c))) return null;
   if (auditorWithPurpose) return null;
   return role === 'auditor' ? 'Say why you need to read this case' : 'This case is open only to the officials assigned to it and its named supervisors';
+}
+
+// ── I12: security records (lib/security; catalogue Part 11 §4.2) ─────────────
+
+/** What the access rule needs to know about a security record. */
+export interface SecurityRecordFacts {
+  /** The institution that keeps it. */
+  owner: string;
+  /** Its marking's rank: 0 not classified, 1… the nation's scheme (lib/security/classification.ts rankOf()). */
+  rank: number;
+  /** Official ids with a need to know this record: assigned to its case or named for it by one who can sign there. */
+  needToKnow: string[];
+  /** Institutions it is shared with as restricted recipients (they see the recipient view only). */
+  recipients: string[];
+}
+export type SecurityAction = 'read' | 'export';
+
+/**
+ * May this official take this action on this security record? null when yes,
+ * otherwise the reason (deny by default; catalogue Part 11 §4.2 "If any
+ * required condition fails, deny the operation"). Every dimension is checked
+ * on its own, and none implies another:
+ *   - signed in, the second step where the installation asks for it, and for
+ *     a marked record always (assurance);
+ *   - acting for the keeping institution (the full record) or a recipient it
+ *     named (the recipient view), or under an approved audit or
+ *     request-information relationship covering `security` records for the
+ *     stated purpose; never the whole government or an administrator by role;
+ *   - a need to know this record: named for it, or (recipient view) one who
+ *     can sign at a recipient institution;
+ *   - a stated purpose;
+ *   - for a marked record, a clearance at its level or above, valid today
+ *     (`clearance`, read from the clearance register by the caller): necessary,
+ *     never sufficient. A clearance alone grants nothing;
+ *   - the action: a marked record is never exported; an export needs one who
+ *     can sign.
+ * The caller writes every attempt, allowed or refused, to the access log.
+ */
+export function securityAccessRefusal(s: CaseScope | null, r: SecurityRecordFacts, ask: { action: SecurityAction; view: 'full' | 'recipient'; purpose?: string; clearance?: { rank: number } | null }): string | null {
+  if (!s) return 'Sign in: security records are read by named officials only';
+  const missing = secondStepMissing(s);
+  if (missing) return missing;
+  if (r.rank > 0 && !s.twoStep) return 'A marked record is read only after the second sign-in step in this session';
+  const role = roleOf(s);
+  const own = !!s.institution && s.institution === r.owner;
+  const recipient = !!s.institution && r.recipients.includes(s.institution);
+  const grant = !own && ask.view === 'full' ? readRelationship(s, r.owner, ['security'], ask.purpose) : null;
+  if (role === 'administrator' && !grant) return 'Administrators have no access to security records by their role: need to know is given for a record, never by a role';
+  if (ask.view === 'full' && !own && !grant) return recipient ? 'Your institution is a recipient: it sees the recipient view, not the full record' : 'Security records are read by the institution that keeps them; serving the whole government gives no access';
+  if (ask.view === 'recipient' && !own && !recipient) return 'This record is shared only with the recipients the keeping institution named';
+  const named = !!s.id && r.needToKnow.includes(s.id);
+  if (!grant && !named && !(ask.view === 'recipient' && recipient && role === 'signatory')) return 'Need to know: you are not assigned to this record nor named for it. A clearance, a role or a seniority does not give access';
+  if (!ask.purpose?.trim()) return 'State the purpose of this read';
+  if (r.rank > 0 && !(ask.clearance && ask.clearance.rank >= r.rank)) return 'This record is marked: it is read only with a clearance at its level or above, valid today (and a clearance alone gives no access)';
+  if (ask.action === 'export') {
+    if (r.rank > 0) return 'A marked record is never exported or downloaded';
+    if (role !== 'signatory') return 'An export of a security record needs an official who can sign';
+  }
+  return null;
 }
 
 /** The access log (lib/records/access-log.ts): auditors, and officials of the nation's data-protection authority. Administrators do not read it by their role. */
