@@ -7,14 +7,17 @@
 //   SOV      the graphite officer apps and National Shell (`.sov`)
 //   CONSOLE  the deep-navy command console: Situation Room and every page in
 //            CommandShell (spread as inline custom properties)
+//   WORKSPACE the institutional workspace (`.ws`, plan step I10)
 // plus the status colours drawn on the dark grounds (STATUS), the platform's
 // "live / information" teal (INFO), and the institutional champagne the front
 // door uses for authority (INSTITUTIONAL).
 //
 // Values are "r g b" triplets for the CSS custom properties (used as
 // rgb(var(--c-ink) / <alpha>)) and hex for inline styles. globals.css must
-// match LIGHT and SOV exactly and every text colour must read at 4.5:1 on its
-// grounds (tokens.test.ts checks both).
+// match LIGHT, SOV and WORKSPACE exactly and every text colour must read at
+// 4.5:1 on its grounds (tokens.test.ts checks both). Beside the colours: the
+// type scale, the spacing scale, controls and keyboard focus (plan step I10;
+// type-scale.test.ts holds console code to them).
 
 export type Triplet = `${number} ${number} ${number}`;
 export type Ground = Record<`--c-${string}`, Triplet>;
@@ -66,6 +69,106 @@ export const CONSOLE: Ground = {
   '--c-link': '74 198 212',
   '--c-link-hover': '130 220 230',
 };
+
+/**
+ * The institutional workspace ground (plan step I10, specification Part 6 §B,
+ * plan §3.3): Sovereign Editorial and Modern Institutional as one ground.
+ * Warm canvas `#F7F7F2`, white surfaces, primary text `#252B29`, sovereign
+ * green `#193B35` for primary actions and links. The specification's
+ * secondary text `#6B7470` reads 4.48:1 on the canvas, so it is darkened
+ * until it reads 4.5:1 on every workspace ground (`--c-ink-muted`).
+ * Copper (`--c-emphasis`) is for limited emphasis on the canvas and white
+ * surfaces only (4.53:1 on the canvas), never body text on `surface-2`.
+ * Status colours are the light ground's: never the nation's accent, the
+ * green or the copper. CSS: `.ws` in globals.css. No screen is repainted
+ * with it yet: the console keeps its grounds (docs/CONSOLE_DESIGN.md §1);
+ * the state gallery (/gov/help/states) shows every component on it.
+ */
+export const WORKSPACE: Ground = {
+  '--c-bg': '247 247 242',
+  '--c-surface': '255 255 255',
+  '--c-surface-2': '239 239 232',
+  '--c-ink': '37 43 41',
+  '--c-ink-soft': '78 86 82',
+  // The specification's 107 116 112 at 4.48:1 on the canvas, darkened: 4.9:1 on the canvas, 4.55:1 on surface-2.
+  '--c-ink-muted': '101 110 106',
+  '--c-line': '214 214 204',
+  '--c-line-soft': '232 232 224',
+  '--c-link': '25 59 53',
+  '--c-link-hover': '15 40 36',
+  '--c-ok': '45 106 79',
+  '--c-warn': '138 103 0',
+  '--c-alert': '138 58 54',
+  '--c-accent': '25 59 53',
+  '--c-emphasis': '168 93 66',
+};
+
+/**
+ * The type scale (plan step I10, specification Part 6 §B "Typography and
+ * spacing"): one scale, in pixels at the default 16px root and served in rem
+ * so the text-size setting and browser zoom enlarge it. Tailwind's own steps
+ * (`text-xs` … `text-3xl`) are the scale, with two steps added for the dense
+ * console: `text-2xs` (11px, markers and captions only, never body text; the
+ * phone floor of the console) and `text-compact` (13px, compact tables and
+ * metadata). Console code takes sizes from it, never `text-[Npx]`
+ * (type-scale.test.ts lists the exceptions with their reasons).
+ */
+export const TYPE_SCALE = {
+  '2xs': 11,
+  xs: 12,
+  compact: 13,
+  sm: 14,
+  base: 16,
+  lg: 18,
+  xl: 20,
+  '2xl': 24,
+  '3xl': 30,
+} as const;
+export type TypeStep = keyof typeof TYPE_SCALE;
+/** rem for a scale step (16px root). */
+export const remOf = (px: number): string => `${+(px / 16).toFixed(4)}rem`;
+
+/**
+ * The specification's typography roles mapped onto the scale. `spec` is the
+ * proposed range (px); `steps` are the scale steps that fill it. `command` is
+ * the dense console's choice (Operational Command, plan §3.3) where it sits
+ * below the range, with the reason.
+ */
+export const TYPE_ROLES: Record<string, { spec: [number, number]; steps: TypeStep[]; command?: { step: TypeStep; why: string } }> = {
+  body: { spec: [14, 16], steps: ['sm', 'base'] },
+  compactTable: { spec: [13, 14], steps: ['compact', 'sm'] },
+  pageTitle: { spec: [28, 32], steps: ['3xl'], command: { step: 'lg', why: 'The console page title (ConsoleTabs) sits under a 56px command bar on a dense operational ground; the workspace ground uses 3xl' } },
+  sectionHeading: { spec: [18, 22], steps: ['lg', 'xl'], command: { step: 'xs', why: 'Console sections (DataSystem Section) are uppercase, letter-spaced labels under the page title, not headings set large' } },
+  smallLabel: { spec: [12, 13], steps: ['xs', 'compact'] },
+  marker: { spec: [11, 11], steps: ['2xs'] },
+};
+
+/**
+ * The spacing scale: a 4px base (specification: "Base spacing 4 px"), with
+ * the 2px half step Tailwind already has (`0.5`, `1.5`, `2.5`, `3.5`) for
+ * insets inside compact controls, and the 1px hairline (`px`) for borders.
+ * Values in px; Tailwind's spacing utilities are this scale. Arbitrary
+ * spacing (`p-[7px]`) is off the scale (type-scale.test.ts).
+ */
+export const SPACE_BASE = 4;
+export const SPACE_SCALE = [0, 1, 2, 4, 6, 8, 10, 12, 14, 16, 20, 24, 28, 32, 40, 48, 56, 64, 80, 96] as const;
+
+/** Controls, containers and keyboard focus (specification Part 6 §B). */
+export const CONTROL = {
+  /** Common control height (spec 40–44px): `min-h-tap`, `--tap`. */
+  height: 44,
+  /** Standard card radius (spec 10–14px): Tailwind `rounded-md`. */
+  cardRadius: 14,
+} as const;
+
+/**
+ * Keyboard focus (spec: "clearly visible, high-contrast outline on every
+ * interactive element"): a 3px amber outline 2px outside the element, with
+ * a 2px halo of the ground's ink filling the gap, so one of the two reads at
+ * 3:1 (WCAG 1.4.11) on every ground, light or dark (tokens.test.ts).
+ * CSS: `:focus-visible` and `.focus-ring` in globals.css.
+ */
+export const FOCUS = { ring: '#ffbf47', width: 3, offset: 2, halo: 2 } as const;
 
 /** Status colours on the dark grounds (always paired with a word or shape, never colour alone). */
 export const STATUS = {

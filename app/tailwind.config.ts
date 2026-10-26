@@ -1,5 +1,5 @@
 import type { Config } from 'tailwindcss';
-import { NIGHT } from './src/lib/theme/tokens';
+import { NIGHT, TYPE_SCALE, CONTROL, remOf } from './src/lib/theme/tokens';
 
 const config: Config = {
   content: ['./src/**/*.{ts,tsx,mdx}'],
@@ -45,6 +45,12 @@ const config: Config = {
         'wall-ink': '#e8eaed',
         'wall-muted': '#8b95a3',
       },
+      // The type scale (lib/theme/tokens.ts TYPE_SCALE, plan step I10): Tailwind's
+      // own steps plus the console's 11px marker step and 13px compact step.
+      fontSize: {
+        '2xs': [remOf(TYPE_SCALE['2xs']), { lineHeight: '1rem' }],
+        compact: [remOf(TYPE_SCALE.compact), { lineHeight: '1.125rem' }],
+      },
       fontFamily: {
         sans: ['Inter', 'Segoe UI', 'system-ui', '-apple-system', 'Noto Sans', 'sans-serif'],
         serif: ['Source Serif 4', 'Georgia', 'serif'],
@@ -54,7 +60,7 @@ const config: Config = {
         DEFAULT: '8px',
         xs: '4px',
         sm: '8px',
-        md: '14px',
+        md: `${CONTROL.cardRadius}px`,
         lg: '22px',
       },
       boxShadow: {
@@ -119,10 +125,10 @@ const config: Config = {
         scanline: 'scanline 6.5s linear infinite',
       },
       minHeight: {
-        tap: '44px',
+        tap: `${CONTROL.height}px`,
       },
       minWidth: {
-        tap: '44px',
+        tap: `${CONTROL.height}px`,
       },
       // Inclusion-floor breakpoints: usable on a small Android browser.
       screens: {

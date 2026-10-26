@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import { LIGHT, SOV, CONSOLE, STATUS, INFO, INSTITUTIONAL, NIGHT, DECISION_CLASS, hexOf, type Ground } from './tokens';
+import { LIGHT, SOV, CONSOLE, WORKSPACE, STATUS, INFO, INSTITUTIONAL, NIGHT, DECISION_CLASS, TYPE_SCALE, TYPE_ROLES, SPACE_BASE, SPACE_SCALE, CONTROL, FOCUS, hexOf, remOf, type Ground } from './tokens';
 import { sealTile, accentText, GRAPHIC } from './nation';
 import { contrast, AA } from '@/apps/_shared/public/design/contrast';
 import { TONE, TONE_SHAPE, TONE_WORD } from '@/lib/tone-palette';
@@ -19,12 +19,13 @@ describe('design tokens', () => {
   it('are the values the stylesheet and the console use', () => {
     expect(block(':root')).toEqual(LIGHT);
     expect(block('.sov')).toEqual(SOV);
+    expect(block('.ws')).toEqual(WORKSPACE);
     expect(TONE).toEqual(STATUS);
     for (const [k, v] of Object.entries(CONSOLE)) expect((PALETTE as Record<string, string>)[k]).toBe(v);
   });
 
   it('give every text colour 4.5:1 on every ground it is drawn on', () => {
-    for (const [name, g] of [['light', LIGHT], ['sov', SOV], ['console', CONSOLE]] as const) {
+    for (const [name, g] of [['light', LIGHT], ['sov', SOV], ['console', CONSOLE], ['workspace', WORKSPACE]] as const) {
       for (const ground of ['--c-bg', '--c-surface', '--c-surface-2']) {
         for (const ink of ['--c-ink', '--c-ink-soft', '--c-ink-muted', '--c-link']) {
           expect(contrast(hx(g, ink), hx(g, ground)), `${name} ${ink} on ${ground}`).toBeGreaterThanOrEqual(AA);
@@ -75,5 +76,77 @@ describe('design tokens', () => {
     }
     // A colour that already stands out is kept as chosen.
     expect(sealTile('#ffd400', surface).fill).toBe('#ffd400');
+  });
+});
+
+// Plan step I10: the workspace ground, the type and spacing scales, controls and focus.
+const rootVar = (name: string) => new RegExp(`${name}:\\s*([^;]+);`).exec(css.slice(css.indexOf(':root {'), css.indexOf('}', css.indexOf(':root {'))))?.[1]?.trim();
+
+describe('workspace ground, type, spacing and focus tokens (plan I10)', () => {
+  it('keep the specification\'s workspace palette, with the secondary text darkened to 4.5:1', () => {
+    expect([hx(WORKSPACE, '--c-bg'), hx(WORKSPACE, '--c-surface'), hx(WORKSPACE, '--c-ink'), hx(WORKSPACE, '--c-accent'), hx(WORKSPACE, '--c-emphasis')])
+      .toEqual(['#f7f7f2', '#ffffff', '#252b29', '#193b35', '#a85d42']);
+    // The specification's #6B7470 falls short on the canvas; the token is darker and passes everywhere.
+    expect(contrast('#6b7470', '#f7f7f2')).toBeLessThan(AA);
+    for (const ground of ['--c-bg', '--c-surface', '--c-surface-2']) {
+      for (const k of ['--c-ok', '--c-warn', '--c-alert', '--c-accent']) expect(contrast(hx(WORKSPACE, k), hx(WORKSPACE, ground)), `workspace ${k} on ${ground}`).toBeGreaterThanOrEqual(AA);
+    }
+    // Copper: emphasis on the canvas and white surfaces only.
+    for (const ground of ['--c-bg', '--c-surface']) expect(contrast(hx(WORKSPACE, '--c-emphasis'), hx(WORKSPACE, ground))).toBeGreaterThanOrEqual(AA);
+    // Status colours never take the green or the copper.
+    for (const k of ['--c-ok', '--c-warn', '--c-alert']) expect([WORKSPACE['--c-accent'], WORKSPACE['--c-emphasis']]).not.toContain(WORKSPACE[k as keyof Ground]);
+  });
+
+  it('have one type scale, in rem, that fills the specification\'s roles', () => {
+    const px = Object.values(TYPE_SCALE);
+    expect([...px].sort((a, b) => a - b)).toEqual(px);
+    expect(Math.min(...px)).toBeGreaterThanOrEqual(11);
+    for (const [step, v] of Object.entries(TYPE_SCALE)) expect(rootVar(`--t-${step}`), step).toBe(remOf(v));
+    for (const [role, r] of Object.entries(TYPE_ROLES)) {
+      for (const step of r.steps) {
+        expect(TYPE_SCALE[step], `${role} ${step}`).toBeGreaterThanOrEqual(r.spec[0]);
+        expect(TYPE_SCALE[step], `${role} ${step}`).toBeLessThanOrEqual(r.spec[1]);
+      }
+      if (r.command) expect(r.command.why.length, role).toBeGreaterThan(40);
+    }
+    expect(Object.keys(TYPE_ROLES)).toEqual(expect.arrayContaining(['body', 'compactTable', 'pageTitle', 'sectionHeading', 'smallLabel']));
+  });
+
+  it('space on a 4px base, with the 2px half step and the 1px hairline only', () => {
+    expect(SPACE_BASE).toBe(4);
+    expect(rootVar('--space')).toBe(`${SPACE_BASE}px`);
+    for (const v of SPACE_SCALE) expect(v === 1 || v % 2 === 0, String(v)).toBe(true);
+    expect(SPACE_SCALE.filter(v => v % SPACE_BASE === 0).length).toBeGreaterThan(SPACE_SCALE.length / 2);
+  });
+
+  it('size controls and cards within the specification, and Tailwind uses the same values', async () => {
+    expect(CONTROL.height).toBeGreaterThanOrEqual(40); expect(CONTROL.height).toBeLessThanOrEqual(44);
+    expect(CONTROL.cardRadius).toBeGreaterThanOrEqual(10); expect(CONTROL.cardRadius).toBeLessThanOrEqual(14);
+    expect(rootVar('--tap')).toBe(`${CONTROL.height}px`);
+    expect(rootVar('--control-h')).toBe(`${CONTROL.height}px`);
+    expect(rootVar('--radius-card')).toBe(`${CONTROL.cardRadius}px`);
+    const tw = (await import('../../../tailwind.config')).default as unknown as { theme: { extend: { fontSize: Record<string, [string, unknown]>; borderRadius: Record<string, string>; minHeight: Record<string, string> } } };
+    const e = tw.theme.extend;
+    expect(e.fontSize['2xs']![0]).toBe(remOf(TYPE_SCALE['2xs']));
+    expect(e.fontSize.compact![0]).toBe(remOf(TYPE_SCALE.compact));
+    expect(e.borderRadius.md).toBe(`${CONTROL.cardRadius}px`);
+    expect(e.minHeight.tap).toBe(`${CONTROL.height}px`);
+  });
+
+  it('show keyboard focus at 3:1 on every ground: the amber ring or the ink halo beside it', () => {
+    expect(rootVar('--focus-ring')).toBe(FOCUS.ring.slice(1).match(/../g)!.map(h => parseInt(h, 16)).join(' '));
+    expect(rootVar('--focus-width')).toBe(`${FOCUS.width}px`);
+    expect(rootVar('--focus-halo')).toBe(`${FOCUS.halo}px`);
+    expect(FOCUS.width).toBeGreaterThanOrEqual(2);
+    expect(css).toMatch(/:focus-visible \{\s*outline: var\(--focus-width\) solid rgb\(var\(--focus-ring\)\)/);
+    expect(css).toMatch(/\.focus-ring:focus-visible \{\s*outline: var\(--focus-width\) solid rgb\(var\(--focus-ring\)\)/);
+    const NON_TEXT = 3;
+    for (const [name, g] of [['light', LIGHT], ['sov', SOV], ['console', CONSOLE], ['workspace', WORKSPACE]] as const) {
+      for (const ground of ['--c-bg', '--c-surface', '--c-surface-2']) {
+        const best = Math.max(contrast(FOCUS.ring, hx(g, ground)), contrast(hx(g, '--c-ink'), hx(g, ground)));
+        expect(best, `focus on ${name} ${ground}`).toBeGreaterThanOrEqual(NON_TEXT);
+      }
+    }
+    expect(contrast(FOCUS.ring, NIGHT.ground)).toBeGreaterThanOrEqual(NON_TEXT);
   });
 });
