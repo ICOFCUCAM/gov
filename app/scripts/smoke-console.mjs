@@ -80,6 +80,11 @@ const PAGES = [
   { path: '/gov/health-regulation/programmes', map: false, text: /public-health programmes and workforce/i },
   // Independent oversight (plan I8): complaints, disclosures, audit engagements and data-protection requests; protected identities hidden.
   { path: '/gov/oversight', map: false, text: /independent oversight/i },
+  // Human services (plan I6): identity, passports and travel documents, labour, social protection.
+  { path: '/gov/identity', map: false, text: /national identity/i },
+  { path: '/gov/passports', map: false, text: /passports and travel documents/i },
+  { path: '/gov/labour', map: false, text: /labour and employment/i },
+  { path: '/gov/social-protection', map: false, text: /social protection/i },
   // Tax services (plan step I5) and forms batch 6: the procedures and a form of each kind, in three channels.
   { path: '/gov/tax/services', map: false, text: /tax services/i },
   { path: '/gov/law/procedures/forms/tax.return.periodic.nil', map: false, text: /register status/i },

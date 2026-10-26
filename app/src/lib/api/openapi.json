@@ -95,6 +95,9 @@
       "name": "health-regulation"
     },
     {
+      "name": "identity"
+    },
+    {
       "name": "immigration"
     },
     {
@@ -102,6 +105,9 @@
     },
     {
       "name": "integrations"
+    },
+    {
+      "name": "labour"
     },
     {
       "name": "law"
@@ -155,6 +161,9 @@
       "name": "parcels"
     },
     {
+      "name": "passports"
+    },
+    {
       "name": "payments"
     },
     {
@@ -198,6 +207,9 @@
     },
     {
       "name": "signatures"
+    },
+    {
+      "name": "social-protection"
     },
     {
       "name": "sovereign"
@@ -6170,6 +6182,7 @@
                                         "anticorruption",
                                         "businessRegister",
                                         "centralBank",
+                                        "citizenship",
                                         "civilRegistration",
                                         "constitutionalCourt",
                                         "controlledSubstances",
@@ -6184,6 +6197,7 @@
                                         "identity",
                                         "immigration",
                                         "judiciary",
+                                        "labour",
                                         "lawRegister",
                                         "legislature",
                                         "medicinesRegulation",
@@ -6191,9 +6205,11 @@
                                         "police",
                                         "professionalRegulation",
                                         "publicHealth",
+                                        "socialProtection",
                                         "statistics",
                                         "supremeAudit",
                                         "tax",
+                                        "travelDocuments",
                                         "trustServices"
                                       ],
                                       "description": "The slot the form or procedure names."
@@ -6204,6 +6220,7 @@
                                         "anticorruption",
                                         "businessRegister",
                                         "centralBank",
+                                        "citizenship",
                                         "civilRegistration",
                                         "constitutionalCourt",
                                         "controlledSubstances",
@@ -6218,6 +6235,7 @@
                                         "identity",
                                         "immigration",
                                         "judiciary",
+                                        "labour",
                                         "lawRegister",
                                         "legislature",
                                         "medicinesRegulation",
@@ -6225,9 +6243,11 @@
                                         "police",
                                         "professionalRegulation",
                                         "publicHealth",
+                                        "socialProtection",
                                         "statistics",
                                         "supremeAudit",
                                         "tax",
+                                        "travelDocuments",
                                         "trustServices"
                                       ],
                                       "description": "The slot whose institution acts (the slot itself, or the stand-in)."
@@ -15764,6 +15784,7 @@
                               "anticorruption",
                               "businessRegister",
                               "centralBank",
+                              "citizenship",
                               "civilRegistration",
                               "constitutionalCourt",
                               "controlledSubstances",
@@ -15778,6 +15799,7 @@
                               "identity",
                               "immigration",
                               "judiciary",
+                              "labour",
                               "lawRegister",
                               "legislature",
                               "medicinesRegulation",
@@ -15785,9 +15807,11 @@
                               "police",
                               "professionalRegulation",
                               "publicHealth",
+                              "socialProtection",
                               "statistics",
                               "supremeAudit",
                               "tax",
+                              "travelDocuments",
                               "trustServices"
                             ]
                           },
@@ -23445,6 +23469,591 @@
         "x-source": "src/app/api/health/route.ts"
       }
     },
+    "/api/identity": {
+      "get": {
+        "tags": [
+          "identity"
+        ],
+        "operationId": "get_identity",
+        "summary": "GET /api/identity",
+        "description": "GET /api/identity — the national identity register (lib/identity/register.ts; plan step I6) for the identity authority's officials, and auditors with a purpose. Without a search: counts only (records, credentials by status, open reviews, determinations, deliveries; no person, no number) and whether the authority is named. ?number= (register or credential number), ?civilRegistration=, or ?familyName=&birthDate=[&givenNames=]: the matching records with their claims, credentials, production and delivery events and determinations; every search and read, allowed or refused, is written to the access log, and a purpose is needed to search by name (field series Part 4 §3.2: never inferred from a name alone; numbers masked in lists, ?masked=1). Changes happen only through decided identity cases (/api/cases); other institutions verify through the exchange (identity.verify), never this file.",
+        "parameters": [
+          {
+            "name": "masked",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "counts": {
+                          "type": "object",
+                          "properties": {
+                            "records": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
+                            "credentials": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
+                            "underReview": {
+                              "type": "number"
+                            },
+                            "determinations": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
+                            "delivered": {
+                              "type": "number"
+                            },
+                            "samples": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "records",
+                            "credentials",
+                            "underReview",
+                            "determinations",
+                            "delivered",
+                            "samples"
+                          ]
+                        },
+                        "records": {
+                          "type": "array",
+                          "items": {
+                            "not": {}
+                          }
+                        },
+                        "authority": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name"
+                              ]
+                            }
+                          ]
+                        },
+                        "procedures": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "title"
+                            ]
+                          }
+                        },
+                        "labels": {
+                          "type": "object",
+                          "properties": {
+                            "credentialStates": {
+                              "type": "object",
+                              "properties": {
+                                "active": {
+                                  "type": "string"
+                                },
+                                "cancelled": {
+                                  "type": "string"
+                                },
+                                "damaged": {
+                                  "type": "string"
+                                },
+                                "expired": {
+                                  "type": "string"
+                                },
+                                "produced": {
+                                  "type": "string"
+                                },
+                                "replaced": {
+                                  "type": "string"
+                                },
+                                "reported-lost": {
+                                  "type": "string"
+                                },
+                                "reported-stolen": {
+                                  "type": "string"
+                                },
+                                "requested": {
+                                  "type": "string"
+                                },
+                                "revoked": {
+                                  "type": "string"
+                                },
+                                "suspended": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "active",
+                                "cancelled",
+                                "damaged",
+                                "expired",
+                                "produced",
+                                "replaced",
+                                "reported-lost",
+                                "reported-stolen",
+                                "requested",
+                                "revoked",
+                                "suspended"
+                              ]
+                            },
+                            "verify": {
+                              "type": "object",
+                              "properties": {
+                                "additional_review_required": {
+                                  "type": "string"
+                                },
+                                "not_verified": {
+                                  "type": "string"
+                                },
+                                "unable_to_verify": {
+                                  "type": "string"
+                                },
+                                "verified": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "additional_review_required",
+                                "not_verified",
+                                "unable_to_verify",
+                                "verified"
+                              ]
+                            },
+                            "determinations": {
+                              "type": "array",
+                              "prefixItems": [
+                                {
+                                  "type": "string",
+                                  "const": "same-person"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "different-persons"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "unresolved"
+                                }
+                              ],
+                              "minItems": 3,
+                              "maxItems": 3
+                            }
+                          },
+                          "required": [
+                            "credentialStates",
+                            "verify",
+                            "determinations"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "counts",
+                        "records",
+                        "authority",
+                        "procedures",
+                        "labels"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "counts": {
+                          "type": "object",
+                          "properties": {
+                            "records": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
+                            "credentials": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
+                            "underReview": {
+                              "type": "number"
+                            },
+                            "determinations": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
+                            "delivered": {
+                              "type": "number"
+                            },
+                            "samples": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "records",
+                            "credentials",
+                            "underReview",
+                            "determinations",
+                            "delivered",
+                            "samples"
+                          ]
+                        },
+                        "records": {
+                          "anyOf": [
+                            {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/IdentityRecord"
+                              }
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "number": {
+                                    "type": "string"
+                                  },
+                                  "state": {
+                                    "type": "string",
+                                    "enum": [
+                                      "active",
+                                      "revoked",
+                                      "superseded"
+                                    ]
+                                  },
+                                  "credentials": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "number": {
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "type": "string"
+                                        },
+                                        "state": {
+                                          "type": "string",
+                                          "enum": [
+                                            "active",
+                                            "cancelled",
+                                            "damaged",
+                                            "expired",
+                                            "produced",
+                                            "replaced",
+                                            "reported-lost",
+                                            "reported-stolen",
+                                            "requested",
+                                            "revoked",
+                                            "suspended"
+                                          ]
+                                        },
+                                        "validUntil": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "number",
+                                        "type",
+                                        "state"
+                                      ]
+                                    }
+                                  },
+                                  "underReview": {
+                                    "type": "boolean"
+                                  },
+                                  "sample": {
+                                    "type": "boolean",
+                                    "const": true
+                                  }
+                                },
+                                "required": [
+                                  "number",
+                                  "state",
+                                  "credentials",
+                                  "underReview"
+                                ]
+                              }
+                            }
+                          ]
+                        },
+                        "authority": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name"
+                              ]
+                            }
+                          ]
+                        },
+                        "procedures": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "title"
+                            ]
+                          }
+                        },
+                        "labels": {
+                          "type": "object",
+                          "properties": {
+                            "credentialStates": {
+                              "type": "object",
+                              "properties": {
+                                "active": {
+                                  "type": "string"
+                                },
+                                "cancelled": {
+                                  "type": "string"
+                                },
+                                "damaged": {
+                                  "type": "string"
+                                },
+                                "expired": {
+                                  "type": "string"
+                                },
+                                "produced": {
+                                  "type": "string"
+                                },
+                                "replaced": {
+                                  "type": "string"
+                                },
+                                "reported-lost": {
+                                  "type": "string"
+                                },
+                                "reported-stolen": {
+                                  "type": "string"
+                                },
+                                "requested": {
+                                  "type": "string"
+                                },
+                                "revoked": {
+                                  "type": "string"
+                                },
+                                "suspended": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "active",
+                                "cancelled",
+                                "damaged",
+                                "expired",
+                                "produced",
+                                "replaced",
+                                "reported-lost",
+                                "reported-stolen",
+                                "requested",
+                                "revoked",
+                                "suspended"
+                              ]
+                            },
+                            "verify": {
+                              "type": "object",
+                              "properties": {
+                                "additional_review_required": {
+                                  "type": "string"
+                                },
+                                "not_verified": {
+                                  "type": "string"
+                                },
+                                "unable_to_verify": {
+                                  "type": "string"
+                                },
+                                "verified": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "additional_review_required",
+                                "not_verified",
+                                "unable_to_verify",
+                                "verified"
+                              ]
+                            },
+                            "determinations": {
+                              "type": "array",
+                              "prefixItems": [
+                                {
+                                  "type": "string",
+                                  "const": "same-person"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "different-persons"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "unresolved"
+                                }
+                              ],
+                              "minItems": 3,
+                              "maxItems": 3
+                            }
+                          },
+                          "required": [
+                            "credentialStates",
+                            "verify",
+                            "determinations"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "counts",
+                        "records",
+                        "authority",
+                        "procedures",
+                        "labels"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "counts": {
+                        "records": {
+                          "key": 1
+                        },
+                        "credentials": {
+                          "key": 1
+                        },
+                        "underReview": 1,
+                        "determinations": {
+                          "key": 1
+                        },
+                        "delivered": 1,
+                        "samples": 1
+                      },
+                      "records": [
+                        null
+                      ],
+                      "authority": {
+                        "id": "ID-0001",
+                        "name": "Example"
+                      },
+                      "procedures": [
+                        {
+                          "key": "string",
+                          "title": "Example"
+                        }
+                      ],
+                      "labels": {
+                        "credentialStates": {
+                          "active": "string",
+                          "cancelled": "string",
+                          "damaged": "string",
+                          "expired": "string",
+                          "produced": "string",
+                          "replaced": "string",
+                          "reported-lost": "string",
+                          "reported-stolen": "string",
+                          "requested": "string",
+                          "revoked": "string",
+                          "suspended": "string"
+                        },
+                        "verify": {
+                          "additional_review_required": "string",
+                          "not_verified": "string",
+                          "unable_to_verify": "string",
+                          "verified": "string"
+                        },
+                        "determinations": [
+                          "same-person",
+                          "different-persons",
+                          "unresolved"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/identity/route.ts"
+      }
+    },
     "/api/immigration": {
       "get": {
         "tags": [
@@ -24814,6 +25423,7 @@
                                           "anticorruption",
                                           "businessRegister",
                                           "centralBank",
+                                          "citizenship",
                                           "civilRegistration",
                                           "constitutionalCourt",
                                           "controlledSubstances",
@@ -24828,6 +25438,7 @@
                                           "identity",
                                           "immigration",
                                           "judiciary",
+                                          "labour",
                                           "lawRegister",
                                           "legislature",
                                           "medicinesRegulation",
@@ -24835,9 +25446,11 @@
                                           "police",
                                           "professionalRegulation",
                                           "publicHealth",
+                                          "socialProtection",
                                           "statistics",
                                           "supremeAudit",
                                           "tax",
+                                          "travelDocuments",
                                           "trustServices"
                                         ]
                                       }
@@ -26150,6 +26763,244 @@
           }
         ],
         "x-source": "src/app/api/integrations/verify/route.ts"
+      }
+    },
+    "/api/labour": {
+      "get": {
+        "tags": [
+          "labour"
+        ],
+        "operationId": "get_labour",
+        "summary": "GET /api/labour",
+        "description": "GET /api/labour — the labour and employment register (lib/labour/register.ts; plan step I6) for the labour authority's officials, and auditors with a purpose. Without a search: counts only (employers, employments, vacancies, jobseekers, inspections open and closed, outstanding corrective orders, injury notifications, mediations, notices; no person, no employer named). ?employer= (labour register or organisation number): the employer with its workplaces, inspections (findings by version, orders, responses, verification), injury notifications and vacancies; ?case=: the records a case made. Every search and read, allowed or refused, is written to the access log. Changes only through decided labour cases (/api/cases); other institutions check an employer's standing through the exchange (employer.standing).",
+        "parameters": [
+          {
+            "name": "case",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "employer",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "purpose",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "counts": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "number"
+                          }
+                        },
+                        "found": {
+                          "type": "null"
+                        },
+                        "authority": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name"
+                              ]
+                            }
+                          ]
+                        },
+                        "procedures": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "title"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "counts",
+                        "found",
+                        "authority",
+                        "procedures"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "counts": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "number"
+                          }
+                        },
+                        "found": {
+                          "type": "object",
+                          "properties": {
+                            "employers": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Employer"
+                              }
+                            },
+                            "inspections": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Inspection_labour_register"
+                              }
+                            },
+                            "injuries": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Injury"
+                              }
+                            },
+                            "vacancies": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Vacancy"
+                              }
+                            }
+                          },
+                          "required": [
+                            "employers",
+                            "inspections",
+                            "injuries",
+                            "vacancies"
+                          ]
+                        },
+                        "authority": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name"
+                              ]
+                            }
+                          ]
+                        },
+                        "procedures": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "title"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "counts",
+                        "found",
+                        "authority",
+                        "procedures"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "counts": {
+                        "key": 1
+                      },
+                      "found": null,
+                      "authority": {
+                        "id": "ID-0001",
+                        "name": "Example"
+                      },
+                      "procedures": [
+                        {
+                          "key": "string",
+                          "title": "Example"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/labour/route.ts"
       }
     },
     "/api/law/cite": {
@@ -45599,6 +46450,754 @@
         "x-source": "src/app/api/parcels/route.ts"
       }
     },
+    "/api/passports": {
+      "get": {
+        "tags": [
+          "passports"
+        ],
+        "operationId": "get_passports",
+        "summary": "GET /api/passports",
+        "description": "GET /api/passports — passports and travel documents (lib/passports/register.ts; plan step I6) for the travel document authority's officials, and auditors with a purpose. Without a search: counts (by state and type, reviews), the production reconciliation by batch (numbers only) and whether the authority and the fee schedule are in place. ?number= (register or document number) or ?identity= (the holder's identity record): the documents with their production, quality, custody, delivery and status history. Document numbers are not searchable without a stated purpose (field series Part 4 §5.2); every search and read, allowed or refused, is written to the access log. Changes only through decided passport cases (/api/cases); others check status through the exchange (travel-document.status).",
+        "parameters": [
+          {
+            "name": "identity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "number",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "purpose",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "counts": {
+                          "type": "object",
+                          "properties": {
+                            "byState": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
+                            "byType": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
+                            "reviews": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
+                            "samples": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "byState",
+                            "byType",
+                            "reviews",
+                            "samples"
+                          ]
+                        },
+                        "reconciliation": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "batch": {
+                                "type": "string"
+                              },
+                              "produced": {
+                                "type": "number"
+                              },
+                              "spoiled": {
+                                "type": "number"
+                              },
+                              "inCustody": {
+                                "type": "number"
+                              },
+                              "issued": {
+                                "type": "number"
+                              },
+                              "other": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "batch",
+                              "produced",
+                              "spoiled",
+                              "inCustody",
+                              "issued",
+                              "other"
+                            ]
+                          }
+                        },
+                        "documents": {
+                          "type": "array",
+                          "items": {
+                            "not": {}
+                          }
+                        },
+                        "authority": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name"
+                              ]
+                            }
+                          ]
+                        },
+                        "feeSchedule": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "key": {
+                                  "type": "string"
+                                },
+                                "version": {
+                                  "type": "number"
+                                },
+                                "lines": {
+                                  "type": "number"
+                                },
+                                "effectiveFrom": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "key",
+                                "version",
+                                "lines",
+                                "effectiveFrom"
+                              ]
+                            }
+                          ]
+                        },
+                        "procedures": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "title"
+                            ]
+                          }
+                        },
+                        "labels": {
+                          "type": "object",
+                          "properties": {
+                            "states": {
+                              "type": "object",
+                              "properties": {
+                                "approved": {
+                                  "type": "string"
+                                },
+                                "cancelled": {
+                                  "type": "string"
+                                },
+                                "damaged": {
+                                  "type": "string"
+                                },
+                                "expired": {
+                                  "type": "string"
+                                },
+                                "in-custody": {
+                                  "type": "string"
+                                },
+                                "issued": {
+                                  "type": "string"
+                                },
+                                "produced": {
+                                  "type": "string"
+                                },
+                                "reported-lost": {
+                                  "type": "string"
+                                },
+                                "reported-stolen": {
+                                  "type": "string"
+                                },
+                                "revoked": {
+                                  "type": "string"
+                                },
+                                "superseded": {
+                                  "type": "string"
+                                },
+                                "surrendered": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "approved",
+                                "cancelled",
+                                "damaged",
+                                "expired",
+                                "in-custody",
+                                "issued",
+                                "produced",
+                                "reported-lost",
+                                "reported-stolen",
+                                "revoked",
+                                "superseded",
+                                "surrendered"
+                              ]
+                            },
+                            "kinds": {
+                              "type": "array",
+                              "prefixItems": [
+                                {
+                                  "type": "string",
+                                  "const": "first"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "renewal"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "child"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "replacement-lost"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "replacement-stolen"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "replacement-damaged"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "emergency"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "limited-validity"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "amendment"
+                                }
+                              ],
+                              "minItems": 9,
+                              "maxItems": 9
+                            },
+                            "icao": {
+                              "type": "array",
+                              "prefixItems": [
+                                {
+                                  "type": "string",
+                                  "const": "documentCode"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "issuingState"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "surname"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "givenNames"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "documentNumber"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "nationality"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "birthDate"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "sex"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "dateOfIssue"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "dateOfExpiry"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "personalNumber"
+                                }
+                              ],
+                              "minItems": 11,
+                              "maxItems": 11
+                            }
+                          },
+                          "required": [
+                            "states",
+                            "kinds",
+                            "icao"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "counts",
+                        "reconciliation",
+                        "documents",
+                        "authority",
+                        "feeSchedule",
+                        "procedures",
+                        "labels"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "counts": {
+                          "type": "object",
+                          "properties": {
+                            "byState": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
+                            "byType": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
+                            "reviews": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
+                            "samples": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "byState",
+                            "byType",
+                            "reviews",
+                            "samples"
+                          ]
+                        },
+                        "documents": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/TravelDocument"
+                          }
+                        },
+                        "authority": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name"
+                              ]
+                            }
+                          ]
+                        },
+                        "feeSchedule": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "key": {
+                                  "type": "string"
+                                },
+                                "version": {
+                                  "type": "number"
+                                },
+                                "lines": {
+                                  "type": "number"
+                                },
+                                "effectiveFrom": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "key",
+                                "version",
+                                "lines",
+                                "effectiveFrom"
+                              ]
+                            }
+                          ]
+                        },
+                        "procedures": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "title"
+                            ]
+                          }
+                        },
+                        "labels": {
+                          "type": "object",
+                          "properties": {
+                            "states": {
+                              "type": "object",
+                              "properties": {
+                                "approved": {
+                                  "type": "string"
+                                },
+                                "cancelled": {
+                                  "type": "string"
+                                },
+                                "damaged": {
+                                  "type": "string"
+                                },
+                                "expired": {
+                                  "type": "string"
+                                },
+                                "in-custody": {
+                                  "type": "string"
+                                },
+                                "issued": {
+                                  "type": "string"
+                                },
+                                "produced": {
+                                  "type": "string"
+                                },
+                                "reported-lost": {
+                                  "type": "string"
+                                },
+                                "reported-stolen": {
+                                  "type": "string"
+                                },
+                                "revoked": {
+                                  "type": "string"
+                                },
+                                "superseded": {
+                                  "type": "string"
+                                },
+                                "surrendered": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "approved",
+                                "cancelled",
+                                "damaged",
+                                "expired",
+                                "in-custody",
+                                "issued",
+                                "produced",
+                                "reported-lost",
+                                "reported-stolen",
+                                "revoked",
+                                "superseded",
+                                "surrendered"
+                              ]
+                            },
+                            "kinds": {
+                              "type": "array",
+                              "prefixItems": [
+                                {
+                                  "type": "string",
+                                  "const": "first"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "renewal"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "child"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "replacement-lost"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "replacement-stolen"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "replacement-damaged"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "emergency"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "limited-validity"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "amendment"
+                                }
+                              ],
+                              "minItems": 9,
+                              "maxItems": 9
+                            },
+                            "icao": {
+                              "type": "array",
+                              "prefixItems": [
+                                {
+                                  "type": "string",
+                                  "const": "documentCode"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "issuingState"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "surname"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "givenNames"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "documentNumber"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "nationality"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "birthDate"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "sex"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "dateOfIssue"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "dateOfExpiry"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "personalNumber"
+                                }
+                              ],
+                              "minItems": 11,
+                              "maxItems": 11
+                            }
+                          },
+                          "required": [
+                            "states",
+                            "kinds",
+                            "icao"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "counts",
+                        "documents",
+                        "authority",
+                        "feeSchedule",
+                        "procedures",
+                        "labels"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "counts": {
+                        "byState": {
+                          "key": 1
+                        },
+                        "byType": {
+                          "key": 1
+                        },
+                        "reviews": {
+                          "key": 1
+                        },
+                        "samples": 1
+                      },
+                      "reconciliation": [
+                        {
+                          "batch": "string",
+                          "produced": 1,
+                          "spoiled": 1,
+                          "inCustody": 1,
+                          "issued": 1,
+                          "other": 1
+                        }
+                      ],
+                      "documents": [
+                        null
+                      ],
+                      "authority": {
+                        "id": "ID-0001",
+                        "name": "Example"
+                      },
+                      "feeSchedule": {
+                        "key": "string",
+                        "version": 1,
+                        "lines": 1,
+                        "effectiveFrom": "2026-01-15"
+                      },
+                      "procedures": [
+                        {
+                          "key": "string",
+                          "title": "Example"
+                        }
+                      ],
+                      "labels": {
+                        "states": {
+                          "approved": "string",
+                          "cancelled": "string",
+                          "damaged": "string",
+                          "expired": "string",
+                          "in-custody": "string",
+                          "issued": "string",
+                          "produced": "string",
+                          "reported-lost": "string",
+                          "reported-stolen": "string",
+                          "revoked": "string",
+                          "superseded": "string",
+                          "surrendered": "string"
+                        },
+                        "kinds": [
+                          "first",
+                          "renewal",
+                          "child",
+                          "replacement-lost",
+                          "replacement-stolen",
+                          "replacement-damaged",
+                          "emergency",
+                          "limited-validity",
+                          "amendment"
+                        ],
+                        "icao": [
+                          "documentCode",
+                          "issuingState",
+                          "surname",
+                          "givenNames",
+                          "documentNumber",
+                          "nationality",
+                          "birthDate",
+                          "sex",
+                          "dateOfIssue",
+                          "dateOfExpiry",
+                          "personalNumber"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/passports/route.ts"
+      }
+    },
     "/api/payments": {
       "get": {
         "tags": [
@@ -49305,6 +50904,7 @@
                                       "anticorruption",
                                       "businessRegister",
                                       "centralBank",
+                                      "citizenship",
                                       "civilRegistration",
                                       "constitutionalCourt",
                                       "controlledSubstances",
@@ -49319,6 +50919,7 @@
                                       "identity",
                                       "immigration",
                                       "judiciary",
+                                      "labour",
                                       "lawRegister",
                                       "legislature",
                                       "medicinesRegulation",
@@ -49326,9 +50927,11 @@
                                       "police",
                                       "professionalRegulation",
                                       "publicHealth",
+                                      "socialProtection",
                                       "statistics",
                                       "supremeAudit",
                                       "tax",
+                                      "travelDocuments",
                                       "trustServices"
                                     ]
                                   }
@@ -65665,7 +67268,7 @@
                         "id": "ID-0001",
                         "key": "string",
                         "title": "Example",
-                        "kind": "flat-rate",
+                        "kind": "fixed-amounts",
                         "owner": "string",
                         "version": 1,
                         "effectiveFrom": "2026-01-15",
@@ -65692,6 +67295,18 @@
                             "rate": 1
                           }
                         ],
+                        "amounts": [
+                          {
+                            "code": "string",
+                            "amountMinor": 1
+                          }
+                        ],
+                        "means": {
+                          "limitMinor": 1,
+                          "baseMinor": 1,
+                          "perMemberMinor": 1,
+                          "taperRate": 1
+                        },
                         "tests": [
                           {
                             "name": "Example",
@@ -65737,7 +67352,7 @@
                         "id": "ID-0001",
                         "key": "string",
                         "title": "Example",
-                        "kind": "flat-rate",
+                        "kind": "fixed-amounts",
                         "owner": "string",
                         "version": 1,
                         "effectiveFrom": "2026-01-15",
@@ -65764,6 +67379,18 @@
                             "rate": 1
                           }
                         ],
+                        "amounts": [
+                          {
+                            "code": "string",
+                            "amountMinor": 1
+                          }
+                        ],
+                        "means": {
+                          "limitMinor": 1,
+                          "baseMinor": 1,
+                          "perMemberMinor": 1,
+                          "taperRate": 1
+                        },
                         "tests": [
                           {
                             "name": "Example",
@@ -65855,6 +67482,7 @@
                             "anticorruption",
                             "businessRegister",
                             "centralBank",
+                            "citizenship",
                             "civilRegistration",
                             "constitutionalCourt",
                             "controlledSubstances",
@@ -65869,6 +67497,7 @@
                             "identity",
                             "immigration",
                             "judiciary",
+                            "labour",
                             "lawRegister",
                             "legislature",
                             "medicinesRegulation",
@@ -65876,9 +67505,11 @@
                             "police",
                             "professionalRegulation",
                             "publicHealth",
+                            "socialProtection",
                             "statistics",
                             "supremeAudit",
                             "tax",
+                            "travelDocuments",
                             "trustServices"
                           ]
                         },
@@ -66527,6 +68158,578 @@
         "x-source": "src/app/api/signatures/route.ts"
       }
     },
+    "/api/social-protection": {
+      "get": {
+        "tags": [
+          "social-protection"
+        ],
+        "operationId": "get_social_protection",
+        "summary": "GET /api/social-protection",
+        "description": "GET /api/social-protection — the social protection register (lib/social/register.ts; plan step I6) for the social protection authority's officials, and auditors with a purpose. Without a search: counts (claims by programme and state, payments, overpayments, reviews; no person) and the programmes with an approved rule in force (`social.<programme>`). ?claimant= (register or identity number) or ?claim=: the claimant, household versions, claims with every assessment (inputs, means, rule version and steps), payment instructions and overpayments; with &reproduce=<n>, the recalculation of a claim's assessment n from its recorded inputs and exact rule version (acceptance P2-07). A search states its purpose; every search and read, allowed or refused, is written to the access log. Changes only through decided social protection cases (/api/cases).",
+        "parameters": [
+          {
+            "name": "claim",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "claimant",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "purpose",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "reproduce",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "counts": {
+                          "type": "object",
+                          "properties": {
+                            "claimants": {
+                              "type": "number"
+                            },
+                            "claims": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "programme": {
+                                    "type": "string"
+                                  },
+                                  "state": {
+                                    "type": "string"
+                                  },
+                                  "count": {
+                                    "type": "number"
+                                  }
+                                },
+                                "required": [
+                                  "programme",
+                                  "state",
+                                  "count"
+                                ]
+                              }
+                            },
+                            "payments": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
+                            "overpayments": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
+                            "reviews": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
+                            "samples": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "claimants",
+                            "claims",
+                            "payments",
+                            "overpayments",
+                            "reviews",
+                            "samples"
+                          ]
+                        },
+                        "found": {
+                          "type": "null"
+                        },
+                        "authority": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name"
+                              ]
+                            }
+                          ]
+                        },
+                        "programmes": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "programme": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "version": {
+                                "type": "number"
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "fixed-amounts",
+                                  "flat-rate",
+                                  "means-tested",
+                                  "rate-bands",
+                                  "tariff"
+                                ]
+                              },
+                              "effectiveFrom": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "programme",
+                              "title",
+                              "version",
+                              "kind",
+                              "effectiveFrom"
+                            ]
+                          }
+                        },
+                        "procedures": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "title"
+                            ]
+                          }
+                        },
+                        "labels": {
+                          "type": "object",
+                          "properties": {
+                            "states": {
+                              "type": "object",
+                              "properties": {
+                                "assessed": {
+                                  "type": "string"
+                                },
+                                "awarded": {
+                                  "type": "string"
+                                },
+                                "ended": {
+                                  "type": "string"
+                                },
+                                "refused": {
+                                  "type": "string"
+                                },
+                                "suspended": {
+                                  "type": "string"
+                                },
+                                "terminated": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "assessed",
+                                "awarded",
+                                "ended",
+                                "refused",
+                                "suspended",
+                                "terminated"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "states"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "counts",
+                        "found",
+                        "authority",
+                        "programmes",
+                        "procedures",
+                        "labels"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "reproduced": {
+                          "type": "object",
+                          "properties": {
+                            "matches": {
+                              "type": "boolean"
+                            },
+                            "recordedMinor": {
+                              "type": "number"
+                            },
+                            "reproducedMinor": {
+                              "type": "number"
+                            },
+                            "error": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "matches",
+                            "recordedMinor"
+                          ]
+                        },
+                        "counts": {
+                          "type": "object",
+                          "properties": {
+                            "claimants": {
+                              "type": "number"
+                            },
+                            "claims": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "programme": {
+                                    "type": "string"
+                                  },
+                                  "state": {
+                                    "type": "string"
+                                  },
+                                  "count": {
+                                    "type": "number"
+                                  }
+                                },
+                                "required": [
+                                  "programme",
+                                  "state",
+                                  "count"
+                                ]
+                              }
+                            },
+                            "payments": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
+                            "overpayments": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
+                            "reviews": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "number"
+                              }
+                            },
+                            "samples": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "claimants",
+                            "claims",
+                            "payments",
+                            "overpayments",
+                            "reviews",
+                            "samples"
+                          ]
+                        },
+                        "found": {
+                          "type": "object",
+                          "properties": {
+                            "claimants": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Claimant"
+                              }
+                            },
+                            "households": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Household"
+                              }
+                            },
+                            "claims": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Claim"
+                              }
+                            },
+                            "payments": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/PaymentInstruction"
+                              }
+                            },
+                            "overpayments": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/Overpayment"
+                              }
+                            }
+                          },
+                          "required": [
+                            "claimants",
+                            "households",
+                            "claims",
+                            "payments",
+                            "overpayments"
+                          ]
+                        },
+                        "authority": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name"
+                              ]
+                            }
+                          ]
+                        },
+                        "programmes": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "programme": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "version": {
+                                "type": "number"
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "fixed-amounts",
+                                  "flat-rate",
+                                  "means-tested",
+                                  "rate-bands",
+                                  "tariff"
+                                ]
+                              },
+                              "effectiveFrom": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "programme",
+                              "title",
+                              "version",
+                              "kind",
+                              "effectiveFrom"
+                            ]
+                          }
+                        },
+                        "procedures": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "title"
+                            ]
+                          }
+                        },
+                        "labels": {
+                          "type": "object",
+                          "properties": {
+                            "states": {
+                              "type": "object",
+                              "properties": {
+                                "assessed": {
+                                  "type": "string"
+                                },
+                                "awarded": {
+                                  "type": "string"
+                                },
+                                "ended": {
+                                  "type": "string"
+                                },
+                                "refused": {
+                                  "type": "string"
+                                },
+                                "suspended": {
+                                  "type": "string"
+                                },
+                                "terminated": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "assessed",
+                                "awarded",
+                                "ended",
+                                "refused",
+                                "suspended",
+                                "terminated"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "states"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "counts",
+                        "found",
+                        "authority",
+                        "programmes",
+                        "procedures",
+                        "labels"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "counts": {
+                        "claimants": 1,
+                        "claims": [
+                          {
+                            "programme": "string",
+                            "state": "string",
+                            "count": 1
+                          }
+                        ],
+                        "payments": {
+                          "key": 1
+                        },
+                        "overpayments": {
+                          "key": 1
+                        },
+                        "reviews": {
+                          "key": 1
+                        },
+                        "samples": 1
+                      },
+                      "found": null,
+                      "authority": {
+                        "id": "ID-0001",
+                        "name": "Example"
+                      },
+                      "programmes": [
+                        {
+                          "programme": "string",
+                          "title": "Example",
+                          "version": 1,
+                          "kind": "fixed-amounts",
+                          "effectiveFrom": "2026-01-15"
+                        }
+                      ],
+                      "procedures": [
+                        {
+                          "key": "string",
+                          "title": "Example"
+                        }
+                      ],
+                      "labels": {
+                        "states": {
+                          "assessed": "string",
+                          "awarded": "string",
+                          "ended": "string",
+                          "refused": "string",
+                          "suspended": "string",
+                          "terminated": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/social-protection/route.ts"
+      }
+    },
     "/api/sovereign/authorities": {
       "get": {
         "tags": [
@@ -66554,6 +68757,9 @@
                           "type": "string"
                         },
                         "centralBank": {
+                          "type": "string"
+                        },
+                        "citizenship": {
                           "type": "string"
                         },
                         "civilRegistration": {
@@ -66598,6 +68804,9 @@
                         "judiciary": {
                           "type": "string"
                         },
+                        "labour": {
+                          "type": "string"
+                        },
                         "lawRegister": {
                           "type": "string"
                         },
@@ -66619,6 +68828,9 @@
                         "publicHealth": {
                           "type": "string"
                         },
+                        "socialProtection": {
+                          "type": "string"
+                        },
                         "statistics": {
                           "type": "string"
                         },
@@ -66626,6 +68838,9 @@
                           "type": "string"
                         },
                         "tax": {
+                          "type": "string"
+                        },
+                        "travelDocuments": {
                           "type": "string"
                         },
                         "trustServices": {
@@ -66652,6 +68867,9 @@
                                       "type": "string"
                                     },
                                     "centralBank": {
+                                      "type": "string"
+                                    },
+                                    "citizenship": {
                                       "type": "string"
                                     },
                                     "civilRegistration": {
@@ -66696,6 +68914,9 @@
                                     "judiciary": {
                                       "type": "string"
                                     },
+                                    "labour": {
+                                      "type": "string"
+                                    },
                                     "lawRegister": {
                                       "type": "string"
                                     },
@@ -66717,6 +68938,9 @@
                                     "publicHealth": {
                                       "type": "string"
                                     },
+                                    "socialProtection": {
+                                      "type": "string"
+                                    },
                                     "statistics": {
                                       "type": "string"
                                     },
@@ -66724,6 +68948,9 @@
                                       "type": "string"
                                     },
                                     "tax": {
+                                      "type": "string"
+                                    },
+                                    "travelDocuments": {
                                       "type": "string"
                                     },
                                     "trustServices": {
@@ -66811,6 +69038,9 @@
                                       "centralBank": {
                                         "type": "string"
                                       },
+                                      "citizenship": {
+                                        "type": "string"
+                                      },
                                       "civilRegistration": {
                                         "type": "string"
                                       },
@@ -66853,6 +69083,9 @@
                                       "judiciary": {
                                         "type": "string"
                                       },
+                                      "labour": {
+                                        "type": "string"
+                                      },
                                       "lawRegister": {
                                         "type": "string"
                                       },
@@ -66874,6 +69107,9 @@
                                       "publicHealth": {
                                         "type": "string"
                                       },
+                                      "socialProtection": {
+                                        "type": "string"
+                                      },
                                       "statistics": {
                                         "type": "string"
                                       },
@@ -66881,6 +69117,9 @@
                                         "type": "string"
                                       },
                                       "tax": {
+                                        "type": "string"
+                                      },
+                                      "travelDocuments": {
                                         "type": "string"
                                       },
                                       "trustServices": {
@@ -66974,6 +69213,7 @@
                         "anticorruption": "string",
                         "businessRegister": "string",
                         "centralBank": "string",
+                        "citizenship": "string",
                         "civilRegistration": "string",
                         "constitutionalCourt": "string",
                         "controlledSubstances": "string",
@@ -66988,6 +69228,7 @@
                         "identity": "string",
                         "immigration": "string",
                         "judiciary": "string",
+                        "labour": "string",
                         "lawRegister": "string",
                         "legislature": "string",
                         "medicinesRegulation": "string",
@@ -66995,9 +69236,11 @@
                         "police": "string",
                         "professionalRegulation": "string",
                         "publicHealth": "string",
+                        "socialProtection": "string",
                         "statistics": "string",
                         "supremeAudit": "string",
                         "tax": "string",
+                        "travelDocuments": "string",
                         "trustServices": "string"
                       },
                       "changes": {
@@ -67113,6 +69356,9 @@
                         "centralBank": {
                           "type": "string"
                         },
+                        "citizenship": {
+                          "type": "string"
+                        },
                         "civilRegistration": {
                           "type": "string"
                         },
@@ -67155,6 +69401,9 @@
                         "judiciary": {
                           "type": "string"
                         },
+                        "labour": {
+                          "type": "string"
+                        },
                         "lawRegister": {
                           "type": "string"
                         },
@@ -67176,6 +69425,9 @@
                         "publicHealth": {
                           "type": "string"
                         },
+                        "socialProtection": {
+                          "type": "string"
+                        },
                         "statistics": {
                           "type": "string"
                         },
@@ -67183,6 +69435,9 @@
                           "type": "string"
                         },
                         "tax": {
+                          "type": "string"
+                        },
+                        "travelDocuments": {
                           "type": "string"
                         },
                         "trustServices": {
@@ -67209,6 +69464,9 @@
                                       "type": "string"
                                     },
                                     "centralBank": {
+                                      "type": "string"
+                                    },
+                                    "citizenship": {
                                       "type": "string"
                                     },
                                     "civilRegistration": {
@@ -67253,6 +69511,9 @@
                                     "judiciary": {
                                       "type": "string"
                                     },
+                                    "labour": {
+                                      "type": "string"
+                                    },
                                     "lawRegister": {
                                       "type": "string"
                                     },
@@ -67274,6 +69535,9 @@
                                     "publicHealth": {
                                       "type": "string"
                                     },
+                                    "socialProtection": {
+                                      "type": "string"
+                                    },
                                     "statistics": {
                                       "type": "string"
                                     },
@@ -67281,6 +69545,9 @@
                                       "type": "string"
                                     },
                                     "tax": {
+                                      "type": "string"
+                                    },
+                                    "travelDocuments": {
                                       "type": "string"
                                     },
                                     "trustServices": {
@@ -67368,6 +69635,9 @@
                                       "centralBank": {
                                         "type": "string"
                                       },
+                                      "citizenship": {
+                                        "type": "string"
+                                      },
                                       "civilRegistration": {
                                         "type": "string"
                                       },
@@ -67410,6 +69680,9 @@
                                       "judiciary": {
                                         "type": "string"
                                       },
+                                      "labour": {
+                                        "type": "string"
+                                      },
                                       "lawRegister": {
                                         "type": "string"
                                       },
@@ -67431,6 +69704,9 @@
                                       "publicHealth": {
                                         "type": "string"
                                       },
+                                      "socialProtection": {
+                                        "type": "string"
+                                      },
                                       "statistics": {
                                         "type": "string"
                                       },
@@ -67438,6 +69714,9 @@
                                         "type": "string"
                                       },
                                       "tax": {
+                                        "type": "string"
+                                      },
+                                      "travelDocuments": {
                                         "type": "string"
                                       },
                                       "trustServices": {
@@ -67529,6 +69808,7 @@
                         "anticorruption": "string",
                         "businessRegister": "string",
                         "centralBank": "string",
+                        "citizenship": "string",
                         "civilRegistration": "string",
                         "constitutionalCourt": "string",
                         "controlledSubstances": "string",
@@ -67543,6 +69823,7 @@
                         "identity": "string",
                         "immigration": "string",
                         "judiciary": "string",
+                        "labour": "string",
                         "lawRegister": "string",
                         "legislature": "string",
                         "medicinesRegulation": "string",
@@ -67550,9 +69831,11 @@
                         "police": "string",
                         "professionalRegulation": "string",
                         "publicHealth": "string",
+                        "socialProtection": "string",
                         "statistics": "string",
                         "supremeAudit": "string",
                         "tax": "string",
+                        "travelDocuments": "string",
                         "trustServices": "string"
                       },
                       "changes": {
@@ -69943,7 +72226,7 @@
                               "assessments": {
                                 "type": "array",
                                 "items": {
-                                  "$ref": "#/components/schemas/Assessment"
+                                  "$ref": "#/components/schemas/Assessment_tax_register"
                                 }
                               },
                               "refunds": {
@@ -79206,6 +81489,25 @@
           "at"
         ]
       },
+      "AmountLine": {
+        "description": "fixed-amounts: one amount for each code (a fee per document type, an amount per benefit category).",
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "amountMinor": {
+            "type": "number"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "amountMinor"
+        ]
+      },
       "AnalyticDelta": {
         "type": "object",
         "properties": {
@@ -79594,6 +81896,118 @@
         ]
       },
       "Assessment": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "number"
+          },
+          "period": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "from",
+              "to"
+            ]
+          },
+          "inputs": {
+            "type": "object",
+            "properties": {
+              "income": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/InputLine"
+                }
+              },
+              "assets": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/InputLine"
+                }
+              },
+              "deductions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/InputLine"
+                }
+              },
+              "members": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "income",
+              "assets",
+              "deductions",
+              "members"
+            ]
+          },
+          "meansMinor": {
+            "type": "number",
+            "description": "Income plus counted assets less deductions, never below zero: what the rule is applied to."
+          },
+          "rule": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "version": {
+                "type": "number"
+              },
+              "digest": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "key",
+              "version",
+              "digest"
+            ]
+          },
+          "amountMinor": {
+            "type": "number"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "case": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "n",
+          "period",
+          "inputs",
+          "meansMinor",
+          "rule",
+          "amountMinor",
+          "steps",
+          "at",
+          "by",
+          "case",
+          "reason"
+        ]
+      },
+      "Assessment_tax_register": {
         "type": "object",
         "properties": {
           "id": {
@@ -84213,6 +86627,216 @@
           "municipality"
         ]
       },
+      "Claim": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string"
+          },
+          "claimant": {
+            "type": "string"
+          },
+          "programme": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "assessed",
+              "awarded",
+              "ended",
+              "refused",
+              "suspended",
+              "terminated"
+            ]
+          },
+          "assessments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Assessment"
+            }
+          },
+          "current": {
+            "type": "number",
+            "description": "The assessment the claim stands on now (awarded or varied)."
+          },
+          "startOn": {
+            "type": "string"
+          },
+          "endOn": {
+            "type": "string"
+          },
+          "decisions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string"
+                },
+                "case": {
+                  "type": "string"
+                },
+                "decision": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                },
+                "by": {
+                  "type": "string"
+                },
+                "assessment": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "kind",
+                "case",
+                "at",
+                "by"
+              ]
+            }
+          },
+          "reviews": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "case": {
+                  "type": "string"
+                },
+                "outcome": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                },
+                "by": {
+                  "type": "string"
+                },
+                "decision": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "case",
+                "outcome",
+                "at",
+                "by"
+              ]
+            }
+          },
+          "case": {
+            "type": "string"
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Step_social_register"
+            }
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "number",
+          "claimant",
+          "programme",
+          "state",
+          "assessments",
+          "decisions",
+          "reviews",
+          "case",
+          "history",
+          "createdAt"
+        ]
+      },
+      "Claimant": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string"
+          },
+          "identity": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "contact": {
+            "type": "string"
+          },
+          "preferredChannel": {
+            "type": "string"
+          },
+          "representative": {
+            "type": "string"
+          },
+          "household": {
+            "type": "string"
+          },
+          "identityBasis": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "exchange"
+                  },
+                  "receipt": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "receipt"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "other-evidence"
+                  },
+                  "reasons": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "reasons"
+                ]
+              }
+            ]
+          },
+          "case": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "number",
+          "identity",
+          "name",
+          "identityBasis",
+          "case",
+          "createdAt"
+        ]
+      },
       "CloudEvent": {
         "type": "object",
         "properties": {
@@ -86644,6 +89268,86 @@
           "state"
         ]
       },
+      "CorrectiveOrder": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "number"
+          },
+          "finding": {
+            "type": "number"
+          },
+          "action": {
+            "type": "string"
+          },
+          "due": {
+            "type": "string"
+          },
+          "responses": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "at": {
+                  "type": "string"
+                },
+                "by": {
+                  "type": "string"
+                },
+                "response": {
+                  "type": "string"
+                },
+                "evidence": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "at",
+                "by",
+                "response",
+                "evidence"
+              ]
+            }
+          },
+          "verified": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "complied",
+                  "not-complied",
+                  "partly-complied"
+                ]
+              },
+              "note": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "at",
+              "by",
+              "outcome",
+              "note"
+            ]
+          }
+        },
+        "required": [
+          "n",
+          "finding",
+          "action",
+          "responses"
+        ]
+      },
       "CostLine": {
         "type": "object",
         "properties": {
@@ -86797,6 +89501,92 @@
           "fields"
         ]
       },
+      "Credential": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "description": "The nation's credential type (its list; none ships)."
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "active",
+              "cancelled",
+              "damaged",
+              "expired",
+              "produced",
+              "replaced",
+              "reported-lost",
+              "reported-stolen",
+              "requested",
+              "revoked",
+              "suspended"
+            ]
+          },
+          "validFrom": {
+            "type": "string"
+          },
+          "validUntil": {
+            "type": "string"
+          },
+          "production": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "serial": {
+                "type": "string"
+              },
+              "qualityChecked": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "at",
+              "by",
+              "serial",
+              "qualityChecked"
+            ]
+          },
+          "delivery": {
+            "$ref": "#/components/schemas/Delivery_identity_register"
+          },
+          "replaces": {
+            "type": "string",
+            "description": "The credential this one replaces, and the one that replaced it."
+          },
+          "replacedBy": {
+            "type": "string"
+          },
+          "case": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Step_identity_register"
+            }
+          }
+        },
+        "required": [
+          "number",
+          "type",
+          "state",
+          "case",
+          "history"
+        ]
+      },
       "CronRun": {
         "type": "object",
         "properties": {
@@ -86919,6 +89709,38 @@
           "label",
           "severity",
           "authority"
+        ]
+      },
+      "CustodyEvent": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "event": {
+            "type": "string",
+            "enum": [
+              "handed-over",
+              "received-in-custody",
+              "returned",
+              "surrendered",
+              "transferred"
+            ]
+          },
+          "place": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "at",
+          "by",
+          "event"
         ]
       },
       "DataCategoryInfo": {
@@ -87791,6 +90613,43 @@
           "detail"
         ]
       },
+      "Delivery_identity_register": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "type": "string",
+            "enum": [
+              "collected",
+              "delivered"
+            ]
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "recipient": {
+            "type": "string",
+            "enum": [
+              "holder",
+              "representative"
+            ]
+          },
+          "evidence": {
+            "type": "string"
+          },
+          "place": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "method",
+          "at",
+          "by",
+          "recipient"
+        ]
+      },
       "DemoPackResult": {
         "type": "object",
         "properties": {
@@ -88506,6 +91365,9 @@
               "centralBank": {
                 "type": "string"
               },
+              "citizenship": {
+                "type": "string"
+              },
               "civilRegistration": {
                 "type": "string"
               },
@@ -88548,6 +91410,9 @@
               "judiciary": {
                 "type": "string"
               },
+              "labour": {
+                "type": "string"
+              },
               "lawRegister": {
                 "type": "string"
               },
@@ -88569,6 +91434,9 @@
               "publicHealth": {
                 "type": "string"
               },
+              "socialProtection": {
+                "type": "string"
+              },
               "statistics": {
                 "type": "string"
               },
@@ -88576,6 +91444,9 @@
                 "type": "string"
               },
               "tax": {
+                "type": "string"
+              },
+              "travelDocuments": {
                 "type": "string"
               },
               "trustServices": {
@@ -90178,6 +93049,7 @@
                       "anticorruption",
                       "businessRegister",
                       "centralBank",
+                      "citizenship",
                       "civilRegistration",
                       "constitutionalCourt",
                       "controlledSubstances",
@@ -90192,6 +93064,7 @@
                       "identity",
                       "immigration",
                       "judiciary",
+                      "labour",
                       "lawRegister",
                       "legislature",
                       "medicinesRegulation",
@@ -90199,9 +93072,11 @@
                       "police",
                       "professionalRegulation",
                       "publicHealth",
+                      "socialProtection",
                       "statistics",
                       "supremeAudit",
                       "tax",
+                      "travelDocuments",
                       "trustServices"
                     ]
                   }
@@ -90253,6 +93128,7 @@
                     "anticorruption",
                     "businessRegister",
                     "centralBank",
+                    "citizenship",
                     "civilRegistration",
                     "constitutionalCourt",
                     "controlledSubstances",
@@ -90267,6 +93143,7 @@
                     "identity",
                     "immigration",
                     "judiciary",
+                    "labour",
                     "lawRegister",
                     "legislature",
                     "medicinesRegulation",
@@ -90274,9 +93151,11 @@
                     "police",
                     "professionalRegulation",
                     "publicHealth",
+                    "socialProtection",
                     "statistics",
                     "supremeAudit",
                     "tax",
+                    "travelDocuments",
                     "trustServices"
                   ]
                 },
@@ -90335,6 +93214,7 @@
                     "anticorruption",
                     "businessRegister",
                     "centralBank",
+                    "citizenship",
                     "civilRegistration",
                     "constitutionalCourt",
                     "controlledSubstances",
@@ -90349,6 +93229,7 @@
                     "identity",
                     "immigration",
                     "judiciary",
+                    "labour",
                     "lawRegister",
                     "legislature",
                     "medicinesRegulation",
@@ -90356,9 +93237,11 @@
                     "police",
                     "professionalRegulation",
                     "publicHealth",
+                    "socialProtection",
                     "statistics",
                     "supremeAudit",
                     "tax",
+                    "travelDocuments",
                     "trustServices"
                   ]
                 },
@@ -90389,6 +93272,71 @@
           "registers",
           "procedures",
           "notConnected"
+        ]
+      },
+      "Employer": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string"
+          },
+          "organisation": {
+            "type": "string",
+            "description": "The organisation (organisations register number) or, where the nation's law registers an individual employer, the name given."
+          },
+          "name": {
+            "type": "string"
+          },
+          "industry": {
+            "type": "string"
+          },
+          "workplaces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Workplace"
+            }
+          },
+          "representative": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "deregistered",
+              "registered",
+              "suspended"
+            ]
+          },
+          "case": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Step_labour_register"
+            }
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "number",
+          "name",
+          "industry",
+          "workplaces",
+          "representative",
+          "state",
+          "case",
+          "history",
+          "createdAt"
         ]
       },
       "Envelope": {
@@ -93941,7 +96889,7 @@
           "versions": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/FindingVersion"
+              "$ref": "#/components/schemas/FindingVersion_oversight_register"
             }
           },
           "decision": {
@@ -93978,6 +96926,48 @@
         ]
       },
       "FindingVersion": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "number"
+          },
+          "requirement": {
+            "type": "string"
+          },
+          "observation": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "severity": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "n",
+          "requirement",
+          "observation",
+          "evidence",
+          "severity",
+          "at",
+          "by",
+          "reason"
+        ]
+      },
+      "FindingVersion_oversight_register": {
         "type": "object",
         "properties": {
           "n": {
@@ -95584,6 +98574,127 @@
           "history"
         ]
       },
+      "Household": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string"
+          },
+          "claimant": {
+            "type": "string"
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HouseholdVersion"
+            }
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "number",
+          "claimant",
+          "versions"
+        ]
+      },
+      "HouseholdVersion": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "number"
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "reference": {
+                  "type": "string"
+                },
+                "relationship": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "reference",
+                "relationship"
+              ]
+            }
+          },
+          "effectiveFrom": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "case": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "n",
+          "members",
+          "effectiveFrom",
+          "at",
+          "by",
+          "case",
+          "reason"
+        ]
+      },
+      "IdentityClaim": {
+        "type": "object",
+        "properties": {
+          "attribute": {
+            "type": "string",
+            "enum": [
+              "birthDate",
+              "birthPlace",
+              "familyName",
+              "givenNames",
+              "nationality",
+              "sex"
+            ]
+          },
+          "value": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "applicant",
+              "civil-register",
+              "evidence"
+            ]
+          },
+          "verification": {
+            "type": "string",
+            "enum": [
+              "disputed",
+              "unverified",
+              "verified"
+            ]
+          },
+          "effectiveFrom": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "attribute",
+          "value",
+          "source",
+          "verification",
+          "effectiveFrom"
+        ]
+      },
       "IdentityMarker": {
         "description": "What anyone who may see the case learns of a protected identity: that it exists, its role and whether the person is anonymous.",
         "type": "object",
@@ -95608,6 +98719,138 @@
           "id",
           "role",
           "anonymous"
+        ]
+      },
+      "IdentityRecord": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string",
+            "description": "The register number (the platform's; the nation's own identifier scheme is CFG-IDN-002)."
+          },
+          "civilLink": {
+            "type": "object",
+            "properties": {
+              "registration": {
+                "type": "string"
+              },
+              "basis": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "registration",
+              "basis"
+            ],
+            "description": "The explicit link to a civil register entry, with its basis (identity_link); absent when there is none."
+          },
+          "claims": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IdentityClaim"
+            }
+          },
+          "eligibility": {
+            "type": "object",
+            "properties": {
+              "rule": {
+                "type": "string"
+              },
+              "outcome": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "rule",
+              "outcome",
+              "by",
+              "at"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "active",
+              "revoked",
+              "superseded"
+            ]
+          },
+          "supersededBy": {
+            "type": "string",
+            "description": "Superseded by a determination that it duplicates this record."
+          },
+          "resolution": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResolutionEntry"
+            }
+          },
+          "underReview": {
+            "type": "object",
+            "properties": {
+              "case": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "since": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "case",
+              "kind",
+              "since"
+            ],
+            "description": "Under review in an open identity case (a duplicate, misuse, compromise or verification dispute)."
+          },
+          "credentials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Credential"
+            }
+          },
+          "case": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Step_identity_register"
+            }
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "claims",
+          "eligibility",
+          "state",
+          "resolution",
+          "credentials",
+          "case",
+          "history",
+          "createdAt"
         ]
       },
       "IdentityRequest": {
@@ -96172,6 +99415,7 @@
                       "anticorruption",
                       "businessRegister",
                       "centralBank",
+                      "citizenship",
                       "civilRegistration",
                       "constitutionalCourt",
                       "controlledSubstances",
@@ -96186,6 +99430,7 @@
                       "identity",
                       "immigration",
                       "judiciary",
+                      "labour",
                       "lawRegister",
                       "legislature",
                       "medicinesRegulation",
@@ -96193,9 +99438,11 @@
                       "police",
                       "professionalRegulation",
                       "publicHealth",
+                      "socialProtection",
                       "statistics",
                       "supremeAudit",
                       "tax",
+                      "travelDocuments",
                       "trustServices"
                     ]
                   }
@@ -96622,6 +99869,94 @@
           "reason"
         ]
       },
+      "Injury": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string"
+          },
+          "employer": {
+            "type": "string"
+          },
+          "workplace": {
+            "type": "string"
+          },
+          "occurredAt": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "description": "The category the nation's occupational safety reporting uses (fatal, serious, other …: the nation's list)."
+          },
+          "description": {
+            "type": "string"
+          },
+          "controls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "medicalEvidence": {
+            "type": "string",
+            "description": "A sealed document of the case holding any medical content; never read into a field."
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "closed",
+              "investigated",
+              "notified"
+            ]
+          },
+          "case": {
+            "type": "string"
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Step_labour_register"
+            }
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "number",
+          "employer",
+          "occurredAt",
+          "category",
+          "description",
+          "controls",
+          "state",
+          "case",
+          "history"
+        ]
+      },
+      "InputLine": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "amountMinor": {
+            "type": "number"
+          },
+          "verified": {
+            "type": "boolean"
+          },
+          "counted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "source",
+          "amountMinor",
+          "verified"
+        ]
+      },
       "Inspection": {
         "type": "object",
         "properties": {
@@ -96668,6 +100003,111 @@
           "case",
           "by",
           "at"
+        ]
+      },
+      "InspectionFinding": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "number"
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FindingVersion"
+            }
+          }
+        },
+        "required": [
+          "n",
+          "versions"
+        ]
+      },
+      "Inspection_labour_register": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string"
+          },
+          "employer": {
+            "type": "string"
+          },
+          "workplace": {
+            "type": "string"
+          },
+          "visit": {
+            "type": "object",
+            "properties": {
+              "date": {
+                "type": "string"
+              },
+              "basis": {
+                "type": "string"
+              },
+              "inspector": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "date",
+              "basis",
+              "inspector",
+              "at"
+            ]
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InspectionFinding"
+            }
+          },
+          "orders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CorrectiveOrder"
+            }
+          },
+          "fromComplaint": {
+            "type": "string",
+            "description": "The complaint case that led to it, if any (a reference only: the allegation stays in the complaint)."
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "closed",
+              "ordered",
+              "planned",
+              "visited"
+            ]
+          },
+          "case": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Step_labour_register"
+            }
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "number",
+          "employer",
+          "findings",
+          "orders",
+          "state",
+          "case",
+          "history"
         ]
       },
       "InstallEvent": {
@@ -99427,6 +102867,30 @@
           "position",
           "text",
           "evidence"
+        ]
+      },
+      "MeansTest": {
+        "description": "means-tested: what is due for assessed means M (minor units) and a household of N members: nothing when M is at or above `limitMinor`; otherwise baseMinor + perMemberMinor x (N - 1) - taperRate% x M, never below zero.",
+        "type": "object",
+        "properties": {
+          "limitMinor": {
+            "type": "number"
+          },
+          "baseMinor": {
+            "type": "number"
+          },
+          "perMemberMinor": {
+            "type": "number"
+          },
+          "taperRate": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "limitMinor",
+          "baseMinor",
+          "perMemberMinor",
+          "taperRate"
         ]
       },
       "MediaShipment": {
@@ -103561,6 +107025,102 @@
           "error"
         ]
       },
+      "Overpayment": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string"
+          },
+          "claim": {
+            "type": "string"
+          },
+          "period": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "from",
+              "to"
+            ]
+          },
+          "paidMinor": {
+            "type": "number"
+          },
+          "dueMinor": {
+            "type": "number"
+          },
+          "overMinor": {
+            "type": "number"
+          },
+          "rule": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "version": {
+                "type": "number"
+              },
+              "digest": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "key",
+              "version",
+              "digest"
+            ]
+          },
+          "payments": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "recover",
+              "waive"
+            ]
+          },
+          "case": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "number",
+          "claim",
+          "period",
+          "paidMinor",
+          "dueMinor",
+          "overMinor",
+          "rule",
+          "payments",
+          "case",
+          "at",
+          "by"
+        ]
+      },
       "OwnerResolution": {
         "description": "Who owns what a slot names: the institution named for it, or, where it is empty, a recorded provisional stand-in.",
         "type": "object",
@@ -103571,6 +107131,7 @@
               "anticorruption",
               "businessRegister",
               "centralBank",
+              "citizenship",
               "civilRegistration",
               "constitutionalCourt",
               "controlledSubstances",
@@ -103585,6 +107146,7 @@
               "identity",
               "immigration",
               "judiciary",
+              "labour",
               "lawRegister",
               "legislature",
               "medicinesRegulation",
@@ -103592,9 +107154,11 @@
               "police",
               "professionalRegulation",
               "publicHealth",
+              "socialProtection",
               "statistics",
               "supremeAudit",
               "tax",
+              "travelDocuments",
               "trustServices"
             ],
             "description": "The slot the form or procedure names."
@@ -103605,6 +107169,7 @@
               "anticorruption",
               "businessRegister",
               "centralBank",
+              "citizenship",
               "civilRegistration",
               "constitutionalCourt",
               "controlledSubstances",
@@ -103619,6 +107184,7 @@
               "identity",
               "immigration",
               "judiciary",
+              "labour",
               "lawRegister",
               "legislature",
               "medicinesRegulation",
@@ -103626,9 +107192,11 @@
               "police",
               "professionalRegulation",
               "publicHealth",
+              "socialProtection",
               "statistics",
               "supremeAudit",
               "tax",
+              "travelDocuments",
               "trustServices"
             ],
             "description": "The slot whose institution acts (the slot itself, or the stand-in)."
@@ -104327,6 +107895,139 @@
           "committedHours",
           "dueAt",
           "state"
+        ]
+      },
+      "PaymentInstruction": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string"
+          },
+          "claim": {
+            "type": "string"
+          },
+          "period": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "from",
+              "to"
+            ]
+          },
+          "amountMinor": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "assessment": {
+            "type": "number"
+          },
+          "rule": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "version": {
+                "type": "number"
+              },
+              "digest": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "key",
+              "version",
+              "digest"
+            ]
+          },
+          "maker": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ]
+          },
+          "approver": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "cancelled",
+              "failed",
+              "paid",
+              "prepared"
+            ]
+          },
+          "result": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "externalReference": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "at",
+              "by",
+              "externalReference"
+            ]
+          },
+          "case": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "number",
+          "claim",
+          "period",
+          "amountMinor",
+          "currency",
+          "assessment",
+          "rule",
+          "maker",
+          "state",
+          "case"
         ]
       },
       "PaymentPlan": {
@@ -107565,6 +111266,52 @@
           "by",
           "reason",
           "case"
+        ]
+      },
+      "Production": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "documentNumber": {
+            "type": "string"
+          },
+          "batch": {
+            "type": "string"
+          },
+          "quality": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "passed": {
+                "type": "boolean"
+              },
+              "note": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "at",
+              "by",
+              "passed",
+              "note"
+            ]
+          }
+        },
+        "required": [
+          "at",
+          "by",
+          "documentNumber",
+          "batch"
         ]
       },
       "Profession": {
@@ -111404,6 +115151,7 @@
                       "anticorruption",
                       "businessRegister",
                       "centralBank",
+                      "citizenship",
                       "civilRegistration",
                       "constitutionalCourt",
                       "controlledSubstances",
@@ -111418,6 +115166,7 @@
                       "identity",
                       "immigration",
                       "judiciary",
+                      "labour",
                       "lawRegister",
                       "legislature",
                       "medicinesRegulation",
@@ -111425,9 +115174,11 @@
                       "police",
                       "professionalRegulation",
                       "publicHealth",
+                      "socialProtection",
                       "statistics",
                       "supremeAudit",
                       "tax",
+                      "travelDocuments",
                       "trustServices"
                     ]
                   }
@@ -112333,6 +116084,45 @@
           "reason"
         ]
       },
+      "ResolutionEntry": {
+        "type": "object",
+        "properties": {
+          "other": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "different-persons",
+              "same-person",
+              "unresolved"
+            ]
+          },
+          "reasons": {
+            "type": "string"
+          },
+          "case": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "other",
+          "outcome",
+          "reasons",
+          "case",
+          "at",
+          "by"
+        ]
+      },
       "RestorePoint": {
         "type": "object",
         "properties": {
@@ -112804,6 +116594,23 @@
           "met"
         ]
       },
+      "RuleInputValues": {
+        "type": "object",
+        "properties": {
+          "amountMinor": {
+            "type": "number"
+          },
+          "code": {
+            "type": "string"
+          },
+          "members": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "amountMinor"
+        ]
+      },
       "RuleRef": {
         "description": "A rule version a decision calculated with.",
         "type": "object",
@@ -112831,18 +116638,7 @@
             "type": "string"
           },
           "input": {
-            "type": "object",
-            "properties": {
-              "amountMinor": {
-                "type": "number"
-              },
-              "code": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "amountMinor"
-            ]
+            "$ref": "#/components/schemas/RuleInputValues"
           },
           "expectMinor": {
             "type": "number"
@@ -112869,7 +116665,9 @@
           "kind": {
             "type": "string",
             "enum": [
+              "fixed-amounts",
               "flat-rate",
+              "means-tested",
               "rate-bands",
               "tariff"
             ]
@@ -112908,6 +116706,16 @@
               "$ref": "#/components/schemas/TariffLine"
             }
           },
+          "amounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AmountLine"
+            },
+            "description": "fixed-amounts: the amount for each code."
+          },
+          "means": {
+            "$ref": "#/components/schemas/MeansTest"
+          },
           "tests": {
             "type": "array",
             "items": {
@@ -112916,7 +116724,7 @@
           },
           "digest": {
             "type": "string",
-            "description": "SHA-256 of the rule's content (kind, rate, bands, lines): what a calculation cites."
+            "description": "SHA-256 of the rule's content (kind, rate, bands, lines, amounts, means): what a calculation cites."
           },
           "state": {
             "type": "string",
@@ -113634,6 +117442,7 @@
                   "anticorruption",
                   "businessRegister",
                   "centralBank",
+                  "citizenship",
                   "civilRegistration",
                   "constitutionalCourt",
                   "controlledSubstances",
@@ -113648,6 +117457,7 @@
                   "identity",
                   "immigration",
                   "judiciary",
+                  "labour",
                   "lawRegister",
                   "legislature",
                   "medicinesRegulation",
@@ -113655,9 +117465,11 @@
                   "police",
                   "professionalRegulation",
                   "publicHealth",
+                  "socialProtection",
                   "statistics",
                   "supremeAudit",
                   "tax",
+                  "travelDocuments",
                   "trustServices"
                 ]
               },
@@ -113814,6 +117626,7 @@
               "anticorruption",
               "businessRegister",
               "centralBank",
+              "citizenship",
               "civilRegistration",
               "constitutionalCourt",
               "controlledSubstances",
@@ -113828,6 +117641,7 @@
               "identity",
               "immigration",
               "judiciary",
+              "labour",
               "lawRegister",
               "legislature",
               "medicinesRegulation",
@@ -113835,9 +117649,11 @@
               "police",
               "professionalRegulation",
               "publicHealth",
+              "socialProtection",
               "statistics",
               "supremeAudit",
               "tax",
+              "travelDocuments",
               "trustServices"
             ],
             "description": "The slot of who is responsible whose institution approves seal keys (the nation's law names it)."
@@ -114025,6 +117841,7 @@
               "anticorruption",
               "businessRegister",
               "centralBank",
+              "citizenship",
               "civilRegistration",
               "constitutionalCourt",
               "controlledSubstances",
@@ -114039,6 +117856,7 @@
               "identity",
               "immigration",
               "judiciary",
+              "labour",
               "lawRegister",
               "legislature",
               "medicinesRegulation",
@@ -114046,9 +117864,11 @@
               "police",
               "professionalRegulation",
               "publicHealth",
+              "socialProtection",
               "statistics",
               "supremeAudit",
               "tax",
+              "travelDocuments",
               "trustServices"
             ],
             "description": "The slot of who is responsible whose institution approves seal keys (the nation's law names it)."
@@ -115262,6 +119082,7 @@
                   "anticorruption",
                   "businessRegister",
                   "centralBank",
+                  "citizenship",
                   "civilRegistration",
                   "constitutionalCourt",
                   "controlledSubstances",
@@ -115276,6 +119097,7 @@
                   "identity",
                   "immigration",
                   "judiciary",
+                  "labour",
                   "lawRegister",
                   "legislature",
                   "medicinesRegulation",
@@ -115283,9 +119105,11 @@
                   "police",
                   "professionalRegulation",
                   "publicHealth",
+                  "socialProtection",
                   "statistics",
                   "supremeAudit",
                   "tax",
+                  "travelDocuments",
                   "trustServices"
                 ]
               },
@@ -119590,6 +123414,122 @@
           "at"
         ]
       },
+      "Step_identity_register": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "what": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "case": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "at",
+          "by",
+          "what",
+          "reason"
+        ]
+      },
+      "Step_labour_register": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "what": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "case": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "at",
+          "by",
+          "what",
+          "reason"
+        ]
+      },
+      "Step_passports_register": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "what": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "case": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "at",
+          "by",
+          "what",
+          "reason"
+        ]
+      },
+      "Step_social_register": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "what": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "case": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "at",
+          "by",
+          "what",
+          "reason"
+        ]
+      },
       "StorePolicy": {
         "description": "The store's business model, held as configuration (decided by the owner; see `decision`).",
         "type": "object",
@@ -121807,6 +125747,322 @@
           ]
         }
       },
+      "TravelDocument": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string",
+            "description": "The register number (the platform's); the document number is the one production gave it."
+          },
+          "documentType": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "amendment",
+              "child",
+              "emergency",
+              "first",
+              "limited-validity",
+              "renewal",
+              "replacement-damaged",
+              "replacement-lost",
+              "replacement-stolen"
+            ]
+          },
+          "holder": {
+            "type": "object",
+            "properties": {
+              "identity": {
+                "type": "string"
+              },
+              "surname": {
+                "type": "string"
+              },
+              "givenNames": {
+                "type": "string"
+              },
+              "nationality": {
+                "type": "string"
+              },
+              "birthDate": {
+                "type": "string"
+              },
+              "sex": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "identity",
+              "surname",
+              "givenNames",
+              "nationality",
+              "birthDate"
+            ]
+          },
+          "icao": {
+            "type": "object",
+            "properties": {
+              "birthDate": {
+                "type": "string"
+              },
+              "dateOfExpiry": {
+                "type": "string"
+              },
+              "dateOfIssue": {
+                "type": "string"
+              },
+              "documentCode": {
+                "type": "string"
+              },
+              "documentNumber": {
+                "type": "string"
+              },
+              "givenNames": {
+                "type": "string"
+              },
+              "issuingState": {
+                "type": "string"
+              },
+              "nationality": {
+                "type": "string"
+              },
+              "personalNumber": {
+                "type": "string"
+              },
+              "sex": {
+                "type": "string"
+              },
+              "surname": {
+                "type": "string"
+              }
+            },
+            "description": "The ICAO Doc 9303 data elements, as personalised (set at production)."
+          },
+          "validFrom": {
+            "type": "string"
+          },
+          "validUntil": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "cancelled",
+              "damaged",
+              "expired",
+              "in-custody",
+              "issued",
+              "produced",
+              "reported-lost",
+              "reported-stolen",
+              "revoked",
+              "superseded",
+              "surrendered"
+            ]
+          },
+          "fee": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "amountMinor": {
+                    "type": "number"
+                  },
+                  "currency": {
+                    "type": "string"
+                  },
+                  "rule": {
+                    "type": "object",
+                    "properties": {
+                      "key": {
+                        "type": "string"
+                      },
+                      "version": {
+                        "type": "number"
+                      },
+                      "digest": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "version",
+                      "digest"
+                    ]
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "bill": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "amountMinor",
+                  "currency",
+                  "rule",
+                  "code"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "exempt": {
+                    "type": "boolean",
+                    "const": true
+                  },
+                  "ground": {
+                    "type": "string"
+                  },
+                  "reasons": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "exempt",
+                  "ground",
+                  "reasons"
+                ]
+              }
+            ]
+          },
+          "productions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Production"
+            }
+          },
+          "custody": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustodyEvent"
+            }
+          },
+          "delivery": {
+            "type": "object",
+            "properties": {
+              "method": {
+                "type": "string",
+                "enum": [
+                  "collected",
+                  "delivered"
+                ]
+              },
+              "at": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "recipient": {
+                "type": "string",
+                "enum": [
+                  "holder",
+                  "representative"
+                ]
+              },
+              "evidence": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "method",
+              "at",
+              "by",
+              "recipient"
+            ]
+          },
+          "replaces": {
+            "type": "string"
+          },
+          "replacedBy": {
+            "type": "string"
+          },
+          "identityBasis": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "exchange"
+                  },
+                  "receipt": {
+                    "type": "string"
+                  },
+                  "result": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "receipt",
+                  "result"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "other-evidence"
+                  },
+                  "reasons": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "reasons"
+                ]
+              }
+            ],
+            "description": "How the identity it relies on was established: the identity.verify receipt, or an official's record of other evidence."
+          },
+          "case": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "string"
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Step_passports_register"
+            }
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "documentType",
+          "kind",
+          "holder",
+          "validFrom",
+          "validUntil",
+          "state",
+          "fee",
+          "productions",
+          "custody",
+          "identityBasis",
+          "case",
+          "history",
+          "createdAt"
+        ]
+      },
       "TrustListEntry": {
         "type": "object",
         "properties": {
@@ -122473,6 +126729,60 @@
           "purposes",
           "retentionDays",
           "onwardSharing"
+        ]
+      },
+      "Vacancy": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string"
+          },
+          "employer": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "occupation": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "closingDate": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "closed",
+              "filled",
+              "published"
+            ]
+          },
+          "case": {
+            "type": "string"
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Step_labour_register"
+            }
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "number",
+          "employer",
+          "title",
+          "occupation",
+          "location",
+          "state",
+          "case",
+          "history"
         ]
       },
       "ValueSnapshot": {
@@ -123572,6 +127882,27 @@
           "regionNotRecorded",
           "source",
           "sha256"
+        ]
+      },
+      "Workplace": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "site": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "address"
         ]
       },
       "Workspace": {
