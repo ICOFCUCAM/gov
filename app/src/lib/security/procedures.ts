@@ -24,6 +24,18 @@
 //                             (SEC-INF-003, 014, 015)
 //     ci.resilience-plan      a resilience plan approved by two officials; continuity exercises authorised and
 //                             evaluated (SEC-INF-004, 005, 006)
+//     ci.incident             an incident affecting designated infrastructure, notified by its operator or found by the
+//                             authority: triage with reasons, coordination with restricted recipients, containment,
+//                             recovery with verification, closure by two officials (SEC-INF-007, CIP-INC-010). No
+//                             attribution and no cause of a person is recorded; a cyber incident goes through cyber.incident
+//     ci.disruption           an essential service disruption: reported, updated, restoration recorded, closed by two
+//                             officials (SEC-INF-009)
+//     ci.exception            a time-limited resilience exception, approved and renewed by two officials until a date they
+//                             choose, refused or revoked (SEC-INF-013)
+//     ci.release              review of a release of critical infrastructure information to a named institution: what is
+//                             released and what withheld, decided by two officials; the records are shared with it as a
+//                             restricted recipient (recipient view only); the public learns only through approved
+//                             indicators, never a release (SEC-INF-016)
 //   securityAccreditation
 //     security.clearance      a security clearance decision as metadata: level, scope, validity, by two officials of
 //                             the competent authority; renewal, variation, suspension, withdrawal (SEC-INT-007, 008).
@@ -55,7 +67,7 @@ import { authorityFor, getMinistry } from '@/lib/data/store';
 import { getOrganisation } from '@/lib/organisations/register';
 import { getFacility } from '@/lib/data/facilities';
 import { markingRefusal, rankOf } from './classification';
-import { openSecurityRecord, updateSecurityRecord, shareSecurityRecord, securityRecordOfCase, type SecurityKind, type TermValue, type Actor } from './register';
+import { openSecurityRecord, updateSecurityRecord, shareSecurityRecord, securityRecordOfCase, securityRecordRaw, type SecurityKind, type TermValue, type Actor } from './register';
 import type { Case, CasePackage, FieldSpec, ActionSpec } from '@/lib/casework/types';
 import type { AuthorityKey } from '@/lib/nation/deployment';
 
@@ -76,6 +88,11 @@ export const SECURITY_PERMITS: Record<string, string> = {
   'ci.risk': 'infrastructure-risk-acceptance',
   'ci.resilience-plan': 'resilience-plan-approval',
   'security.clearance': 'security-clearance',
+  // leftovers (plan I12): infrastructure incidents and disruptions, resilience exceptions, information release.
+  'ci.incident': 'infrastructure-incident-closure',
+  'ci.disruption': 'essential-service-disruption-closure',
+  'ci.exception': 'resilience-exception',
+  'ci.release': 'infrastructure-information-release',
 };
 
 /** Each procedure: its kind of record, its slot, and the status each step leaves the record in. */
@@ -90,6 +107,10 @@ const FAMILY: Record<string, { kind: SecurityKind; slot: AuthorityKey; status: R
   'ci.risk': { kind: 'risk', slot: 'criticalInfrastructure', status: { register: 'assessed', treat: 'in-treatment', 'accept-risk': 'accepted', review: 'under-review', close: 'closed' } },
   'ci.resilience-plan': { kind: 'plan', slot: 'criticalInfrastructure', status: { register: 'drafted', approve: 'approved', 'authorise-exercise': 'exercise-authorised', 'evaluate-exercise': 'exercise-evaluated', revise: 'under-revision', close: 'closed' } },
   'security.clearance': { kind: 'clearance', slot: 'securityAccreditation', status: { register: 'applied', 'record-assessment': 'assessed', grant: 'granted', refuse: 'refused', renew: 'renewed', vary: 'varied', suspend: 'suspended', reinstate: 'granted', withdraw: 'withdrawn' } },
+  'ci.incident': { kind: 'infra-incident', slot: 'criticalInfrastructure', status: { register: 'notified', triage: 'triaged', escalate: 'coordinating', 'record-containment': 'contained', recover: 'recovered', close: 'closed', 'not-incident': 'not-an-incident' } },
+  'ci.disruption': { kind: 'disruption', slot: 'criticalInfrastructure', status: { register: 'reported', update: 'ongoing', restore: 'restored', close: 'closed' } },
+  'ci.exception': { kind: 'resilience-exception', slot: 'criticalInfrastructure', status: { register: 'requested', approve: 'approved', refuse: 'refused', renew: 'renewed', revoke: 'revoked' } },
+  'ci.release': { kind: 'release', slot: 'criticalInfrastructure', status: { register: 'requested', release: 'released', refuse: 'refused' } },
 };
 /** Fields that are the record's envelope, not its terms. */
 const ENVELOPE = ['summary', 'marking', 'caveats', 'recipients'];
@@ -134,6 +155,12 @@ registerEffect('security.open', (ctx: EffectContext) => {
   for (const key of ['requestingInstitution', 'sponsoringInstitution', 'reportingInstitution']) { const n = str(c.fields[key]); if (n && !getMinistry(n)) return { error: `${n} is not a registered institution` }; }
   const facility = str(c.fields.facility);
   if (facility && !getFacility(facility)) return { error: `${facility} is not a site of the national facility register` };
+  // leftovers (plan I12): infrastructure incidents, disruptions and resilience exceptions concern a designation the keeper made.
+  if (['infra-incident', 'disruption', 'resilience-exception'].includes(k.kind)) {
+    const n = str(c.fields.designation);
+    const d = n ? securityRecordRaw(n) : undefined;
+    if (!d || d.kind !== 'designation' || d.owner !== c.owner) return { error: `${n || 'The designation'} is not a critical infrastructure designation of this authority (its record number, CID-…)` };
+  }
   if (k.kind === 'clearance') {
     const level = str(c.fields.levelRequested).toLowerCase();
     if (rankOf(level) <= 0) return { error: 'The level asked for is a level of the nation\'s adopted classification scheme (none is adopted, or this is not one of its levels)' };
@@ -162,7 +189,7 @@ registerEffect('security.step', (ctx: EffectContext) => {
 });
 
 /** Steps whose decision sets the record's validity: an exception's expiry, a clearance's end, a risk acceptance's review. */
-const VALIDITY_STEPS = ['cyber.exception:approve', 'cyber.exception:renew', 'security.clearance:grant', 'security.clearance:renew', 'ci.risk:accept-risk'];
+const VALIDITY_STEPS = ['cyber.exception:approve', 'cyber.exception:renew', 'security.clearance:grant', 'security.clearance:renew', 'ci.risk:accept-risk', 'ci.exception:approve', 'ci.exception:renew'];
 /** A date the deciding officials choose, in the future; never a default period. */
 registerEffect('security.validity', ({ case: c, now }: EffectContext) => {
   const until = str(c.fields.validUntil);
@@ -207,6 +234,28 @@ registerEffect('security.disclose', (ctx: EffectContext) => {
   if (!date || !summary) return { error: 'Set the disclosure date and the public summary first' };
   if (date > day(now)) return { error: `The disclosure date (${date}) has not come` };
   return { facts: { disclosed: date }, after: (d, done) => { updateSecurityRecord(rec.number, { step: 'publish', status: 'disclosed', reason: reasonOf(done, 'Disclosed'), disclosure: { date, publicSummary: summary, published: now.toISOString() }, ...(d ? { decision: d.id } : {}) }, actorOf(ctx), now); } };
+});
+
+/**
+ * A release of critical infrastructure information (SEC-INF-016): to a named
+ * registered institution only, of records this authority keeps, each shared
+ * with it as a restricted recipient (it sees the recipient view only). The
+ * public learns about critical infrastructure only through approved
+ * indicators (lib/indicators/), never through a release.
+ */
+registerEffect('security.release', (ctx: EffectContext) => {
+  const { case: c, now } = ctx;
+  const k = keeper(c);
+  if ('error' in k) return k;
+  const recipient = str(c.fields.recipient);
+  if (!recipient) return { error: 'A release goes to a named institution (its id in the institution register): the public learns about critical infrastructure only through approved indicators' };
+  if (!getMinistry(recipient)) return { error: `${recipient} is not a registered institution` };
+  if (recipient === c.owner) return { error: 'The keeping institution is not its own recipient' };
+  if (!str(c.fields.withheld)) return { error: 'Say what is withheld (exploitable detail, dependencies, recovery procedures)' };
+  const numbers = lines(c.fields.records);
+  if (!numbers.length) return { error: 'Name the records released (their numbers), one per line' };
+  for (const n of numbers) { const r = securityRecordRaw(n); if (!r || r.owner !== c.owner) return { error: `${n} is not a security record this authority keeps` }; }
+  return { facts: { released: numbers.length, recipient }, after: (_d, done) => { for (const n of numbers) shareSecurityRecord(n, [recipient], reasonOf(done, 'Released'), actorOf(ctx), now); } };
 });
 
 // ── Fields ───────────────────────────────────────────────────────────────────
@@ -595,7 +644,137 @@ export const REFERENCE_CLEARANCE: Ref = {
   ]),
 };
 
-export const SECURITY_PROCEDURES: Ref[] = [REFERENCE_CYBER_INCIDENT, REFERENCE_VULNERABILITY, REFERENCE_SUPPLIER, REFERENCE_EXCEPTION, REFERENCE_EXERCISE, REFERENCE_DESIGNATION, REFERENCE_DEPENDENCY, REFERENCE_RISK, REFERENCE_RESILIENCE_PLAN, REFERENCE_CLEARANCE];
+// ── leftovers (plan I12): infrastructure incidents and disruptions, resilience exceptions, information release ──
+const DESIGNATION: FieldSpec = adm('designation', 'Designated service or asset (its record number, CID-…)');
+
+export const REFERENCE_INFRA_INCIDENT: Ref = {
+  ...base, owner: 'criticalInfrastructure', key: 'ci.incident', version: 1, title: 'Critical infrastructure incident', refPrefix: 'CII', retention: 'critical-infrastructure',
+  fields: [
+    ...ENVELOPE_FIELDS,
+    DESIGNATION,
+    adm('operator', 'Reporting operator (its number in the organisations register, or the id of the public institution that runs it)'),
+    r('occurredAt', 'When it happened', 'timestamp'),
+    configured('incidentType', 'Incident type in the nation\'s list', 'security.country.infrastructure_incident_types', 'infrastructure incident types (CFG-SEC-012)'),
+    r('serviceImpact', 'Service impact and its extent', 'longtext'),
+    r('actionsSoFar', 'Actions taken so far', 'longtext'),
+    RECIPIENTS,
+    r('coordinationActions', 'Coordination asked of each recipient', 'longtext'),
+    r('containmentActions', 'Containment actions, one per line, and who approved them', 'longtext'),
+    r('serviceStatus', 'Service status after recovery', 'longtext'),
+    r('recoveryVerification', 'How continuity of the essential service was verified', 'longtext'),
+    r('correctiveActions', 'Corrective actions, owners and how closure is verified', 'longtext'),
+  ],
+  documents: [
+    { class: 'incident-notification', label: 'The notification as received', required: true },
+    { class: 'regulatory-notification', label: 'A regulatory notification made, if any', required: false },
+  ],
+  stages: [
+    { key: 'received', label: 'Notified' }, { key: 'assessment', label: 'Triage' }, { key: 'coordinating', label: 'Coordination and containment' },
+    { key: 'contained', label: 'Contained' }, { key: 'recovered', label: 'Recovered and verified' },
+    { key: 'closed', label: 'Closed with reasons', terminal: true }, { key: 'not-incident', label: 'Not an incident, with reasons', terminal: true },
+  ],
+  actions: [
+    { ...open(['designation', 'occurredAt', 'serviceImpact']), requires: { fields: ['summary', 'designation', 'occurredAt', 'serviceImpact'], documents: ['incident-notification'] } },
+    { key: 'triage', label: 'Triage: incident type, with reasons', from: ['assessment'], to: 'coordinating', needs: { role: 'officer', assigned: true }, requires: { fields: ['incidentType'], reasons: true }, effects: ['security.step'] },
+    { key: 'not-incident', label: 'Not an incident, with reasons', from: ['assessment'], to: 'not-incident', decision: 'not-incident', needs: { role: 'signatory' }, requires: { reasons: true }, effects: ['security.step'] },
+    { key: 'escalate', label: 'Coordinate with restricted recipients', from: ['coordinating', 'contained'], to: 'coordinating', needs: { role: 'signatory' }, requires: { fields: ['recipients', 'coordinationActions'], reasons: true }, effects: ['security.share', 'security.step'] },
+    { key: 'record-containment', label: 'Record containment and who approved it', from: ['coordinating'], to: 'contained', needs: { role: 'signatory' }, requires: { fields: ['containmentActions'], reasons: true }, effects: ['security.step'] },
+    { key: 'recover', label: 'Record recovery and how continuity was verified', from: ['contained'], to: 'recovered', needs: { role: 'officer' }, requires: { fields: ['serviceStatus', 'recoveryVerification'], reasons: true }, effects: ['security.step'] },
+    { key: 'close', label: 'Close: corrective actions recorded (two officials)', from: ['recovered'], to: 'closed', decision: 'close-incident', needs: { role: 'signatory', fourEyes: true }, requires: { fields: ['correctiveActions'], reasons: true }, effects: ['security.step'] },
+  ],
+  tests: tests([
+    { action: 'register', expect: 'refused' },
+    { action: 'register', fields: x(['summary', 'designation', 'occurredAt', 'serviceImpact']), documents: ['incident-notification'], expect: 'assessment' },
+    { action: 'triage', fields: x(['incidentType']), expect: 'coordinating' },
+    { action: 'escalate', fields: x(['recipients', 'coordinationActions']), expect: 'coordinating' },
+    { action: 'record-containment', fields: x(['containmentActions']), expect: 'contained' },
+    { action: 'recover', fields: x(['serviceStatus', 'recoveryVerification']), expect: 'recovered' },
+    { action: 'close', fields: x(['correctiveActions']), expect: 'closed' },
+  ]),
+};
+
+export const REFERENCE_DISRUPTION: Ref = {
+  ...base, owner: 'criticalInfrastructure', key: 'ci.disruption', version: 1, title: 'Essential service disruption', refPrefix: 'DIS', retention: 'critical-infrastructure',
+  fields: [
+    ...ENVELOPE_FIELDS,
+    DESIGNATION,
+    r('impact', 'Service impact', 'longtext'),
+    adm('period', 'From and until when', 'dateRange'),
+    r('restoration', 'Restoration status', 'longtext'),
+  ],
+  documents: [],
+  stages: [{ key: 'received', label: 'Reported' }, { key: 'assessment', label: 'Ongoing' }, { key: 'restored', label: 'Restored' }, { key: 'closed', label: 'Closed', terminal: true }],
+  actions: [
+    open(['designation', 'impact', 'period', 'restoration']),
+    { key: 'update', label: 'Record an update on restoration', from: ['assessment'], to: 'assessment', needs: { role: 'officer' }, requires: { fields: ['restoration'], reasons: true }, effects: ['security.step'] },
+    { key: 'restore', label: 'Record that the service is restored', from: ['assessment'], to: 'restored', needs: { role: 'officer' }, requires: { fields: ['restoration', 'period'], reasons: true }, effects: ['security.step'] },
+    { key: 'close', label: 'Close (two officials)', from: ['restored'], to: 'closed', decision: 'close-disruption', needs: { role: 'signatory', fourEyes: true }, requires: { reasons: true }, effects: ['security.step'] },
+  ],
+  tests: tests([
+    { action: 'register', fields: x(['summary', 'designation', 'impact', 'period', 'restoration']), expect: 'assessment' },
+    { action: 'update', expect: 'assessment' },
+    { action: 'restore', expect: 'restored' },
+    { action: 'close', expect: 'closed' },
+  ]),
+};
+
+export const REFERENCE_RESILIENCE_EXCEPTION: Ref = {
+  ...base, owner: 'criticalInfrastructure', key: 'ci.exception', version: 1, title: 'Resilience exception', refPrefix: 'REX', retention: 'critical-infrastructure',
+  fields: [
+    ...ENVELOPE_FIELDS,
+    DESIGNATION,
+    r('requirement', 'The requirement excepted', 'longtext'),
+    r('justification', 'Why it cannot be met now', 'longtext'),
+    r('compensatingMeasures', 'Compensating measures', 'longtext'),
+    adm('requestedUntil', 'Asked for until', 'date'),
+    VALID_UNTIL,
+  ],
+  documents: [{ class: 'exception-request', label: 'The request', required: true }],
+  stages: [
+    { key: 'received', label: 'Received' }, { key: 'assessment', label: 'Review' }, { key: 'in-force', label: 'In force until its date' },
+    { key: 'refused', label: 'Refused, with reasons', terminal: true }, { key: 'ended', label: 'Revoked, with reasons', terminal: true },
+  ],
+  actions: [
+    { ...open(['designation', 'requirement', 'justification', 'compensatingMeasures', 'requestedUntil']), requires: { fields: ['summary', 'designation', 'requirement', 'justification', 'compensatingMeasures', 'requestedUntil'], documents: ['exception-request'] } },
+    { key: 'approve', label: 'Approve until a date (two officials)', from: ['assessment'], to: 'in-force', decision: 'approve-exception', needs: { role: 'signatory', fourEyes: true }, requires: { fields: ['validUntil'], reasons: true }, effects: ['security.validity', 'security.step'] },
+    { key: 'refuse', label: 'Refuse, with reasons', from: ['assessment'], to: 'refused', decision: 'refuse-exception', needs: { role: 'signatory' }, requires: { reasons: true }, effects: ['security.step'] },
+    { key: 'renew', label: 'Renew until a new date (two officials)', from: ['in-force'], to: 'in-force', decision: 'renew', needs: { role: 'signatory', fourEyes: true }, requires: { fields: ['validUntil'], reasons: true }, effects: ['security.validity', 'security.step'] },
+    { key: 'revoke', label: 'Revoke (two officials)', from: ['in-force'], to: 'ended', decision: 'revoke', needs: { role: 'signatory', fourEyes: true }, requires: { reasons: true }, effects: ['security.step'] },
+  ],
+  tests: tests([
+    { action: 'register', fields: x(['summary', 'designation', 'requirement', 'justification', 'compensatingMeasures', 'requestedUntil']), documents: ['exception-request'], expect: 'assessment' },
+    { action: 'approve', fields: x(['validUntil']), expect: 'in-force' },
+    { action: 'renew', expect: 'in-force' },
+    { action: 'revoke', expect: 'ended' },
+  ]),
+};
+
+export const REFERENCE_INFORMATION_RELEASE: Ref = {
+  ...base, owner: 'criticalInfrastructure', key: 'ci.release', version: 1, title: 'Release of critical infrastructure information', refPrefix: 'REL', retention: 'critical-infrastructure',
+  fields: [
+    ...ENVELOPE_FIELDS,
+    adm('records', 'Records concerned (their numbers), one per line', 'longtext'),
+    adm('recipient', 'Recipient institution (its id in the institution register)'),
+    r('purpose', 'Purpose of the release', 'longtext'),
+    r('withheld', 'What must be withheld (exploitable detail, dependencies, recovery procedures)', 'longtext'),
+    adm('receivedAt', 'Request received at', 'timestamp'),
+  ],
+  documents: [],
+  stages: [{ key: 'received', label: 'Requested' }, { key: 'assessment', label: 'Review' }, { key: 'released', label: 'Released to the recipient', terminal: true }, { key: 'refused', label: 'Refused, with reasons', terminal: true }],
+  actions: [
+    open(['records', 'purpose', 'withheld']),
+    { key: 'release', label: 'Release to the named institution, withholding what is listed (two officials)', from: ['assessment'], to: 'released', decision: 'release', needs: { role: 'signatory', fourEyes: true }, requires: { fields: ['records', 'recipient', 'withheld'], reasons: true }, effects: ['security.release', 'security.step'] },
+    { key: 'refuse', label: 'Refuse, with reasons', from: ['assessment'], to: 'refused', decision: 'refuse-release', needs: { role: 'signatory' }, requires: { reasons: true }, effects: ['security.step'] },
+  ],
+  tests: tests([
+    { action: 'register', fields: x(['summary', 'records', 'purpose', 'withheld']), expect: 'assessment' },
+    { action: 'release', fields: x(['recipient']), expect: 'released' },
+  ]),
+};
+
+export const SECURITY_PROCEDURES: Ref[] = [REFERENCE_CYBER_INCIDENT, REFERENCE_VULNERABILITY, REFERENCE_SUPPLIER, REFERENCE_EXCEPTION, REFERENCE_EXERCISE, REFERENCE_DESIGNATION, REFERENCE_DEPENDENCY, REFERENCE_RISK, REFERENCE_RESILIENCE_PLAN, REFERENCE_CLEARANCE,
+  // leftovers (plan I12)
+  REFERENCE_INFRA_INCIDENT, REFERENCE_DISRUPTION, REFERENCE_RESILIENCE_EXCEPTION, REFERENCE_INFORMATION_RELEASE];
 /** The slot each procedure belongs to. */
 export const SECURITY_SLOT_OF: Record<string, AuthorityKey> = Object.fromEntries(Object.entries(FAMILY).map(([k, f]) => [k, f.slot]));
 

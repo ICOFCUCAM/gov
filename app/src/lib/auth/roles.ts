@@ -473,7 +473,11 @@ const INSTALLATION: RegExp[] = [/^\/api\/releases(\/|$)/];
  *  Switching to a member of the demo cast is a sign-in too: the route lets only a signed-in
  *  administrator or cast member (any role, so the cast's auditor can switch back) do it, and
  *  answers 404 outside demo and training installations (lib/auth/demo-cast.ts actAsRefusal()). */
-const ANY_ROLE: RegExp[] = [/^\/api\/auth\/official\/?$/, /^\/api\/auth\/two-step\/?$/, /^\/api\/auth\/passkeys(\/options)?\/?$/, /^\/api\/auth\/password\/?$/, /^\/api\/health\/?$/, /^\/api\/demo\/act-as$/];
+const ANY_ROLE: RegExp[] = [/^\/api\/auth\/official\/?$/, /^\/api\/auth\/two-step\/?$/, /^\/api\/auth\/passkeys(\/options)?\/?$/, /^\/api\/auth\/password\/?$/, /^\/api\/health\/?$/, /^\/api\/demo\/act-as$/,
+  // leftovers (plan I9, P5-12): an independent review of key operations is recorded by an auditor or the data-protection
+  // authority (canReadAuditChain(), never one who took an operation reviewed), whom the general rule keeps from changing
+  // records; the route decides (lib/keys/key-review.ts reviewerRefusal()).
+  /^\/api\/audit\/key-reviews$/];
 /** Inside one ministry's workspace: officials of that ministry, or of the whole government (not into an independent institution). */
 const MINISTRY = /^\/api\/org\/ministries\/([^/]+)\//;
 /**

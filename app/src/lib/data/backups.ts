@@ -30,6 +30,7 @@
 // a set number of days. The schedule's interval and the RPO and RTO targets
 // are part of the same policy.
 
+import { recoveryTargets } from '@/lib/ops/deployment-record';
 import { randomBytes } from 'node:crypto';
 import { recordAudit } from './store/audit';
 import { afterRestore } from '@/lib/events/outbox';
@@ -408,6 +409,8 @@ async function executeRestore(t: BackupTarget, entry: BackupEntry, proposal: Res
 
 // ── Policy, retention, schedule ───────────────────────────────────────────
 export const getPolicy = (): BackupPolicy => ({ ...db().policy });
+/** The policy with the recovery targets the deployment record sets once adopted (plan I9, lib/ops/deployment-record.ts). */
+const effective = (p: BackupPolicy): BackupPolicy => { const t = recoveryTargets(p); return { ...p, rpoMinutes: t.rpoMinutes, rtoMinutes: t.rtoMinutes }; };
 
 export function setPolicy(input: Partial<BackupPolicy> & { by?: string }): Result<BackupPolicy> {
   const by = name(input.by);
@@ -423,6 +426,12 @@ export function setPolicy(input: Partial<BackupPolicy> & { by?: string }): Resul
     (next as Record<string, unknown>)[k] = v;
   }
   if (next.daily + next.weekly + next.monthly < 1) return fail('Keep at least one backup (daily, weekly or monthly)', 422);
+  // Plan I9: once the deployment record sets the recovery objectives, they are its (two officials, citing the law or contract), and the interval must meet the RPO.
+  const t = recoveryTargets(next);
+  if (t.source === 'deployment-record') {
+    if ((input.rpoMinutes !== undefined && input.rpoMinutes !== t.rpoMinutes) || (input.rtoMinutes !== undefined && input.rtoMinutes !== t.rtoMinutes)) return fail(`The recovery objectives are set by the deployment record (version ${t.version}: RPO ${t.rpoMinutes} min, RTO ${t.rtoMinutes} min); change them there, by two officials`, 409);
+    if (next.intervalMinutes > t.rpoMinutes) return fail(`A backup every ${next.intervalMinutes} min cannot meet the recovery-point objective of ${t.rpoMinutes} min the deployment record sets`, 422);
+  }
   next.updatedBy = by; next.updatedAt = new Date().toISOString();
   db().policy = next;
   recordAudit(by, 'backup.policy', 'BackupPolicy', 'ok', changes.join(', ') || 'unchanged');
@@ -520,11 +529,13 @@ export async function runScheduled(now = new Date(), opts: { now?: boolean } = {
   return { took: b.id, verified, pruned: 'error' in r ? [] : r.pruned, rpo: rpoOf(await listBackups(t).catch(() => entries), policy, new Date()) };
 }
 
-export interface RpoStatus { targetMinutes: number; newestVerifiedAt: string | null; ageMinutes: number | null; met: boolean }
+export interface RpoStatus { targetMinutes: number; newestVerifiedAt: string | null; ageMinutes: number | null; met: boolean; source?: 'deployment-record' | 'backup-policy'; version?: number }
 function rpoOf(entries: BackupEntry[], policy: BackupPolicy, now: Date): RpoStatus {
   const v = entries.find(e => e.verification?.ok && e.reason !== 'pre-restore');
   const age = v ? Math.round((now.getTime() - Date.parse(v.createdAt)) / 60_000) : null;
-  return { targetMinutes: policy.rpoMinutes, newestVerifiedAt: v?.createdAt ?? null, ageMinutes: age, met: age !== null && age <= policy.rpoMinutes };
+  // Plan I9: the deployment record's objective once adopted, else the backup policy's own.
+  const t = recoveryTargets(policy);
+  return { targetMinutes: t.rpoMinutes, newestVerifiedAt: v?.createdAt ?? null, ageMinutes: age, met: age !== null && age <= t.rpoMinutes, source: t.source, ...(t.version ? { version: t.version } : {}) };
 }
 
 export interface BackupStatus {
@@ -547,7 +558,7 @@ export async function backupStatus(): Promise<BackupStatus> {
   const kind = providerKind();
   return {
     target: targetInfo, key: { provider: kind, ready: kind !== 'env' || encryptionAtRest().enabled }, mode: serverMode(),
-    policy, rpo: rpoOf(entries, policy, new Date()), rtoMinutes: policy.rtoMinutes,
+    policy: effective(policy), rpo: rpoOf(entries, policy, new Date()), rtoMinutes: recoveryTargets(policy).rtoMinutes,
     proposals: listProposals(), restores: listRestores(), runs: [...db().runs].reverse().slice(0, 20),
   };
 }

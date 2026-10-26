@@ -1,14 +1,16 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { resetUpdates, getChamber, HOME_NATION, allReleases, enrolNation } from './updates';
 import { listAudit } from './store';
-import { resetMirror, registerMirror, syncManifest, recordSync, sealMedia, custodyStep, getMirror, listMedia } from './mirror';
+import { resetMirror, registerMirror, syncManifest, recordSync, sealMedia, custodyStep, getMirror, listMedia, mediaManifestFile } from './mirror';
+import { resetReleaseTrust, proposePublisherKey, confirmPublisherKey } from './release-trust';
+import { releaseKey } from '@/lib/updates/release-signing';
 import { GET as mGET, POST as mPOST } from '@/app/api/releases/mirror/route';
 
 const ok = <T,>(r: T): Exclude<T, { error: string }> => { if (r && typeof r === 'object' && 'error' in r) throw new Error((r as { error: string }).error); return r as Exclude<T, { error: string }>; };
 const key = (id: string) => { const c = getChamber(id); if ('error' in c) throw new Error(c.error); return c.nation.channelKey; };
 const json = (url: string, body: unknown) => new Request(url, { method: 'POST', body: JSON.stringify(body), headers: { 'content-type': 'application/json' } }) as never;
 
-beforeEach(() => { resetUpdates(); resetMirror(); });
+beforeEach(() => { resetUpdates(); resetMirror(); resetReleaseTrust(); });
 
 describe('local mirror', () => {
   it('is for self-hosted and air-gapped nations only, registered by a named person', () => {
@@ -59,9 +61,14 @@ describe('physical media chain of custody', () => {
     expect(v.state).toBe('seal-verified');
     expect(v.chain.map(c => c.step)).toEqual(['sealed', 'handed-over', 'received', 'seal-verified']);
     expect(v.chain.every(c => c.by && c.auditSeq)).toBe(true);
+    // Plan I9 (P5-15): the seal proves custody; the releases are mirrored once the signed contents verify too.
+    expect(getMirror(id)!.mirrored).not.toContain('DR-141');
+    ok(confirmPublisherKey(id, ok(proposePublisherKey(id, { publicKeyPem: releaseKey().publicKeyPem, checkedWith: 'Fingerprint read back on a call to the publisher' }, { by: 'Officer A', byId: 'a' })).id, { by: 'Officer B', byId: 'b' }));
+    const c = ok(custodyStep('nation', id, s.mediaId, { step: 'contents-verified', by: 'Air-gap officer', envelope: mediaManifestFile(id, s.mediaId)!.envelope, files: s.contents.map(x => ({ filename: x.filename, sha256: x.sha256 })) }));
+    expect(c.state).toBe('contents-verified');
     expect(getMirror(id)!.mirrored).toContain('DR-141');
     const acts = listAudit().filter(a => a.resource === `UpdateChamber:${id}/media`).map(a => a.action);
-    expect(acts).toEqual(expect.arrayContaining(['update.media.sealed', 'update.media.handed-over', 'update.media.received', 'update.media.seal-verified']));
+    expect(acts).toEqual(expect.arrayContaining(['update.media.sealed', 'update.media.handed-over', 'update.media.received', 'update.media.seal-verified', 'update.media.contents-verified']));
   });
 
   it('a seal that does not match marks the media unusable', () => {

@@ -12,13 +12,28 @@
 // named person (and the person it was handed to), in order, and written to
 // the audit chain. A seal that does not match marks the media unusable.
 // Hosted (SaaS) nations have no mirror: the publisher runs the registry.
+//
+// Plan I9 (acceptance P5-15): the seal proves custody, not authenticity. The
+// publisher signs a statement of every file written to the media
+// (lib/updates/release-signing.ts, DSSE over an in-toto statement), written to
+// the media beside them. After the seal is verified, the nation verifies the
+// contents on the disconnected side: the statement read from the media must
+// be signed by a publisher key two of its officials trusted
+// (lib/data/release-trust.ts), name this shipment, and its subjects must be
+// exactly the files read (each SHA-256 computed locally,
+// app/scripts/verify-update-media.mjs). Only then are the releases mirrored;
+// contents that do not verify mark the media unusable. A production
+// installation never accepts media signed with a development key.
 
 import { createHash } from 'node:crypto';
 import type { DistributionRelease, LocalMirror, MediaShipment, ReleaseArtifact, SyncItem, SyncManifest } from '@/lib/api/types';
 import { recordAudit } from '@/lib/data/store/audit';
-import { allReleases, nationRecord, visibleTo } from './updates';
+import { allReleases, nationRecord, visibleTo, releaseFor } from './updates';
 import { compareVersions } from '@/lib/updates/semver';
 import { touch } from '@/lib/data/repo/track';
+import { mediaStatement, releaseStatement, signStatement, verifyEnvelope, compareSubjects, MEDIA_PREDICATE, RELEASE_PREDICATE, type SignedStatement } from '@/lib/updates/release-signing';
+import { trustedKeysFor } from './release-trust';
+import { installationMode } from '@/lib/ops/mode';
 
 const sha = (v: string) => createHash('sha256').update(v).digest('hex');
 const DELTA_KINDS = new Set(['container-image', 'offline-bundle', 'restore-kit', 'binary-tarball']);
@@ -97,6 +112,9 @@ export function recordSync(nationId: string, input: { releaseIds?: string[]; by?
   const ids = [...new Set(input.releaseIds ?? [])];
   const visible = new Set(releasesFor(nationId).map(r => r.id));
   if (!ids.length || ids.some(id => !visible.has(id))) return { error: 'List the releases synced (your own releases only)', status: 422 };
+  // Plan I9 (P5-15): a production installation mirrors only releases whose signed statement and artifacts it verified.
+  const unverified = ids.filter(id => !m.verified?.[id]);
+  if (installationMode() === 'production' && unverified.length) return { error: `Verify each release's signed statement and artifacts first (${unverified.join(', ')})`, status: 409 };
   const manifest = syncManifest(nationId, now);
   const bytes = 'error' in manifest ? 0 : manifest.items.filter(i => ids.includes(i.releaseId)).reduce((s, i) => s + (i.delta?.sizeBytes ?? i.sizeBytes), 0);
   m.mirrored = [...new Set([...m.mirrored, ...ids])];
@@ -123,8 +141,13 @@ export function sealMedia(nationId: string, input: { releaseIds?: string[]; seal
   const db = mdb();
   const contents = rs.flatMap(r => artifactsFor(r, n.deliveryMode).map(a => ({ filename: a.filename, sha256: a.sha256, sizeBytes: a.sizeBytes })));
   const at = new Date(now).toISOString();
-  const a = recordAudit(by, 'update.media.sealed', `UpdateChamber:${nationId}/media`, 'ok', `MEDIA-${db.mediaSeq} · seal ${sealId} · ${rs.map(r => r.version).join(', ')}`);
-  const s: MediaShipment = { mediaId: `MEDIA-${db.mediaSeq++}`, nationId, releaseIds: rs.map(r => r.id), contents, sealId, state: 'sealed', chain: [{ step: 'sealed', at, by, sealId, auditSeq: a.seq }] };
+  const mediaId = `MEDIA-${db.mediaSeq}`;
+  // Plan I9: the publisher's signed statement of every file written to the media (written to it as media-manifest.intoto.json).
+  const signed = signStatement(mediaStatement({ mediaId, nationId, sealId, releaseIds: rs.map(r => r.id), contents }, at), new Date(now));
+  const a = recordAudit(by, 'update.media.sealed', `UpdateChamber:${nationId}/media`, 'ok', `${mediaId} · seal ${sealId} · ${rs.map(r => r.version).join(', ')} · signed by ${signed.keyId}${signed.production ? '' : ' (development key)'}`);
+  db.mediaSeq++;
+  const s: MediaShipment = { mediaId, nationId, releaseIds: rs.map(r => r.id), contents, sealId, state: 'sealed', chain: [{ step: 'sealed', at, by, sealId, auditSeq: a.seq }],
+    signed: { envelope: signed.envelope, keyId: signed.keyId, production: signed.production, signedAt: signed.signedAt } };
   db.media.push(s);
   return s;
 }
@@ -133,16 +156,18 @@ const NEXT: Record<string, { from: MediaShipment['state']; side: 'publisher' | '
   'handed-over': { from: 'sealed', side: 'publisher' },
   received: { from: 'handed-over', side: 'nation' },
   'seal-verified': { from: 'received', side: 'nation' },
+  'contents-verified': { from: 'seal-verified', side: 'nation' },
 };
 
 /** The next custody step. Handing over names who receives it; verification compares the seal number. */
-export function custodyStep(side: 'publisher' | 'nation', nationId: string | null, mediaId: string, input: { step?: string; by?: string; to?: string; sealId?: string; note?: string }, now = Date.now()): MediaShipment | { error: string; status: number } {
+export function custodyStep(side: 'publisher' | 'nation', nationId: string | null, mediaId: string, input: { step?: string; by?: string; to?: string; sealId?: string; note?: string; envelope?: unknown; files?: unknown }, now = Date.now()): MediaShipment | { error: string; status: number } {
   const s = mdb().media.find(x => x.mediaId === mediaId && (nationId === null || x.nationId === nationId));
   if (!s) return { error: 'Media not found', status: 404 };
   const step = String(input.step ?? '');
   const rule = NEXT[step];
   if (!rule || rule.side !== side) return { error: `Unknown custody step for the ${side}`, status: 422 };
-  if (s.state !== rule.from) return { error: s.state === 'seal-broken' ? 'The seal did not match: this media must not be used' : `Next step is after “${s.state}”, not ${step}`, status: 409 };
+  if (s.state !== rule.from) return { error: s.state === 'seal-broken' ? 'The seal did not match: this media must not be used' : s.state === 'contents-rejected' ? 'The contents did not verify: this media must not be used' : `Next step is after “${s.state}”, not ${step}`, status: 409 };
+  if (step === 'contents-verified') return verifyContents(s, input, now);
   const by = str(input.by, 120), to = str(input.to, 120), note = str(input.note, 500);
   if (!by) return { error: 'Name who is taking this step', status: 422 };
   if (step === 'handed-over' && !to) return { error: 'Name who the media is handed to (courier or official)', status: 422 };
@@ -161,10 +186,104 @@ export function custodyStep(side: 'publisher' | 'nation', nationId: string | nul
     `${s.mediaId}${to ? ` · to ${to}` : ''}${ok === false ? ` · seal mismatch (read ${str(input.sealId, 60)}, sealed ${s.sealId})` : ''}${note ? ` · ${note}` : ''}`);
   s.chain.push({ step: step as MediaShipment['chain'][number]['step'], at, by, to: to || undefined, note: note || undefined, sealId: step === 'seal-verified' ? str(input.sealId, 60) : undefined, ok, auditSeq: a.seq });
   s.state = ok === false ? 'seal-broken' : step as MediaShipment['state'];
-  // Verified media counts as mirrored for an air-gapped nation's sync manifest.
+  // Verified media counts as mirrored for an air-gapped nation's sync manifest; signed media only once its contents verify too.
+  if (ok && !s.signed) {
+    const m = getMirror(s.nationId);
+    if (m) m.mirrored = [...new Set([...m.mirrored, ...s.releaseIds])];
+  }
+  return s;
+}
+
+/**
+ * The contents check on the disconnected side (plan I9, acceptance P5-15):
+ * `envelope` is the signed statement as read from the media
+ * (media-manifest.intoto.json), `files` each file read from it with the
+ * SHA-256 computed there. Verified: signed by a publisher key the nation
+ * trusts (two officials), naming this shipment, nation and seal, and the
+ * files exactly its subjects; the releases are then mirrored. Anything else
+ * is recorded with its problems and the media is unusable.
+ */
+function verifyContents(s: MediaShipment, input: { by?: string; envelope?: unknown; files?: unknown; note?: string }, now: number): MediaShipment | { error: string; status: number } {
+  if (!s.signed) return { error: 'This media was sealed before its contents were signed: its seal is its only check', status: 409 };
+  const by = str(input.by, 120);
+  if (!by) return { error: 'Name who is taking this step', status: 422 };
+  const files = Array.isArray(input.files) ? input.files.filter(f => f && typeof f === 'object').map(f => ({ filename: str((f as { filename?: unknown }).filename, 300), sha256: str((f as { sha256?: unknown }).sha256, 64).toLowerCase() })) : [];
+  if (!files.length || files.some(f => !f.filename || !/^[0-9a-f]{64}$/.test(f.sha256))) return { error: 'List every file read from the media with the SHA-256 computed there (scripts/verify-update-media.mjs prints them)', status: 422 };
+  if (input.envelope === undefined) return { error: 'Give the signed statement as read from the media (media-manifest.intoto.json)', status: 422 };
+  const problems: string[] = [];
+  const v = verifyEnvelope(input.envelope, trustedKeysFor(s.nationId), { predicateType: MEDIA_PREDICATE, signedAt: s.signed.signedAt });
+  if (!v.ok) problems.push(v.problem);
+  else {
+    const p = v.statement.predicate as { mediaId?: string; nation?: string; sealId?: string };
+    if (p.mediaId !== s.mediaId || p.nation !== s.nationId || String(p.sealId ?? '').toUpperCase() !== s.sealId.toUpperCase()) problems.push(`The statement is for ${p.mediaId ?? '?'} (nation ${p.nation ?? '?'}, seal ${p.sealId ?? '?'}), not this media`);
+    const c = compareSubjects(v.statement, files);
+    if (c.missing.length) problems.push(`Missing from the media: ${c.missing.join(', ').slice(0, 300)}`);
+    if (c.changed.length) problems.push(`Changed (SHA-256 differs from the signed statement): ${c.changed.join(', ').slice(0, 300)}`);
+    if (c.extra.length) problems.push(`Not in the signed statement: ${c.extra.join(', ').slice(0, 300)}`);
+    if (installationMode() === 'production' && !s.signed.production && v.keyId === s.signed.keyId) problems.push('Signed with a development key: a production installation never accepts it');
+  }
+  const ok = problems.length === 0;
+  const note = str(input.note, 500);
+  const a = recordAudit(by, 'update.media.contents-verified', `UpdateChamber:${s.nationId}/media`, ok ? 'ok' : 'denied',
+    `${s.mediaId} · ${files.length} file(s)${v.ok ? ` · signed by ${v.keyId}` : ''}${ok ? ' · every file matches the signed statement' : ` · ${problems.join('; ').slice(0, 400)}`}${note ? ` · ${note}` : ''}`);
+  s.chain.push({ step: 'contents-verified', at: new Date(now).toISOString(), by, ok, ...(note ? { note } : {}), ...(ok ? {} : { problems }), auditSeq: a.seq });
+  s.state = ok ? 'contents-verified' : 'contents-rejected';
   if (ok) {
     const m = getMirror(s.nationId);
     if (m) m.mirrored = [...new Set([...m.mirrored, ...s.releaseIds])];
   }
   return s;
+}
+
+/** What is written to the media beside the files: the signed statement (media-manifest.intoto.json). */
+export function mediaManifestFile(nationId: string | null, mediaId: string): { filename: string; envelope: NonNullable<MediaShipment['signed']>['envelope'] } | undefined {
+  const s = mdb().media.find(x => x.mediaId === mediaId && (nationId === null || x.nationId === nationId));
+  return s?.signed ? { filename: 'media-manifest.intoto.json', envelope: structuredClone(s.signed.envelope) } : undefined;
+}
+
+// ── Signed releases (plan I9, acceptance P5-15) ─────────────────────
+/** The publisher's signed statement of a release the nation can see: every artifact by name and SHA-256 (audited like a download). */
+export function signedRelease(nationId: string, releaseId: string, by = 'download link'): SignedStatement | undefined {
+  const r = releaseFor(nationId, releaseId);
+  if (!r) return undefined;
+  const signed = signStatement(releaseStatement({ id: r.id, version: r.version, channel: r.channel, ...(r.nationId ? { nationId: r.nationId } : {}), releasedAt: r.releasedAt, artifacts: r.artifacts.map(a => ({ filename: a.filename, sha256: a.sha256, kind: a.kind })) }));
+  recordAudit(by, 'update.release.statement', `UpdateChamber:${nationId}/${r.version}`, 'ok', `release ${r.id} · ${r.artifacts.length} artifact(s) · signed by ${signed.keyId}${signed.production ? '' : ' (development key)'}`);
+  return signed;
+}
+
+/**
+ * The nation verifies a release before it is mirrored: the statement (as
+ * fetched or carried) signed by a publisher key it trusts, naming this
+ * release, and the artifacts it holds (SHA-256 computed where they are) every
+ * one the statement lists for its delivery mode, none changed. Recorded either
+ * way; only a verified release can be recorded as synced in production.
+ */
+export function verifyRelease(nationId: string, releaseId: string, input: { by?: string; envelope?: unknown; files?: unknown }, now = Date.now()): { verified: boolean; problems: string[] } | { error: string; status: number } {
+  const n = nationRecord(nationId);
+  if (!n) return { error: 'Nation not found', status: 404 };
+  const r = releaseFor(nationId, releaseId);
+  if (!r) return { error: 'Choose one of your releases', status: 422 };
+  const m = getMirror(nationId);
+  if (!m) return { error: 'Register the mirror first', status: 409 };
+  const by = str(input.by, 120);
+  if (!by) return { error: 'Name who verified the release', status: 422 };
+  const files = Array.isArray(input.files) ? input.files.filter(f => f && typeof f === 'object').map(f => ({ filename: str((f as { filename?: unknown }).filename, 300), sha256: str((f as { sha256?: unknown }).sha256, 64).toLowerCase() })) : [];
+  if (!files.length || files.some(f => !f.filename || !/^[0-9a-f]{64}$/.test(f.sha256))) return { error: 'List each artifact held with the SHA-256 computed where it is', status: 422 };
+  const problems: string[] = [];
+  const v = verifyEnvelope(input.envelope, trustedKeysFor(nationId), { predicateType: RELEASE_PREDICATE });
+  if (!v.ok) problems.push(v.problem);
+  else {
+    const p = v.statement.predicate as { releaseId?: string; version?: string };
+    if (p.releaseId !== r.id || p.version !== r.version) problems.push(`The statement is for ${p.releaseId ?? '?'} ${p.version ?? ''}, not ${r.id} ${r.version}`);
+    // The artifacts of the nation's delivery mode must all be there; others in the statement may be absent.
+    const wanted = new Set(artifactsFor(r, n.deliveryMode).map(a => a.filename));
+    const c = compareSubjects({ ...v.statement, subject: v.statement.subject.filter(s => wanted.has(s.name) || files.some(f => f.filename === s.name)) }, files);
+    if (c.missing.length) problems.push(`Not held: ${c.missing.join(', ').slice(0, 300)}`);
+    if (c.changed.length) problems.push(`Changed (SHA-256 differs from the signed statement): ${c.changed.join(', ').slice(0, 300)}`);
+    if (c.extra.length) problems.push(`Not in the signed statement: ${c.extra.join(', ').slice(0, 300)}`);
+  }
+  const verified = problems.length === 0;
+  recordAudit(by, 'update.release.verify', `UpdateChamber:${nationId}/${r.version}`, verified ? 'ok' : 'denied', `${r.id} · ${files.length} artifact(s)${v.ok ? ` · signed by ${v.keyId}` : ''}${verified ? ' · verified' : ` · ${problems.join('; ').slice(0, 400)}`}`);
+  if (verified && v.ok) (m.verified ??= {})[r.id] = { at: new Date(now).toISOString(), by, keyId: v.keyId, files: files.length };
+  return { verified, problems };
 }

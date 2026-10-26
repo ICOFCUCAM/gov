@@ -20,7 +20,12 @@
 //     them: every mapping and rule version is the institution's own, every
 //     rule version and law version its decisions record is listed, every
 //     certificate comes from one of its decisions, and its federation key's id
-//     is the key's own.
+//     is the key's own;
+//   - (plan I9) its records management register, when it carries one: every
+//     record is the institution's own; each migration's per-record manifest
+//     gives back the digests the plan recorded (source, target, whole), its
+//     length is the source count, and every reconciliation's counts are the
+//     statuses its records carry for it (acceptance P5-06).
 //
 // Used by the import (lib/portability/import.ts) before anything is written,
 // by the export route's check, and by app/scripts/verify-institution-export.mjs.
@@ -36,6 +41,7 @@ import type { EvidenceSegment, TrustListCopy } from './evidence';
 import type { ExportManifest, PortableConfiguration } from './export';
 import type { Certificate } from '@/lib/records/certificates';
 import { keyIdOfPem } from '@/lib/crypto/signing-key';
+import { sourceDigestOf, targetDigestOf, manifestDigestOf, type recordkeepingOf } from '@/lib/recordkeeping/register';
 
 export interface ExportReport {
   ok: boolean;
@@ -176,6 +182,39 @@ export function verifyExportParts(manifest: ExportManifest, parts: Parts): Expor
       if (ver.federationKey && keyIdOfPem(ver.federationKey.publicKeyPem) !== ver.federationKey.keyId) problems.push('The federation key\'s id is not its own');
       if (problems.length === before) checks.push(`Configuration: ${conf.mappings.length} mapping and ${conf.rules.length} rule version(s) of its own, ${conf.relationships.length} relationship(s), ${conf.laws.length} law version(s) cited, every rule and law its decisions record listed; ${ver.certificates.length} certificate(s) from its decisions${ver.federationKey ? `; federation key ${ver.federationKey.keyId}` : ''}`);
     } else notes.push('Taken before plan I9: it carries no configuration or verification material (certificates, federation key)');
+
+    // Plan I9 (acceptance P5-06): records management, each migrated record's provenance and verification history.
+    if (parts.has('registers/records-management.json')) {
+      const rm = read<ReturnType<typeof recordkeepingOf>>(parts, 'registers/records-management.json');
+      const before = problems.length;
+      const theirs = [...rm.classes, ...rm.holds, ...rm.incoming, ...rm.disposals, ...rm.transfers, ...rm.migrations].filter(x => x.institution !== inst);
+      if (theirs.length) problems.push(`Records management entries of another institution: ${theirs.length}`);
+      let migrated = 0;
+      for (const m of rm.migrations) {
+        if (!m.records || !m.manifest) continue;
+        migrated += m.records.length;
+        if (m.records.length !== m.manifest.count || m.manifest.count !== m.source.count) problems.push(`Migration ${m.id}: the per-record manifest lists ${m.records.length} record(s), the plan ${m.manifest.count}, the source ${m.source.count}`);
+        if (sourceDigestOf(m.records) !== m.manifest.sourceDigest || m.manifest.sourceDigest !== m.source.manifest) problems.push(`Migration ${m.id}: the records' sources do not give the source manifest the plan recorded`);
+        if (targetDigestOf(m.records) !== m.manifest.targetDigest) problems.push(`Migration ${m.id}: the records' targets do not give the target digest the plan recorded`);
+        if (manifestDigestOf(m.records) !== m.manifest.digest) problems.push(`Migration ${m.id}: a record's source, transformations or target differ from the manifest the plan recorded`);
+        for (const [i, r] of (m.reconciliation ?? []).entries()) {
+          if (!r.records) continue;
+          const at = m.records.map(x => x.verification.find(v => v.reconciliation === i + 1)?.status);
+          const n = (s: string) => at.filter(x => x === s).length;
+          if (at.some(x => !x) || n('verified') !== r.records.verified || n('hash-mismatch') !== r.records.mismatched || n('missing') !== r.records.missing || n('not-verifiable-here') !== r.records.notVerifiable) problems.push(`Migration ${m.id}: reconciliation ${i + 1}'s counts are not the statuses its records carry`);
+        }
+      }
+      if (problems.length === before) checks.push(`Records management: ${rm.classes.length} class(es), ${rm.holds.length} hold(s), ${rm.migrations.length} migration(s) of its own; ${migrated} migrated record(s), each manifest giving back its recorded digests and every reconciliation's counts its records' statuses`);
+    }
+    // Plan I9 (register 25.16): security registers, unmarked records only in full; a marked one only as a reference.
+    if (parts.has('registers/security.json')) {
+      const sec = read<{ records: { number: string; owner: string; marking: string }[]; references: { number: string; owner: string; summary?: string; terms?: unknown }[] }>(parts, 'registers/security.json');
+      const before = problems.length;
+      if (sec.records.some(r => r.marking)) problems.push('A marked security record is carried in full: an export carries a marked record as a reference only');
+      if (sec.references.some(r => 'summary' in r || 'terms' in r)) problems.push('A marked security record\'s reference carries its summary or terms');
+      if ([...sec.records, ...sec.references].some(r => r.owner !== inst)) problems.push('Security records of another institution');
+      if (problems.length === before) checks.push(`Security registers: ${sec.records.length} unmarked record(s) of its own; ${sec.references.length} marked record(s) as references only`);
+    }
   } catch (e) {
     problems.push((e as Error).message);
   }
