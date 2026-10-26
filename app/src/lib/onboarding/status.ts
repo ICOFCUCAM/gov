@@ -102,6 +102,7 @@ import { recordkeepingCounts } from '@/lib/recordkeeping/register';
 // leftovers (plan I9): publisher keys waiting for a second official.
 import { waitingPublisherKeys } from '@/lib/data/release-trust';
 import { keyReviewStatus } from '@/lib/keys/key-review';
+import { deploymentRecordChanges } from '@/lib/ops/deployment-record';
 
 export type TrackState = 'done' | 'in-progress' | 'not-started' | 'blocked';
 /**
@@ -752,6 +753,8 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
   safe(() => { for (const h of waitingHoldings()) wait({ what: `${h.holderName} to hold an office — waiting for a second official`, proposedBy: h.proposedBy, at: h.proposedAt, href: '/gov/configuration/offices' }); });
   safe(() => { for (const d of waitingDepartmentChanges()) wait({ what: `Departments: ${d.what} — waiting for a second official`, proposedBy: d.pending.by, at: d.pending.at, href: `/gov/institutions/departments?institution=${d.id}` }); });
   // leftovers (plan I9, P5-15): a publisher key the nation is asked to trust for its software.
+  // leftovers (plan I9): the installation's deployment record (recovery, residency, access, zones, exit).
+  safe(() => { const p = deploymentRecordChanges().pending; if (p) wait({ what: 'Deployment record (recovery objectives, residency, administrator access, network zones, exit): a change waiting for a second official', proposedBy: p.by, at: p.at, href: '/platform' }); });
   // leftovers (plan I9, P5-12): key operations an auditor or the data-protection authority has not yet reviewed.
   safe(() => { const k = keyReviewStatus(); if (k.unreviewed) wait({ what: `${k.unreviewed} key operation(s) not yet reviewed by an auditor or the data-protection authority`, proposedBy: 'Key custody and administrators', ...(k.oldest ? { at: k.oldest } : {}), href: '/gov/audit' }); });
   safe(() => { for (const k of waitingPublisherKeys()) wait({ what: `Publisher key ${k.keyId} for software updates: waiting for a second official`, proposedBy: k.proposed.by, at: k.proposed.at, href: '/updates/mirror' }); });

@@ -32,7 +32,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 
 | Step | Met | Partial | Not yet | Platform rule stricter | Country decision | Lower priority | Total |
 |---|---|---|---|---|---|---|---|
-| — | 736 | 0 | 0 | 39 | 5 | 0 | 780 |
+| — | 736 | 0 | 0 | 39 | 12 | 0 | 787 |
 | I1 | 0 | 59 | 14 | 0 | 3 | 0 | 76 |
 | I2 | 0 | 109 | 3 | 0 | 0 | 0 | 112 |
 | I3 | 0 | 123 | 30 | 0 | 0 | 0 | 153 |
@@ -41,7 +41,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | I6 | 0 | 123 | 111 | 4 | 0 | 0 | 238 |
 | I7 | 0 | 65 | 208 | 0 | 0 | 0 | 273 |
 | I8 | 0 | 63 | 105 | 0 | 0 | 0 | 168 |
-| I9 | 0 | 217 | 11 | 0 | 17 | 0 | 245 |
+| I9 | 0 | 217 | 11 | 0 | 10 | 0 | 238 |
 | I10 | 0 | 147 | 22 | 6 | 0 | 2 | 177 |
 | I11 | 0 | 44 | 5 | 3 | 0 | 166 | 218 |
 | I12 | 0 | 5 | 0 | 0 | 0 | 0 | 5 |
@@ -156,7 +156,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 
 ## Plan gaps closed by the revised plan
 
-484 rows had no step under the first plan text; each now maps to a step of the revised plan (table below). Rows still without a step: 0.
+477 rows had no step under the first plan text; each now maps to a step of the revised plan (table below). Rows still without a step: 0.
 
 | Part | Sector | Rows | Revised step |
 |---|---|---|---|
@@ -191,7 +191,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | 5 | Control plane | 19 | I9 |
 | 5 | Standalone deployment | 5 | I9 |
 | 5 | APIs and events | 22 | I9 |
-| 5 | Hosting | 22 | I9 |
+| 5 | Hosting | 15 | I9 |
 | 6 | Production, training, demo | 3 | Throughout |
 
 ## Plan text weaker than the specification — resolution
@@ -3056,27 +3056,27 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
 | S5-I-01 | 3891 | architecture | CivicOS should support several hosting arrangements without tying its application architecture to one vendor. | Partial | Hosting paths and DR docs |  | I9 |
-| S5-I-02 | 3895 | architecture | Institution-operated data centre: Strengths: Direct operational control · Risks and requirements: Requires skilled staff, resilient power, physical security and tested disaster recovery | Country decision | Platform provides four hosting paths with an estimate model and engineering review (lib/data/hosting.ts, lib/updates/hosting-model.ts, /updates/hostin | Key control, provider-access and independent-assurance requirements recorded per deployment | I9 |
-| S5-I-03 | 3896 | architecture | National sovereign cloud: Strengths: Centralised infrastructure management with country-specific governance · Risks and requirements: Requires clear key control, administrative boundaries, contracts and independent assur | Country decision | Platform provides four hosting paths with an estimate model and engineering review (lib/data/hosting.ts, lib/updates/hosting-model.ts, /updates/hostin | Key control, provider-access and independent-assurance requirements recorded per deployment | I9 |
-| S5-I-04 | 3897 | architecture | Private cloud or managed sovereign hosting: Strengths: Easier scaling and operations · Risks and requirements: Must validate provider access, subcontractors, location, recovery and exit capabilities | Country decision | Platform provides four hosting paths with an estimate model and engineering review (lib/data/hosting.ts, lib/updates/hosting-model.ts, /updates/hostin | Key control, provider-access and independent-assurance requirements recorded per deployment | I9 |
-| S5-I-05 | 3898 | architecture | Hybrid hosting: Strengths: Allows different sensitivity and availability requirements · Risks and requirements: Increases integration, identity, monitoring and data-movement complexity | Country decision | Platform provides four hosting paths with an estimate model and engineering review (lib/data/hosting.ts, lib/updates/hosting-model.ts, /updates/hostin | Key control, provider-access and independent-assurance requirements recorded per deployment | I9 |
-| S5-I-06 | 3899 | architecture | Isolated or disconnected installation: Strengths: Useful for high-security or remote institutions · Risks and requirements: Requires controlled update delivery, local operations and secure offline procedures | Country decision | Platform provides four hosting paths with an estimate model and engineering review (lib/data/hosting.ts, lib/updates/hosting-model.ts, /updates/hostin | Key control, provider-access and independent-assurance requirements recorded per deployment | I9 |
+| S5-I-02 | 3895 | architecture | Institution-operated data centre: Strengths: Direct operational control · Risks and requirements: Requires skilled staff, resilient power, physical security and tested disaster recovery | Country decision | Platform provides four hosting paths with an estimate model and engineering review (lib/data/hosting.ts, lib/updates/hosting-model.ts, /updates/hostin | Key control and independent-assurance requirements recorded per deployment | I9 |
+| S5-I-03 | 3896 | architecture | National sovereign cloud: Strengths: Centralised infrastructure management with country-specific governance · Risks and requirements: Requires clear key control, administrative boundaries, contracts and independent assur | Country decision | Platform provides four hosting paths with an estimate model and engineering review (lib/data/hosting.ts, lib/updates/hosting-model.ts, /updates/hostin | Key control and independent-assurance requirements recorded per deployment | I9 |
+| S5-I-04 | 3897 | architecture | Private cloud or managed sovereign hosting: Strengths: Easier scaling and operations · Risks and requirements: Must validate provider access, subcontractors, location, recovery and exit capabilities | Country decision | Platform provides four hosting paths with an estimate model and engineering review (lib/data/hosting.ts, lib/updates/hosting-model.ts, /updates/hostin | Key control and independent-assurance requirements recorded per deployment | I9 |
+| S5-I-05 | 3898 | architecture | Hybrid hosting: Strengths: Allows different sensitivity and availability requirements · Risks and requirements: Increases integration, identity, monitoring and data-movement complexity | Country decision | Platform provides four hosting paths with an estimate model and engineering review (lib/data/hosting.ts, lib/updates/hosting-model.ts, /updates/hostin | Key control and independent-assurance requirements recorded per deployment | I9 |
+| S5-I-06 | 3899 | architecture | Isolated or disconnected installation: Strengths: Useful for high-security or remote institutions · Risks and requirements: Requires controlled update delivery, local operations and secure offline procedures | Country decision | Platform provides four hosting paths with an estimate model and engineering review (lib/data/hosting.ts, lib/updates/hosting-model.ts, /updates/hostin | Key control and independent-assurance requirements recorded per deployment | I9 |
 | S5-I-07 | 3901 | architecture | Recommendation: define a supported deployment contract, not a mandatory cloud vendor. | Partial | Hosting paths and DR docs |  | I9 |
 | S5-I-08 | 3901 | architecture | Package services in reproducible containers where appropriate, document configuration, automate health checks and test upgrades against supported versions. | Partial | Hosting paths and DR docs |  | I9 |
 | S5-I-09 | 3903 | architecture | A small deployment can begin with a simpler topology, but it should still have encrypted off-host backups, separate secrets management and a tested restoration procedure. | Partial | Hosting paths and DR docs |  | I9 |
 | S5-I-10 | 3903 | architecture | A national deployment requires a formal high-availability and disaster-recovery design based on its actual service requirements. | Partial | Hosting paths and DR docs |  | I9 |
-| S5-I-11 | 3907 | architecture | Availability and recovery-time objectives | Country decision | Platform provides: backup schedule and retention, hosting paths, contracts (lib/data/contracts.ts), advisories | Per-deployment record of RTO/RPO, residency, admin access, network zones | I9 |
-| S5-I-12 | 3908 | architecture | Recovery-point objectives | Country decision | Platform provides: backup schedule and retention, hosting paths, contracts (lib/data/contracts.ts), advisories | Per-deployment record of RTO/RPO, residency, admin access, network zones | I9 |
-| S5-I-13 | 3909 | architecture | Backup frequency and retention | Country decision | Platform provides: backup schedule and retention, hosting paths, contracts (lib/data/contracts.ts), advisories | Per-deployment record of RTO/RPO, residency, admin access, network zones | I9 |
-| S5-I-14 | 3910 | architecture | Encryption and key ownership | Country decision | Platform provides: backup schedule and retention, hosting paths, contracts (lib/data/contracts.ts), advisories | Per-deployment record of RTO/RPO, residency, admin access, network zones | I9 |
-| S5-I-15 | 3911 | architecture | Data residency and cross-border transfer restrictions | Country decision | Platform provides: backup schedule and retention, hosting paths, contracts (lib/data/contracts.ts), advisories | Per-deployment record of RTO/RPO, residency, admin access, network zones | I9 |
-| S5-I-16 | 3912 | architecture | Administrator and subcontractor access | Country decision | Platform provides: backup schedule and retention, hosting paths, contracts (lib/data/contracts.ts), advisories | Per-deployment record of RTO/RPO, residency, admin access, network zones | I9 |
-| S5-I-17 | 3913 | architecture | Network zones and ingress/egress policy | Country decision | Platform provides: backup schedule and retention, hosting paths, contracts (lib/data/contracts.ts), advisories | Per-deployment record of RTO/RPO, residency, admin access, network zones | I9 |
-| S5-I-18 | 3914 | architecture | Vulnerability and patch management | Country decision | Platform provides: backup schedule and retention, hosting paths, contracts (lib/data/contracts.ts), advisories | Per-deployment record of RTO/RPO, residency, admin access, network zones | I9 |
-| S5-I-19 | 3915 | architecture | Monitoring and incident escalation | Country decision | Platform provides: backup schedule and retention, hosting paths, contracts (lib/data/contracts.ts), advisories | Per-deployment record of RTO/RPO, residency, admin access, network zones | I9 |
-| S5-I-20 | 3916 | architecture | Disaster-recovery location and independence | Country decision | Platform provides: backup schedule and retention, hosting paths, contracts (lib/data/contracts.ts), advisories | Per-deployment record of RTO/RPO, residency, admin access, network zones | I9 |
-| S5-I-21 | 3917 | architecture | Capacity, latency and performance targets | Country decision | Platform provides: backup schedule and retention, hosting paths, contracts (lib/data/contracts.ts), advisories | Per-deployment record of RTO/RPO, residency, admin access, network zones | I9 |
-| S5-I-22 | 3918 | architecture | Contractual and technical exit requirements | Country decision | Platform provides: backup schedule and retention, hosting paths, contracts (lib/data/contracts.ts), advisories | Per-deployment record of RTO/RPO, residency, admin access, network zones | I9 |
+| S5-I-11 | 3907 | architecture | Availability and recovery-time objectives | Country decision | lib/ops/deployment-record.ts (/api/platform/deployment-record: recovery objectives and disaster-recovery location, residency, administrator and subcon |  | — |
+| S5-I-12 | 3908 | architecture | Recovery-point objectives | Country decision | lib/ops/deployment-record.ts (/api/platform/deployment-record: recovery objectives and disaster-recovery location, residency, administrator and subcon |  | — |
+| S5-I-13 | 3909 | architecture | Backup frequency and retention | Country decision | Platform provides: backup schedule and retention, hosting paths, contracts (lib/data/contracts.ts), advisories; lib/ops/deployment-record.ts (/api/pla | Load tests per deployment profile; key ownership per deployment | I9 |
+| S5-I-14 | 3910 | architecture | Encryption and key ownership | Country decision | Platform provides: backup schedule and retention, hosting paths, contracts (lib/data/contracts.ts), advisories; lib/ops/deployment-record.ts (/api/pla | Load tests per deployment profile; key ownership per deployment | I9 |
+| S5-I-15 | 3911 | architecture | Data residency and cross-border transfer restrictions | Country decision | lib/ops/deployment-record.ts (/api/platform/deployment-record: recovery objectives and disaster-recovery location, residency, administrator and subcon |  | — |
+| S5-I-16 | 3912 | architecture | Administrator and subcontractor access | Country decision | lib/ops/deployment-record.ts (/api/platform/deployment-record: recovery objectives and disaster-recovery location, residency, administrator and subcon |  | — |
+| S5-I-17 | 3913 | architecture | Network zones and ingress/egress policy | Country decision | lib/ops/deployment-record.ts (/api/platform/deployment-record: recovery objectives and disaster-recovery location, residency, administrator and subcon |  | — |
+| S5-I-18 | 3914 | architecture | Vulnerability and patch management | Country decision | Platform provides: backup schedule and retention, hosting paths, contracts (lib/data/contracts.ts), advisories; lib/ops/deployment-record.ts (/api/pla | Load tests per deployment profile; key ownership per deployment | I9 |
+| S5-I-19 | 3915 | architecture | Monitoring and incident escalation | Country decision | Platform provides: backup schedule and retention, hosting paths, contracts (lib/data/contracts.ts), advisories; lib/ops/deployment-record.ts (/api/pla | Load tests per deployment profile; key ownership per deployment | I9 |
+| S5-I-20 | 3916 | architecture | Disaster-recovery location and independence | Country decision | lib/ops/deployment-record.ts (/api/platform/deployment-record: recovery objectives and disaster-recovery location, residency, administrator and subcon |  | — |
+| S5-I-21 | 3917 | architecture | Capacity, latency and performance targets | Country decision | Platform provides: backup schedule and retention, hosting paths, contracts (lib/data/contracts.ts), advisories; lib/ops/deployment-record.ts (/api/pla | Load tests per deployment profile; key ownership per deployment | I9 |
+| S5-I-22 | 3918 | architecture | Contractual and technical exit requirements | Country decision | lib/ops/deployment-record.ts (/api/platform/deployment-record: recovery objectives and disaster-recovery location, residency, administrator and subcon |  | — |
 | S5-I-23 | 3920 | architecture | No universal uptime percentage or recovery time should be invented before the deployment's service criticality, budget and risk assessment are established. | Met | No uptime or RTO typed in (estimates labelled, hosting-model) |  | — |
 
 ### Migration — Met 18, Partial 10

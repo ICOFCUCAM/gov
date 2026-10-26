@@ -523,7 +523,7 @@ export interface BackupStatusView {
   key: { provider: string; ready: boolean };
   mode: 'snapshot' | 'postgres';
   policy: { daily: number; weekly: number; monthly: number; preRestoreDays: number; intervalMinutes: number; rpoMinutes: number; rtoMinutes: number; updatedBy?: string; updatedAt?: string };
-  rpo: { targetMinutes: number; newestVerifiedAt: string | null; ageMinutes: number | null; met: boolean };
+  rpo: { targetMinutes: number; newestVerifiedAt: string | null; ageMinutes: number | null; met: boolean; source?: 'deployment-record' | 'backup-policy'; version?: number };
   rtoMinutes: number;
   proposals: { id: string; backupId: string; by: string; at: string; expiresAt: string; warning: { text: string } }[];
   restores: { id: string; backupId: string; proposedBy: string; confirmedBy: string; at: string; safetyBackupId: string }[];
