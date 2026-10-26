@@ -22,7 +22,7 @@ interface Answer {
     fieldSources?: Record<string, { source: 'entered' | 'verified'; at: string; by?: string; channel?: string; service?: string }> };
   procedure: { title: string; version: number; stages: { key: string; label: string }[]; actions: { key: string; label: string; from: string[]; decision?: string; needs: { role: string; fourEyes?: boolean }; requires?: { reasons?: boolean; documents?: string[]; fields?: string[]; citations?: boolean } }[]; documents: { class: string; label: string; required: boolean }[]; fields: FieldSpecView[]; citations?: Citation[] } | null;
   documents: { id: string; class: string; title: string; versions: { n: number; sha256: string; at: string; by: string }[] }[];
-  decisions: { id: string; sha256: string; seal: { keyId: string }; content: { decision: string; reasons: string; citations: Citation[]; officials: { role: string; name: string }[]; facts?: Record<string, unknown>; at: string } }[];
+  decisions: { id: string; sha256: string; seal: { keyId: string }; content: { decision: string; reasons: string; citations: Citation[]; officials: { role: string; name: string }[]; facts?: Record<string, unknown>; rules?: { key: string; version: number; digest?: string }[]; at: string } }[];
   certificates: { id: string; code: string; title: string; status: string }[];
   hearings?: { id: string; kind: string; at: string; room?: string; state: string; history: { state: string; at: string; by: string; reason?: string }[] }[];
 }
@@ -178,6 +178,7 @@ export function CaseFile({ id }: { id: string }) {
               <div><strong>{d.content.decision}</strong> · {new Date(d.content.at).toLocaleString()} · {d.content.officials.map(o => `${o.role === 'decided' ? 'decided by' : 'confirmed by'} ${o.name}`).join(', ')}</div>
               <div className="mt-1">{d.content.reasons}</div>
               {d.content.citations.length ? <div className="mt-1 text-xs">Law: {d.content.citations.map(ci => `${ci.title ?? ci.instrument} ${ci.num ?? ci.eId} (version ${ci.version.slice(0, 8)})`).join('; ')}</div> : null}
+              {d.content.rules?.length ? <div className="mt-1 text-xs">Calculated by the approved rule: {d.content.rules.map(r => `${r.key} version ${r.version}${r.digest ? ` (digest ${r.digest.slice(0, 12)})` : ''}`).join('; ')}</div> : null}
               <div className="mt-1 font-mono text-xs">Record {d.sha256.slice(0, 16)} · seal key {d.seal.keyId}</div>
             </div>
           ))}
