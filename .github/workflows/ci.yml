@@ -7,6 +7,12 @@ on:
     branches: [main, "claude/**"]
   pull_request:
 
+# The production build outgrew Node's default heap (about 4 GB on the hosted
+# runners) once plan steps I5 to I13 landed; every job gets 6 GB, within the
+# runner's memory.
+env:
+  NODE_OPTIONS: --max-old-space-size=6144
+
 jobs:
   app-checks:
     name: typecheck + tests
