@@ -21,7 +21,7 @@ import { subscribe as orchSubscribe, orchestrationStats, version as orchVersion 
 import type { SovereignProfile, NationalSnapshot, NationalCoordination, Ministry } from '@/lib/api/types';
 import { useHydrated, useRenderNow } from '@/lib/clock/render-now';
 import { usePathname } from 'next/navigation';
-import { HEADER_LINKS, locate, navFor } from '@/lib/nav/console-nav';
+import { HEADER_LINKS, locate, navFor, type NavContext } from '@/lib/nav/console-nav';
 import type { Scope } from '@/lib/auth/roles';
 import { ConsoleTabs } from '@/components/ui/ConsoleTabs';
 import { SkipLink } from '@/components/ui/SkipLink';
@@ -74,12 +74,17 @@ export function CommandShell({
   const [navOpen, setNavOpen] = React.useState(false);
   // The signed-in official's role and institution: the menu shows what they can use (plan I2, lib/nav/console-nav.ts navFor()).
   const [scope, setScope] = React.useState<Scope | null>(null);
+  // The institutions the read rules name (plan I10: the access log, permits and the pilot's exit gate show only to those the routes admit).
+  const [navCtx, setNavCtx] = React.useState<NavContext>({});
   React.useEffect(() => {
     fetch('/api/auth/official', { cache: 'no-store' }).then(r => (r.ok ? r.json() : null))
-      .then((j: { official?: { role?: Scope['role']; institution?: string } | null } | null) => { if (j?.official) setScope({ ...(j.official.role ? { role: j.official.role } : {}), ...(j.official.institution ? { institution: j.official.institution } : {}) }); })
+      .then((j: { official?: { role?: Scope['role']; institution?: string } | null; navigation?: NavContext } | null) => {
+        if (j?.official) setScope({ ...(j.official.role ? { role: j.official.role } : {}), ...(j.official.institution ? { institution: j.official.institution } : {}) });
+        if (j?.navigation) setNavCtx(j.navigation);
+      })
       .catch(() => undefined);
   }, []);
-  const NAV = navFor(scope);
+  const NAV = navFor(scope, navCtx);
   const hydrated = useHydrated();
 
   React.useEffect(() => {

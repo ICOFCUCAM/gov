@@ -12,7 +12,7 @@
 // someone allowed (console-nav.test.ts); without a signed-in official (sign-in
 // not enforced) the whole menu shows.
 
-import { adminOnly, installationAdmin, canSeeOnboarding, roleOf, type Scope } from '@/lib/auth/roles';
+import { adminOnly, installationAdmin, canSeeOnboarding, canReadAccessLog, canReadAuditChain, canReadPermits, canSeePilotGate, roleOf, type Scope } from '@/lib/auth/roles';
 
 export interface NavTab { label: string; href: string; was?: string }
 export interface NavItem {
@@ -170,7 +170,24 @@ const SEARCH_ITEM: NavItem = { key: 'search', icon: '⌕', label: 'Search', href
  * to what the page reads or changes. Pages not listed are open to every
  * signed-in official (the page and its API still check each record).
  */
-const PAGE_RULES: Record<string, (s: Scope) => string | null> = {
+/**
+ * What the menu needs besides the official's role and institution: the
+ * institutions the read rules name (plan I10). The server sends it with the
+ * signed-in official (GET /api/auth/official, `navigation`); absent values
+ * leave a page shown and the server decides.
+ */
+export interface NavContext {
+  /** The institution named for data protection (reads the access log and the audit chain with auditors). */
+  dataProtection?: string | null;
+  /** The institutions that keep the permit register (lib/data/store permitHolders()). */
+  permitHolders?: string[];
+  /** The pilot institutions (lib/pilot/exit-gate.ts pilotScope()). */
+  pilot?: string[];
+}
+
+const auditorsCannotChange = (s: Scope) => (roleOf(s) === 'auditor' ? 'Auditors can read records but not change them' : null);
+
+const PAGE_RULES: Record<string, (s: Scope, c: NavContext) => string | null> = {
   '/admin/officials': adminOnly,
   '/gov/officers/bulk': adminOnly,
   '/setup': adminOnly,
@@ -179,26 +196,56 @@ const PAGE_RULES: Record<string, (s: Scope) => string | null> = {
   '/platform': installationAdmin,
   '/gov/crons': installationAdmin,
   '/admin/releases': installationAdmin,
-  // The access log and the audit chain: auditors and the data-protection authority's officials (never administrators by their role).
-  '/gov/access-log': s => (roleOf(s) === 'auditor' || (!!s.institution && roleOf(s) !== 'administrator') ? null : 'The access log is read by auditors and by the data-protection authority'),
-  '/gov/audit': s => (roleOf(s) === 'auditor' || (!!s.institution && roleOf(s) !== 'administrator') ? null : 'The audit chain is read by auditors and by the data-protection authority'),
+  // The access log and the audit chain: auditors and the data-protection authority's officials (never administrators by their role),
+  // by the same functions the routes apply (plan I10; until I10 the menu showed them to every institution's officials).
+  '/gov/access-log': (s, c) => canReadAccessLog(s, c.dataProtection ?? undefined),
+  '/gov/audit': (s, c) => canReadAuditChain(s, c.dataProtection ?? undefined),
   // Loading cases changes records: not auditors.
-  '/gov/work/cases': s => (roleOf(s) === 'auditor' ? 'Auditors can read records but not change them' : null),
+  '/gov/work/cases': auditorsCannotChange,
+  // Plan I10: capturing a site records one (auditors read, never change); permits and the pilot's exit gate are read by those the routes admit.
+  '/gov/sites/capture': auditorsCannotChange,
+  '/console': (s, c) => (c.permitHolders ? canReadPermits(s, c.permitHolders) : null),
+  '/gov/health-regulation/pilot': (s, c) => (c.pilot ? canSeePilotGate(s, c.pilot) : null),
 };
+
+/**
+ * Where each page rule comes from (plan I10; console-nav-permission.test.ts
+ * checks each against the route): the read that gives the page its data, or
+ * the change that is the page's purpose, and the rule there. `narrower`: the
+ * menu deliberately shows the page to fewer officials than the route admits,
+ * with the reason.
+ */
+export const PAGE_GROUNDS: Record<string, { reads?: string; changes?: string; rule: string; narrower?: string }> = {
+  '/admin/officials': { changes: '/api/auth/officials', rule: 'adminOnly' },
+  '/gov/officers/bulk': { changes: '/api/admin/officers/bulk', rule: 'adminOnly', narrower: 'The bulk route checks its own credential (the substrate\'s platform officer or the provisioning secret); adding officials from a spreadsheet is an administrator\'s task on this platform, as for single accounts.' },
+  '/setup': { changes: '/api/setup', rule: 'adminOnly' },
+  '/admin/messaging': { reads: '/api/messaging', rule: 'adminOnly' },
+  '/admin/onboarding': { reads: '/api/onboarding/status', rule: 'canSeeOnboarding' },
+  '/platform': { changes: '/api/platform/backups', rule: 'installationAdmin', narrower: 'The platform API admits any administrator (ADMIN_ONLY); backups, restore, deployments and retention are the whole installation\'s, so the menu offers them to administrators serving the whole government (integration register 27.4).' },
+  '/gov/crons': { reads: '/api/platform/scheduled-jobs', rule: 'installationAdmin', narrower: 'The list of scheduled jobs is open to every official; the page is the installation operator\'s view of them (run records, overlaps and alerts).' },
+  '/admin/releases': { changes: '/api/releases', rule: 'installationAdmin' },
+  '/gov/access-log': { reads: '/api/access-log', rule: 'canReadAccessLog' },
+  '/gov/audit': { reads: '/api/audit', rule: 'canReadAuditChain' },
+  '/gov/work/cases': { changes: '/api/org/ministries/:own/queue/import', rule: 'ministryPermission' },
+  '/gov/sites/capture': { changes: '/api/org/ministries/:own/facilities', rule: 'ministryPermission' },
+  '/console': { reads: '/api/permits', rule: 'canReadPermits' },
+  '/gov/health-regulation/pilot': { reads: '/api/pilot/exit-gate', rule: 'canSeePilotGate' },
+};
+
 /** Whether the official may use the page at `href` (null: yes). */
-export const pageRefusal = (s: Scope, href: string): string | null => PAGE_RULES[href]?.(s) ?? null;
+export const pageRefusal = (s: Scope, href: string, c: NavContext = {}): string | null => PAGE_RULES[href]?.(s, c) ?? null;
 
 /**
  * The menu as this official sees it: tabs whose rule refuses them are left
  * out, and an item with no tab left disappears (its first remaining tab
  * becomes its address). Null scope: no one is signed in, the whole menu.
  */
-export function navFor(s: Scope | null): NavSection[] {
+export function navFor(s: Scope | null, c: NavContext = {}): NavSection[] {
   if (!s) return CONSOLE_NAV;
   return CONSOLE_NAV.map(sec => ({
     ...sec,
     items: sec.items.flatMap(item => {
-      const tabs = item.tabs.filter(t => !pageRefusal(s, t.href));
+      const tabs = item.tabs.filter(t => !pageRefusal(s, t.href, c));
       if (!tabs.length) return [];
       return [{ ...item, tabs, href: tabs.some(t => t.href === item.href) ? item.href : tabs[0]!.href }];
     }),

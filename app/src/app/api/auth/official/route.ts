@@ -25,7 +25,8 @@ import { logoutUrl, providerPublic } from '@/lib/auth/oidc';
 import type { AssertionJSON } from '@/lib/auth/webauthn';
 import { currentOfficial, actorLabel, issueSession, sessionToken, sessionKey } from '@/lib/auth/official';
 import { serverClient } from '@/lib/db/client';
-import { recordAudit, getMinistry, termsOf } from '@/lib/data/store';
+import { recordAudit, getMinistry, termsOf, authorityFor, permitHolders } from '@/lib/data/store';
+import { pilotScope } from '@/lib/pilot/exit-gate';
 import { officesHeldBy } from '@/lib/nation/office-register';
 import type { OfficialRole } from '@/lib/auth/roles';
 import { officerForUser, substrateScope, substrateAal2 } from '@/lib/auth/substrate-officials';
@@ -79,6 +80,10 @@ export async function GET() {
     state: { writable: stateWritable(forPath) },
     // Why no session can be issued or verified (sign-in enforced without CIVICOS_SESSION_SECRET), else null.
     sessionKeyProblem: sessionSecretProblem(),
+    // What the console menu needs to show only what this official can use (plan I10, lib/nav/console-nav.ts
+    // NavContext): the institutions the read rules name. Configuration, not records; the routes still decide.
+    // Left out of the middleware's own check of a change.
+    ...(o && !forPath ? { navigation: { dataProtection: authorityFor('dataProtection') ?? null, permitHolders: permitHolders(), pilot: pilotScope().institutions.map(i => i.id) } } : {}),
   });
 }
 
