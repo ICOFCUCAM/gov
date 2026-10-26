@@ -6,8 +6,8 @@
   {
    "family": "audit-events",
    "means": "The audit chain and the access log",
-   "endpoints": 10,
-   "paths": 7
+   "endpoints": 12,
+   "paths": 8
   },
   {
    "family": "cases",
@@ -54,8 +54,8 @@
   {
    "family": "operations",
    "means": "The installation: backups, releases, scheduled jobs, health and metrics (the control plane)",
-   "endpoints": 164,
-   "paths": 113
+   "endpoints": 166,
+   "paths": 114
   },
   {
    "family": "other:records-management",
@@ -187,6 +187,52 @@
    "version": "1",
    "deprecated": false,
    "source": "src/app/api/ai/advisory/route.ts"
+  },
+  {
+   "path": "/api/audit/key-reviews",
+   "method": "GET",
+   "family": "audit-events",
+   "resource": "audit event",
+   "operation": "read",
+   "authentication": [
+    "officialSession"
+   ],
+   "permission": "read: signed-in official or the credential named",
+   "purpose": "none read by the route",
+   "refusals": [
+    401,
+    403
+   ],
+   "idempotency": "not declared",
+   "rateLimit": "platform limits only",
+   "audit": "audited (the route or the module it calls records the act)",
+   "classification": "declared per record and field (forms, procedures, registers), not per endpoint",
+   "version": "1",
+   "deprecated": false,
+   "source": "src/app/api/audit/key-reviews/route.ts"
+  },
+  {
+   "path": "/api/audit/key-reviews",
+   "method": "POST",
+   "family": "audit-events",
+   "resource": "audit event",
+   "operation": "change",
+   "authentication": [
+    "officialSession"
+   ],
+   "permission": "any-role",
+   "purpose": "none read by the route",
+   "refusals": [
+    401,
+    403
+   ],
+   "idempotency": "not declared",
+   "rateLimit": "platform limits only",
+   "audit": "audited (the route or the module it calls records the act)",
+   "classification": "declared per record and field (forms, procedures, registers), not per endpoint",
+   "version": "1",
+   "deprecated": false,
+   "source": "src/app/api/audit/key-reviews/route.ts"
   },
   {
    "path": "/api/audit/proof",
@@ -7407,6 +7453,46 @@
    "source": "src/app/api/platform/config/route.ts"
   },
   {
+   "path": "/api/platform/deployment-record",
+   "method": "GET",
+   "family": "operations",
+   "resource": "installation",
+   "operation": "read",
+   "authentication": [
+    "officialSession"
+   ],
+   "permission": "read: signed-in official or the credential named",
+   "purpose": "none read by the route",
+   "refusals": [],
+   "idempotency": "not declared",
+   "rateLimit": "platform limits only",
+   "audit": "audited (the route or the module it calls records the act)",
+   "classification": "declared per record and field (forms, procedures, registers), not per endpoint",
+   "version": "1",
+   "deprecated": false,
+   "source": "src/app/api/platform/deployment-record/route.ts"
+  },
+  {
+   "path": "/api/platform/deployment-record",
+   "method": "POST",
+   "family": "operations",
+   "resource": "installation",
+   "operation": "change",
+   "authentication": [
+    "officialSession"
+   ],
+   "permission": "admin",
+   "purpose": "none read by the route",
+   "refusals": [],
+   "idempotency": "not declared",
+   "rateLimit": "platform limits only",
+   "audit": "audited (the route or the module it calls records the act)",
+   "classification": "declared per record and field (forms, procedures, registers), not per endpoint",
+   "version": "1",
+   "deprecated": false,
+   "source": "src/app/api/platform/deployment-record/route.ts"
+  },
+  {
    "path": "/api/platform/deployments/{id}/advance",
    "method": "POST",
    "family": "operations",
@@ -9081,6 +9167,7 @@
    "permission": "read: signed-in official or the credential named",
    "purpose": "none read by the route",
    "refusals": [
+    404,
     409,
     422
    ],
@@ -9104,6 +9191,7 @@
    "permission": "installation",
    "purpose": "none read by the route",
    "refusals": [
+    404,
     409,
     422
    ],
