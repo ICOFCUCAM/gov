@@ -609,6 +609,34 @@ import b9SOCBEN015 from './catalogue-contracts/SOC-BEN-015.json';
 import b9SOCBEN018 from './catalogue-contracts/SOC-BEN-018.json';
 import b9SOCBEN019 from './catalogue-contracts/SOC-BEN-019.json';
 import b9SOCBEN020 from './catalogue-contracts/SOC-BEN-020.json';
+// I13: batch 12, digital government front door and records (catalogue Part 13 §2.1, §2.3, §2.5; supplement Part 21 DGV-*).
+import b12GOVGOV001 from './catalogue-contracts/GOV-GOV-001.json';
+import b12GOVGOV002 from './catalogue-contracts/GOV-GOV-002.json';
+import b12GOVGOV003 from './catalogue-contracts/GOV-GOV-003.json';
+import b12GOVGOV004 from './catalogue-contracts/GOV-GOV-004.json';
+import b12GOVGOV005 from './catalogue-contracts/GOV-GOV-005.json';
+import b12GOVGOV006 from './catalogue-contracts/GOV-GOV-006.json';
+import b12GOVGOV010 from './catalogue-contracts/GOV-GOV-010.json';
+import b12GOVGOV014 from './catalogue-contracts/GOV-GOV-014.json';
+import b12GOVREC001 from './catalogue-contracts/GOV-REC-001.json';
+import b12GOVREC007 from './catalogue-contracts/GOV-REC-007.json';
+import b12GOVREC008 from './catalogue-contracts/GOV-REC-008.json';
+import b12GOVREC010 from './catalogue-contracts/GOV-REC-010.json';
+import b12GOVREC011 from './catalogue-contracts/GOV-REC-011.json';
+import b12GOVREC012 from './catalogue-contracts/GOV-REC-012.json';
+import b12GOVREC017 from './catalogue-contracts/GOV-REC-017.json';
+import b12GOVREC018 from './catalogue-contracts/GOV-REC-018.json';
+import b12GOVSVC001 from './catalogue-contracts/GOV-SVC-001.json';
+import b12GOVSVC004 from './catalogue-contracts/GOV-SVC-004.json';
+import b12GOVSVC006 from './catalogue-contracts/GOV-SVC-006.json';
+import b12GOVSVC007 from './catalogue-contracts/GOV-SVC-007.json';
+import b12GOVSVC008 from './catalogue-contracts/GOV-SVC-008.json';
+import b12GOVSVC009 from './catalogue-contracts/GOV-SVC-009.json';
+import b12GOVSVC011 from './catalogue-contracts/GOV-SVC-011.json';
+import b12GOVSVC012 from './catalogue-contracts/GOV-SVC-012.json';
+import b12GOVSVC013 from './catalogue-contracts/GOV-SVC-013.json';
+import b12GOVSVC014 from './catalogue-contracts/GOV-SVC-014.json';
+import b12GOVSVC018 from './catalogue-contracts/GOV-SVC-018.json';
 
 // Batch 13: security governance and resilience (plan I12).
 import b13SECCYB001 from './catalogue-contracts/SEC-CYB-001.json';
@@ -775,7 +803,11 @@ export const BATCH_11 = [
 export const BATCH_13 = [
   b13SECCYB001, b13SECCYB002, b13SECCYB003, b13SECCYB004, b13SECCYB008, b13SECCYB009, b13SECCYB010, b13SECCYB011, b13SECCYB012, b13SECCYB013, b13SECCYB014, b13SECCYB015, b13SECCYB016, b13SECCYB017, b13SECINF001, b13SECINF002, b13SECINF003, b13SECINF004, b13SECINF005, b13SECINF006, b13SECINF007, b13SECINF009, b13SECINF013, b13SECINF014, b13SECINF015, b13SECINF016, b13SECINT007, b13SECINT008, b13CIPREG008, b13CIPRSK009, b13CIPINC010,
 ] as unknown as CatalogueContractJson[];
-/** The passages contracts answer the same way: every item applies to the forms in applies_to, an item with `for` only to that group (health: batches 1 and 2; tax: batch 3; adm: batch 5; oversight: batch 7; land, hpc, lrg, trn: batch 10; sec, cyb, inf, clr: batch 13). */
+/** Batch 12: the digital government front door, records management and service governance, catalogue Part 13 §2.1, §2.3 and §2.5 with the supplement's DGV contracts (owner's assignment; plan I13). Each institution owns its own. */
+export const BATCH_12 = [
+  b12GOVGOV001, b12GOVGOV002, b12GOVGOV003, b12GOVGOV004, b12GOVGOV005, b12GOVGOV006, b12GOVGOV010, b12GOVGOV014, b12GOVREC001, b12GOVREC007, b12GOVREC008, b12GOVREC010, b12GOVREC011, b12GOVREC012, b12GOVREC017, b12GOVREC018, b12GOVSVC001, b12GOVSVC004, b12GOVSVC006, b12GOVSVC007, b12GOVSVC008, b12GOVSVC009, b12GOVSVC011, b12GOVSVC012, b12GOVSVC013, b12GOVSVC014, b12GOVSVC018,
+] as unknown as CatalogueContractJson[];
+/** The passages contracts answer the same way: every item applies to the forms in applies_to, an item with `for` only to that group (health: batches 1 and 2; tax: batch 3; adm: batch 5; oversight: batch 7; land, hpc, lrg, trn: batch 10; dgv, svc, rec, ggov: batch 12; sec, cyb, inf, clr: batch 13). */
 export const COMMON_ITEMS = (common as unknown as { applies_to: string[]; groups: Record<string, string[]>; items: (CatalogueItem & { for?: string })[] });
 /** The shared items that apply to one contract. */
 export const commonItemsFor = (formId: string): CatalogueItem[] => (COMMON_ITEMS.applies_to.includes(formId) ? COMMON_ITEMS.items.filter(i => !i.for || COMMON_ITEMS.groups[i.for]?.includes(formId)).map(({ for: _for, ...i }) => i) : []);
@@ -823,7 +855,7 @@ function load(c: CatalogueContractJson, batch: number): CatalogueLibraryForm {
 /** Every catalogue contract CivicOS has written, as library drafts. */
 export const CATALOGUE_CONTRACTS: CatalogueLibraryForm[] = [...BATCH_1.map(c => load(c, 1)), ...BATCH_2.map(c => load(c, 2)), ...BATCH_3.map(c => load(c, 3)), ...BATCH_4.map(c => load(c, 4)), ...BATCH_5.map(c => load(c, 5)), ...BATCH_6.map(c => load(c, 6)), ...BATCH_7.map(c => load(c, 7)), ...BATCH_8.map(c => load(c, 8)), ...BATCH_9.map(c => load(c, 9)), ...BATCH_10.map(c => load(c, 10)), ...BATCH_11.map(c => load(c, 11)),
   // I12
-  ...BATCH_13.map(c => load(c, 13))];
+  ...BATCH_12.map(c => load(c, 12)), ...BATCH_13.map(c => load(c, 13))];
 
 /**
  * A catalogue contract by its identity (CATALOGUE:FORM-ID@VERSION; without

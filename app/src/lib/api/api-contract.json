@@ -30,8 +30,8 @@
   {
    "family": "identity-and-access",
    "means": "Signing in, accounts, sessions and the demonstration cast",
-   "endpoints": 34,
-   "paths": 25
+   "endpoints": 36,
+   "paths": 26
   },
   {
    "family": "indicators",
@@ -58,10 +58,22 @@
    "paths": 113
   },
   {
+   "family": "other:records-management",
+   "means": "Routes under /api/records-management",
+   "endpoints": 2,
+   "paths": 1
+  },
+  {
    "family": "other:security",
    "means": "Routes under /api/security",
    "endpoints": 2,
    "paths": 1
+  },
+  {
+   "family": "other:services",
+   "means": "Routes under /api/services",
+   "endpoints": 4,
+   "paths": 2
   },
   {
    "family": "payments",
@@ -72,8 +84,8 @@
   {
    "family": "public-information",
    "means": "Public sites, public checks and email updates",
-   "endpoints": 20,
-   "paths": 18
+   "endpoints": 21,
+   "paths": 19
   },
   {
    "family": "registers",
@@ -1355,6 +1367,56 @@
    "version": "1",
    "deprecated": false,
    "source": "src/app/api/citizen/applications/route.ts"
+  },
+  {
+   "path": "/api/citizen/representation",
+   "method": "GET",
+   "family": "identity-and-access",
+   "resource": "session or account",
+   "operation": "read",
+   "authentication": [
+    "integrationKey"
+   ],
+   "permission": "read: signed-in official or the credential named",
+   "purpose": "none read by the route",
+   "refusals": [
+    400,
+    401,
+    403,
+    422
+   ],
+   "idempotency": "not declared",
+   "rateLimit": "platform limits only",
+   "audit": "read",
+   "classification": "declared per record and field (forms, procedures, registers), not per endpoint",
+   "version": "1",
+   "deprecated": false,
+   "source": "src/app/api/citizen/representation/route.ts"
+  },
+  {
+   "path": "/api/citizen/representation",
+   "method": "POST",
+   "family": "identity-and-access",
+   "resource": "session or account",
+   "operation": "change",
+   "authentication": [
+    "integrationKey"
+   ],
+   "permission": "self-authenticated",
+   "purpose": "none read by the route",
+   "refusals": [
+    400,
+    401,
+    403,
+    422
+   ],
+   "idempotency": "not declared",
+   "rateLimit": "platform limits only",
+   "audit": "audited by the module it calls, where it changes a record",
+   "classification": "declared per record and field (forms, procedures, registers), not per endpoint",
+   "version": "1",
+   "deprecated": false,
+   "source": "src/app/api/citizen/representation/route.ts"
   },
   {
    "path": "/api/civil",
@@ -8243,6 +8305,28 @@
    "source": "src/app/api/public/route.ts"
   },
   {
+   "path": "/api/public/services",
+   "method": "GET",
+   "family": "public-information",
+   "resource": "public page",
+   "operation": "read",
+   "authentication": [
+    "public"
+   ],
+   "permission": "public read",
+   "purpose": "none read by the route",
+   "refusals": [
+    404
+   ],
+   "idempotency": "not declared",
+   "rateLimit": "platform limits only",
+   "audit": "read",
+   "classification": "declared per record and field (forms, procedures, registers), not per endpoint",
+   "version": "1",
+   "deprecated": false,
+   "source": "src/app/api/public/services/route.ts"
+  },
+  {
    "path": "/api/public/telemetry",
    "method": "GET",
    "family": "public-information",
@@ -8261,6 +8345,56 @@
    "version": "1",
    "deprecated": false,
    "source": "src/app/api/public/telemetry/route.ts"
+  },
+  {
+   "path": "/api/records-management",
+   "method": "GET",
+   "family": "other:records-management",
+   "resource": "records-management",
+   "operation": "read",
+   "authentication": [
+    "officialSession"
+   ],
+   "permission": "read: signed-in official or the credential named",
+   "purpose": "none read by the route",
+   "refusals": [
+    400,
+    403,
+    404,
+    422
+   ],
+   "idempotency": "not declared",
+   "rateLimit": "platform limits only",
+   "audit": "audited (the route or the module it calls records the act)",
+   "classification": "declared per record and field (forms, procedures, registers), not per endpoint",
+   "version": "1",
+   "deprecated": false,
+   "source": "src/app/api/records-management/route.ts"
+  },
+  {
+   "path": "/api/records-management",
+   "method": "POST",
+   "family": "other:records-management",
+   "resource": "records-management",
+   "operation": "change",
+   "authentication": [
+    "officialSession"
+   ],
+   "permission": "official",
+   "purpose": "none read by the route",
+   "refusals": [
+    400,
+    403,
+    404,
+    422
+   ],
+   "idempotency": "not declared",
+   "rateLimit": "platform limits only",
+   "audit": "audited (the route or the module it calls records the act)",
+   "classification": "declared per record and field (forms, procedures, registers), not per endpoint",
+   "version": "1",
+   "deprecated": false,
+   "source": "src/app/api/records-management/route.ts"
   },
   {
    "path": "/api/registers/check",
@@ -10195,6 +10329,104 @@
    "version": "1",
    "deprecated": false,
    "source": "src/app/api/security/route.ts"
+  },
+  {
+   "path": "/api/services/management",
+   "method": "GET",
+   "family": "other:services",
+   "resource": "services",
+   "operation": "read",
+   "authentication": [
+    "officialSession"
+   ],
+   "permission": "read: signed-in official or the credential named",
+   "purpose": "none read by the route",
+   "refusals": [
+    400,
+    403,
+    404
+   ],
+   "idempotency": "not declared",
+   "rateLimit": "platform limits only",
+   "audit": "audited (the route or the module it calls records the act)",
+   "classification": "declared per record and field (forms, procedures, registers), not per endpoint",
+   "version": "1",
+   "deprecated": false,
+   "source": "src/app/api/services/management/route.ts"
+  },
+  {
+   "path": "/api/services/management",
+   "method": "POST",
+   "family": "other:services",
+   "resource": "services",
+   "operation": "change",
+   "authentication": [
+    "officialSession"
+   ],
+   "permission": "official",
+   "purpose": "none read by the route",
+   "refusals": [
+    400,
+    403,
+    404
+   ],
+   "idempotency": "not declared",
+   "rateLimit": "platform limits only",
+   "audit": "audited (the route or the module it calls records the act)",
+   "classification": "declared per record and field (forms, procedures, registers), not per endpoint",
+   "version": "1",
+   "deprecated": false,
+   "source": "src/app/api/services/management/route.ts"
+  },
+  {
+   "path": "/api/services",
+   "method": "GET",
+   "family": "other:services",
+   "resource": "services",
+   "operation": "read",
+   "authentication": [
+    "officialSession"
+   ],
+   "permission": "read: signed-in official or the credential named",
+   "purpose": "none read by the route",
+   "refusals": [
+    400,
+    403,
+    404,
+    422
+   ],
+   "idempotency": "not declared",
+   "rateLimit": "platform limits only",
+   "audit": "audited (the route or the module it calls records the act)",
+   "classification": "declared per record and field (forms, procedures, registers), not per endpoint",
+   "version": "1",
+   "deprecated": false,
+   "source": "src/app/api/services/route.ts"
+  },
+  {
+   "path": "/api/services",
+   "method": "POST",
+   "family": "other:services",
+   "resource": "services",
+   "operation": "change",
+   "authentication": [
+    "officialSession"
+   ],
+   "permission": "official",
+   "purpose": "none read by the route",
+   "refusals": [
+    400,
+    403,
+    404,
+    422
+   ],
+   "idempotency": "not declared",
+   "rateLimit": "platform limits only",
+   "audit": "audited (the route or the module it calls records the act)",
+   "classification": "declared per record and field (forms, procedures, registers), not per endpoint",
+   "version": "1",
+   "deprecated": false,
+   "source": "src/app/api/services/route.ts"
   },
   {
    "path": "/api/session",

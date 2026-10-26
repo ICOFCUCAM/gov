@@ -38,7 +38,10 @@ export type AuthorityKey =
   // designates critical infrastructure under the nation's law, the security authority that declares the installation's
   // accreditation and decides clearances, and the national security body that issues security directives. Empty until
   // named; no case opens under a slot nobody is named for. Nothing about intelligence is a slot (legal review first).
-  | 'cyberAuthority' | 'criticalInfrastructure' | 'securityAccreditation' | 'nationalSecurity';
+  | 'cyberAuthority' | 'criticalInfrastructure' | 'securityAccreditation' | 'nationalSecurity'
+  // I13: the digital front door and records (plan step I13): the archive the nation's law names to receive records
+  // transferred for permanent preservation (lib/recordkeeping). Empty until named; nothing is transferred until then.
+  | 'archives';
 
 export type ModuleKey = 'law' | 'civil' | 'organisations' | 'accreditation' | 'licensing' | 'immigration' | 'police' | 'courts' | 'tax' | 'customs' | 'education' | 'health' | 'professions';
 
@@ -132,6 +135,8 @@ export const AUTHORITIES: { key: AuthorityKey; label: string; registers: string;
   { key: 'criticalInfrastructure', label: 'Critical infrastructure designation', registers: 'Designated critical infrastructure under the nation\'s law and criteria, essential-service dependencies, risk assessments, resilience plans and continuity exercises (restricted)', optional: true },
   { key: 'securityAccreditation', label: 'Security accreditation and clearances', registers: 'Security clearance decisions (metadata: level, scope, validity; never vetting content)', optional: true },
   { key: 'nationalSecurity', label: 'National security directives', registers: 'National security directives: instrument, authority, recipients and validity (restricted to the issuer and recipients)', optional: true },
+  // I13: records management (plan step I13): optional; until named, records whose schedule ends in transfer stay with their institution.
+  { key: 'archives', label: 'National archives', registers: 'Records transferred for permanent preservation from every institution, with each transfer\'s manifest and the archive\'s receipt', optional: true },
 ];
 /** Health bodies a nation may set apart from the health regulator: optional, provisionally stood in for until named (PROVISIONAL_FALLBACK). */
 export const HEALTH_SLOTS: AuthorityKey[] = ['medicinesRegulation', 'controlledSubstances', 'publicHealth'];

@@ -92,6 +92,13 @@ import { identityCounts } from '@/lib/identity/register';
 import { passportCounts, FEE_RULE } from '@/lib/passports/register';
 import { labourCounts } from '@/lib/labour/register';
 import { socialCounts } from '@/lib/social/register';
+// I13: the digital front door and records (plan step I13).
+import { catalogueCounts, waitingServices } from '@/lib/frontdoor/catalogue';
+import { waitingServiceManagement } from '@/lib/frontdoor/service-management';
+import { identityRoute } from '@/lib/frontdoor/journey';
+import { FRONTDOOR_PROCEDURES, frontdoorKey } from '@/lib/frontdoor/procedures';
+import { RECORDKEEPING_PROCEDURES, recordkeepingKey } from '@/lib/recordkeeping/procedures';
+import { recordkeepingCounts } from '@/lib/recordkeeping/register';
 
 export type TrackState = 'done' | 'in-progress' | 'not-started' | 'blocked';
 /**
@@ -142,6 +149,8 @@ const TRACK_OWNER: Record<string, string> = {
   indicators: 'Officials who can sign at each institution whose figures an indicator defines', tax: 'The tax administration the nation names (officials who can sign there)',
   oversight: 'Each independent oversight body the nation names (its own officials)',
   territory: 'The land registry, building control, housing and transport bodies the nation names, and each local government for its own records',
+  // I13: each institution owns its services and its records; the archive the nation names receives transfers.
+  frontdoor: 'Each institution for its own services and records (an official proposes, a different one who can sign there publishes or approves)',
 };
 
 /** One track, read defensively: a store that cannot be read shows as a check not done, never breaks the page. */
@@ -684,6 +693,25 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
       ] };
     }));
   }
+  // I13 (plan step I13): the digital front door and records management. Every installation has services and records.
+  tracks.push(track({ key: 'frontdoor', title: 'Public services and records', why: 'The public service catalogue (each service with its owner, legal basis, procedure, forms, fee rule and channels, published by a second official), how citizens prove who they are, each institution\'s own reconsideration, complaint, appointment and refund procedures, and its records classes with the retention schedules its law sets.', href: '/gov/services', seeded: true }, () => {
+    for (const w of waitingServices()) wait({ what: w.what, proposedBy: w.by, at: w.at, href: '/gov/services' });
+    for (const w of waitingServiceManagement()) wait({ what: w.what, proposedBy: w.by, at: w.at, href: '/gov/services/management' });
+    const c = catalogueCounts();
+    const ident = identityRoute();
+    const inst = active().map(m => m.id);
+    const fdApproved = inst.filter(id => FRONTDOOR_PROCEDURES.every(t => listPackages({ key: frontdoorKey(t.key, id), state: 'approved' }).length));
+    const recApproved = inst.filter(id => RECORDKEEPING_PROCEDURES.every(t => listPackages({ key: recordkeepingKey(t.key, id), state: 'approved' }).length));
+    const r = recordkeepingCounts();
+    return { checks: [
+      { label: 'Services published in the catalogue (each by a second official)', done: c.published > 0, href: '/gov/services', detail: `${c.published} published, ${c.byStatus.active ?? 0} active, ${c.byStatus.unavailable ?? 0} not available yet${c.samples ? ` (${c.samples} samples)` : ''}` },
+      { label: 'Citizens sign in through the nation\'s identity provider (or the lawful alternatives are stated)', done: !!ident.provider, href: '/gov/configuration', detail: ident.statement },
+      { label: 'Each institution\'s own appointment, complaint, reconsideration and refund procedures approved', done: inst.length > 0 && fdApproved.length === inst.length, href: '/gov/services', detail: `${fdApproved.length} of ${inst.length} institutions` },
+      { label: 'Each institution\'s records procedures approved', done: inst.length > 0 && recApproved.length === inst.length, href: '/gov/records', detail: `${recApproved.length} of ${inst.length} institutions` },
+      { label: 'Record classes with retention schedules the law sets (none ships; nothing is disposed of without one)', done: r.scheduled > 0, href: '/gov/records', detail: `${r.scheduled} class(es) scheduled · ${r.holdsInForce} hold(s) in force` },
+      { label: 'The archive named (Who is responsible), if records are transferred', done: !!authorityFor('archives'), href: '/gov/configuration#who-is-responsible', detail: authorityFor('archives') ? getMinistry(authorityFor('archives')!)?.name ?? '' : 'Not named: records whose schedule ends in transfer stay with their institution' },
+    ] };
+  }));
 
   if (samplesAllowed(env)) {
     tracks.push(track({ key: 'demo', title: 'Demonstration', why: 'Sample officials and records to try every feature. Only in demo and training installations; never in production.', href: '/admin/onboarding#demo', samplesOnly: true }, () => ({

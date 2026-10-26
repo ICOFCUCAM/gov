@@ -97,6 +97,10 @@ const PAGES = [
   { path: '/gov/building', map: false, text: /planning, building control and housing/i },
   { path: '/gov/local-government', map: false, text: /local and regional government/i },
   { path: '/gov/transport', map: false, text: /transport registers/i },
+  // I13 (plan step I13): the public service catalogue, service management and records management.
+  { path: '/gov/services', map: false, text: /service catalogue/i },
+  { path: '/gov/services/management', map: false, text: /service management/i },
+  { path: '/gov/records', map: false, text: /records management/i },
   // Human services (plan I6): identity, passports and travel documents, labour, social protection.
   { path: '/gov/identity', map: false, text: /national identity/i },
   { path: '/gov/passports', map: false, text: /passports and travel documents/i },

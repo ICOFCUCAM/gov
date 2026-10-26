@@ -15,6 +15,8 @@ import { effectiveContent } from './effective';
 import { fillDeep, siteTokens } from './tokens';
 import type { SiteContent, SiteLink } from './types';
 import { siteHref } from '@/apps/_shared/public/site-props';
+import { publicCatalogue } from '@/lib/frontdoor/catalogue';
+import { siteMessages } from '@/lib/nation/registry';
 
 export type SearchKind = 'service' | 'news' | 'programme' | 'figure' | 'page';
 
@@ -82,6 +84,15 @@ export function searchSites(q: string, { site, limit = 40, year = new Date().get
     for (const e of entries(id, c)) {
       const s = score(query, e);
       if (s > 0) hits.push({ siteId: id, siteName: c.institution.name, ...e, score: s });
+    }
+  }
+  // I13: the public service catalogue's published entries (lib/frontdoor/catalogue.ts publicCatalogue(): published only, status
+  // computed), searched with every site: each leads to its own page under /services. Never an outside search service.
+  if (!site || site === 'services') {
+    for (const p of publicCatalogue()) {
+      const e: Entry = { kind: 'service', title: p.name, text: [p.description, p.owner, p.statusLabel, ...p.lifeEvents, p.category].filter(Boolean).join(' — '), href: `/services/${encodeURIComponent(p.id)}` };
+      const s = score(query, e);
+      if (s > 0) hits.push({ siteId: 'services', siteName: siteMessages(locale).servicesTitle, ...e, score: s });
     }
   }
   return hits.sort((a, b) => b.score - a.score || a.siteName.localeCompare(b.siteName)).slice(0, limit);

@@ -194,6 +194,23 @@ D['housing'] = ('Housing, planning and building control', 'I7', True, BLDEV + ';
 D['local-gov'] = ('Local and regional government', 'I7', True, LGEV, 'Not yet')
 D['transport'] = ('Transport', 'I7', True, TRNEV, 'Not yet')
 
+# Digital front door and records (plan I13, forms batch 12): the public service catalogue, the citizen journey, representation granted by the
+# person, records management and service management, each institution's own; nothing a law decides shipped.
+CATEV = "lib/frontdoor/catalogue.ts (service versions proposed by an official of the owning institution, published by a different one who can sign there; owner from the deployment profile or the registry, law cited from the laws register, forms by identity, fee only as an approved rule, status computed each read: active, pilot, information only, not available yet with reasons, retired; samples only where samplesAllowed()), /services, /gov/services; tests lib/frontdoor/frontdoor.test.ts, app/api/public/services/route.test.ts"
+JOUREV = "lib/frontdoor/journey.ts (discover, authenticate through the nation's identity provider or assisted at an office, apply through the service's own procedure, routed to authorityFor() with a receipt, track, decision, reconsideration by the deciding institution; lib/frontdoor/register.ts routing), /wallet/applications; test lib/frontdoor/frontdoor.test.ts"
+REPEV = "lib/frontdoor/representation.ts (granted and revoked by the represented person, scoped by service and act, every act recording both; kept in lib/records/delegations.ts), /wallet/representation; tests lib/frontdoor/frontdoor.test.ts, app/api/public/services/route.test.ts"
+FDPEV = "lib/frontdoor/procedures.ts (svc.appointment, svc.complaint, svc.reconsideration decided by two officials who took no part in the original, svc.refund only of a receipt the payments system holds, adopted by each institution as its own); test lib/frontdoor/frontdoor.test.ts"
+RKEV = "lib/recordkeeping/procedures.ts and register.ts (rec.incoming registration, rec.schedule record classes with schedules cited and approved by two officials, rec.hold, rec.disposal listing only what an approved schedule makes due and two other officials authorise, never deleting a record, certificate kept; rec.transfer to the archives slot acknowledged by the archive; rec.migration reconciled by count and SHA-256 manifest), /gov/records; test lib/recordkeeping/recordkeeping.test.ts"
+SMEV = "lib/frontdoor/service-management.ts (dashboard registry, objectives with targets only as the nation approves them, performance computed from cases with signal markers, reports frozen with SHA-256 and validated, disruptions, changes, retirement, architecture exceptions with expiry), /gov/services/management; test lib/frontdoor/service-management.test.ts"
+B12 = "; library contract of batch 12 (app/src/lib/forms/library/catalogue-contracts/; docs/FORMS_CONFORMANCE.md §20)"
+B12MISS = "Adoption by each institution: its front-door and records procedures approved by a second official of its own; the nation's identity provider, periods, schedules and targets"
+
+# Plan I13: the front door, records and service management records exist.
+D['portal'] = ('Public portal and workspaces', 'I13', True, JOUREV + '; ' + CATEV, 'Not yet')
+D['digital-services'] = ('Citizen and business digital services', 'I13', True, JOUREV + '; ' + REPEV + '; ' + FDPEV, 'Not yet')
+D['records'] = ('Records, documents and digital trust', 'I13', True, RKEV + '; ' + KB.DOCS + '; ' + KB.CERT + '; ' + RET + '; ' + SEAL, 'Not yet')
+D['service-gov'] = ('Service governance and performance', 'I13', True, SMEV + '; ' + CATEV + '; ' + UPD, 'Not yet')
+
 # (tag, part) -> [(section regex on the top section or 'sub', domain)] first match; tag = file tag
 def _m(*pairs):
     return [(re.compile(a), b) for a, b in pairs]
@@ -341,6 +358,16 @@ def I(rx, status, ev, miss='', step=None, also='', lr=False, tag=None):
     ID.append((re.compile(rx), status, ev, miss, step, also, lr, tag))
 
 
+# Plan I13: the forms the front-door, records and service-management systems carry (batch 12), before the earlier rules.
+I(r'^GOV-SVC-00[14]$|^GOV-SVC-006$', 'Partial', JOUREV + '; ' + CATEV + B12, B12MISS + '; the identity provider connected (integration register 26)', 'I13')
+I(r'^GOV-SVC-00[78]$|^GOV-SVC-01[13]$', 'Partial', FDPEV + B12, B12MISS, 'I13')
+I(r'^GOV-SVC-012$', 'Partial', FDPEV + '; ' + JOUREV + B12, B12MISS + '; the reconsideration period the nation sets on its procedure', 'I13')
+I(r'^GOV-SVC-014$', 'Partial', REPEV + '; ' + DELEG + B12, 'A supporting instrument checked where the law requires one; representation for businesses through the organisations register', 'I13')
+I(r'^GOV-SVC-018$', 'Partial', FDPEV + '; ' + KB.PAY + ' (instructRefund() from a receipt)' + B12, B12MISS + '; a payment provider that executes refunds (integration register 26)', 'I13')
+I(r'^GOV-SVC-009$|^GOV-REC-00[178]$|^GOV-REC-01[0128]$|^GOV-REC-017$', 'Partial', RKEV + B12, B12MISS + '; the national archive named for the archives slot', 'I13')
+I(r'^GOV-GOV-00[1-6]$|^GOV-GOV-01[04]$', 'Partial', SMEV + '; ' + CATEV + B12, B12MISS, 'I13')
+I(r'^DGV-SVC-001$', 'Partial', JOUREV + B12, B12MISS, 'I13', tag='SUP')
+I(r'^DGV-REP-003$', 'Partial', REPEV + B12, 'A supporting instrument checked where the law requires one', 'I13', tag='SUP')
 # Land (catalogue Part 8 §3)
 # Plan I7: the forms the land and transport procedures carry (batch 10), before the earlier land rules.
 I(r'^LND-REG-0(05|07|08|09|10|11|12|16|17|20|21|22)$', 'Partial', LANDEV + B10, B10MISS + '; the nation\'s tenure types and instrument kinds (CFG-LND-001, CFG-LND-003)', 'I7')

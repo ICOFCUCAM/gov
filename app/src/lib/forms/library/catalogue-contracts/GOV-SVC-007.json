@@ -1,0 +1,262 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "GOV-SVC-007",
+ "record_type": "svc.appointment",
+ "form_version": 1,
+ "procedure_package_id": "svc.appointment",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-GOV-009: personal-data protection and lawful disclosure (retention and disclosure of what the form collects)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/PARTS-12-13.md",
+  "id": "GOV-SVC-007",
+  "part": 13,
+  "section": "2.1",
+  "line": 652,
+  "batch": 12
+ },
+ "library": {
+  "title": "Book an appointment",
+  "intro": "Book an appointment at an office for a service. The office confirms a date and time or puts you on its waiting list; every change is kept.",
+  "owner": "institution",
+  "filled_by": "Anyone; an official at an office.",
+  "authority": "The institution that owns the service or the records (an institution of the registry, or the one the deployment profile names for its slot); never a ministry by name.",
+  "procedure": {
+   "key": "svc.appointment",
+   "stage": "requested",
+   "action": "confirm"
+  },
+  "lists": {},
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "institution-owned",
+    "what": "The owner is each institution itself for its own services and records: it adopts the front-door and records procedures as its own (svc.<template>.<institution>, rec.<template>.<institution>), drafted by one of its officials and approved by another; a service names its owner as a slot of the deployment profile or an institution of the registry, never a ministry by name",
+    "why": "Part 13 §12.3: each institution keeps its own records, service ownership and decisions; the shared platform is no authority over them.",
+    "rule": "lib/frontdoor/procedures.ts installFrontdoorProcedures(); lib/recordkeeping/procedures.ts installRecordkeepingProcedures(); lib/frontdoor/catalogue.ts ownerOf()"
+   },
+   {
+    "id": "two-officials",
+    "what": "Every publication, approval and decision is proposed by one official and confirmed by a different person, compared as persons and never only as accounts",
+    "why": "Part 13 §7.3 and §15 Gate 3: required dual control prevents self-approval.",
+    "rule": "lib/casework/engine.ts act() (fourEyes, distinctFrom); lib/data/dual-control.ts dualControlRefusal()"
+   },
+   {
+    "id": "no-ai-decision",
+    "what": "No step is decided by a model or a score: officials decide with reasons",
+    "why": "Part 13 §11.3: AI must not issue legally consequential decisions.",
+    "rule": "CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 652,
+    "quotes": [
+     "GOV-SVC-007",
+     "Appointment booking",
+     "Confirmed appointment or wait-list record"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/frontdoor/procedures.ts",
+      "how": "the form's register row, carried by svc.appointment"
+     },
+     "procedure": "confirm"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 763,
+    "quotes": [
+     "Provide the relevant payment, appointment, certificate, correction, complaint or appeal workflow."
+    ],
+    "met_by": {
+     "procedure": "confirm",
+     "platform": {
+      "file": "app/src/lib/frontdoor/procedures.ts",
+      "how": "svc.appointment: confirmed, wait-listed, attended or cancelled, each change kept"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "appointment.service",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 80
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The service (its catalogue id)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the service (its catalogue id).",
+     "length": "The service (its catalogue id) must be 80 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "appointment.service_point",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 200
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Office"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter office.",
+     "length": "Office must be 200 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "appointment.preferred_date",
+   "type": "date",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Preferred date"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "appointment.access_needs",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 2000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Assistance or adjustments you need"
+   },
+   "error_text": {
+    "en": {
+     "length": "Assistance or adjustments you need must be 2000 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "appointment.contact",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 200
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "personal",
+   "evidence": [],
+   "label": {
+    "en": "How to reach you"
+   },
+   "error_text": {
+    "en": {
+     "length": "How to reach you must be 200 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "only": [
+    "declaration.text_version",
+    "declaration.confirmed",
+    "declaration.signed_at"
+   ],
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "appointment.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

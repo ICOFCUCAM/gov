@@ -42,6 +42,11 @@ import '@/lib/procurement/procedures';
 import '@/lib/security/procedures';
 // I9: cross-institution workflow procedures (xi.<template>.<institution>).
 import '@/lib/federation/procedures';
+// I13: the digital front door and records (plan step I13): each institution's own appointment, complaint, reconsideration and
+// refund procedures, and its records management procedures (registry, schedules, holds, disposal, transfer, migration),
+// drafted from templates on request.
+import '@/lib/frontdoor/procedures';
+import '@/lib/recordkeeping/procedures';
 // The decision guard: every decision rests on a named authority (lib/permits/decisions.ts).
 import '@/lib/permits/decisions';
 // Publication gates: a form takes submissions in production only once its release is approved (lib/forms/publication.ts).

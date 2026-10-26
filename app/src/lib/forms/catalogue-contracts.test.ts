@@ -26,7 +26,7 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import * as React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { CATALOGUE_CONTRACTS, BATCH_1, BATCH_2, BATCH_3, BATCH_4, BATCH_5, BATCH_6, BATCH_7, BATCH_8, BATCH_9, BATCH_10, BATCH_11, BATCH_13, COMMON_ITEMS, type CatalogueLibraryForm } from './library/catalogue-contracts';
+import { CATALOGUE_CONTRACTS, BATCH_1, BATCH_2, BATCH_3, BATCH_4, BATCH_5, BATCH_6, BATCH_7, BATCH_8, BATCH_9, BATCH_10, BATCH_11, BATCH_12, BATCH_13, COMMON_ITEMS, type CatalogueLibraryForm } from './library/catalogue-contracts';
 import { CANONICAL_LIBRARY } from './library/catalogue';
 import SPEC_TAXPAYER from './library/spec/taxpayer-registration-v1.json';
 import { SPEC_CLASSES } from './spec-import';
@@ -62,6 +62,9 @@ import { SOCIAL_PROCEDURES } from '@/lib/social/procedures';
 import { SECURITY_PROCEDURES } from '@/lib/security/procedures';
 // I9: the cross-institution workflow procedures (batch 11).
 import { CROSS_INSTITUTION_PROCEDURES } from '@/lib/federation/procedures';
+// I13: the front-door and records procedures batch 12 carries.
+import { FRONTDOOR_PROCEDURES } from '@/lib/frontdoor/procedures';
+import { RECORDKEEPING_PROCEDURES } from '@/lib/recordkeeping/procedures';
 import { dualControlRefusal } from '@/lib/data/dual-control';
 import { serviceDirectory } from '@/lib/exchange/services';
 import { AUTHORITIES } from '@/lib/nation/deployment';
@@ -187,9 +190,11 @@ const IDS_11 = [
   'exchange.referral.create', 'exchange.referral.accept', 'exchange.referral.update', 'exchange.referral.close',
   'exchange.tax_status.verify', 'exchange.tax_status.response', 'exchange.business_status.verify', 'exchange.business_status.response',
 ];
-const IDS = [...IDS_1, ...IDS_2, ...IDS_3, ...IDS_4, ...IDS_5, ...IDS_6, ...IDS_7, ...IDS_8, ...IDS_9, ...IDS_10, ...IDS_11, ...IDS_13];
-const batchOf = (id: string) => (IDS_13.includes(id) ? 13 : IDS_11.includes(id) ? 11 : IDS_10.includes(id) ? 10 : IDS_9.includes(id) ? 9 : IDS_8.includes(id) ? 8 : id.startsWith('ADM-') ? 5 : id.startsWith('tax.') ? 6 : id.startsWith('taxpayer.') ? 3 : id.startsWith('HLT-MED') ? 2 : IDS_4.includes(id) ? 4 : IDS_7.includes(id) ? 7 : 1);
-const sourceOf = (id: string): Src => (batchOf(id) === 13 ? (/^CIP-/.test(id) ? 'C' : 'F') : batchOf(id) === 11 ? (id.startsWith('GOV-WF') ? 'E' : 'G') : batchOf(id) === 10 ? (/^(LND|TRN)-/.test(id) ? 'F' : 'C') : batchOf(id) === 9 ? (/^(LAB|SOC)-/.test(id) ? 'C' : 'G') : batchOf(id) === 5 ? 'C' : [3, 6, 8].includes(batchOf(id)) ? 'B' : batchOf(id) === 7 ? 'E' : 'A');
+// Batch 12 (I13): the digital government front door, records management and service governance, catalogue Part 13 §2.1, §2.3 and §2.5.
+const IDS_12 = ['GOV-GOV-001', 'GOV-GOV-002', 'GOV-GOV-003', 'GOV-GOV-004', 'GOV-GOV-005', 'GOV-GOV-006', 'GOV-GOV-010', 'GOV-GOV-014', 'GOV-REC-001', 'GOV-REC-007', 'GOV-REC-008', 'GOV-REC-010', 'GOV-REC-011', 'GOV-REC-012', 'GOV-REC-017', 'GOV-REC-018', 'GOV-SVC-001', 'GOV-SVC-004', 'GOV-SVC-006', 'GOV-SVC-007', 'GOV-SVC-008', 'GOV-SVC-009', 'GOV-SVC-011', 'GOV-SVC-012', 'GOV-SVC-013', 'GOV-SVC-014', 'GOV-SVC-018'];
+const IDS = [...IDS_1, ...IDS_2, ...IDS_3, ...IDS_4, ...IDS_5, ...IDS_6, ...IDS_7, ...IDS_8, ...IDS_9, ...IDS_10, ...IDS_11, ...IDS_12, ...IDS_13];
+const batchOf = (id: string) => (IDS_13.includes(id) ? 13 : IDS_11.includes(id) ? 11 : IDS_12.includes(id) ? 12 : IDS_10.includes(id) ? 10 : IDS_9.includes(id) ? 9 : IDS_8.includes(id) ? 8 : id.startsWith('ADM-') ? 5 : id.startsWith('tax.') ? 6 : id.startsWith('taxpayer.') ? 3 : id.startsWith('HLT-MED') ? 2 : IDS_4.includes(id) ? 4 : IDS_7.includes(id) ? 7 : 1);
+const sourceOf = (id: string): Src => (batchOf(id) === 13 ? (/^CIP-/.test(id) ? 'C' : 'F') : batchOf(id) === 11 ? (id.startsWith('GOV-WF') ? 'E' : 'G') : batchOf(id) === 12 ? 'E' : batchOf(id) === 10 ? (/^(LND|TRN)-/.test(id) ? 'F' : 'C') : batchOf(id) === 9 ? (/^(LAB|SOC)-/.test(id) ? 'C' : 'G') : batchOf(id) === 5 ? 'C' : [3, 6, 8].includes(batchOf(id)) ? 'B' : batchOf(id) === 7 ? 'E' : 'A');
 const HUMAN_SLOTS = ['identity', 'travelDocuments', 'citizenship', 'labour', 'socialProtection'];
 const OVERSIGHT_SLOTS = ['ombudsman', 'humanRights', 'anticorruption', 'supremeAudit', 'dataProtection'];
 const TERRITORY_OWNERS = ['landRegistry', 'buildingControl', 'housing', 'vehicleRegistration', 'roadAuthority', 'transportRegulator', 'institution'];
@@ -646,11 +651,51 @@ function rowLine(id: string): number {
   return DOC[sourceOf(id)].findIndex(l => l.startsWith(`${cid}\t`) || l.startsWith(`- ${cid} — `)) + 1;
 }
 
+// Batch 12 (I13): the lines every form answers (dgv: Part 13's configured-before-activation and accountability rules), each family's
+// (svc: separate decisions, identity is not authorisation; rec: lifecycle, retention by law, holds; ggov: computed status, separate dashboards)
+// and each form's own (its catalogue passages; the supplement's DGV contracts for GOV-SVC-004 and GOV-SVC-014).
+const GROUP_12: Record<string, Partial<Record<Src, number[]>>> = {
+  dgv: { E: [620, 1387] },
+  svc: { E: [666, 826, 828] },
+  rec: { E: [875, 895, 904, 1305] },
+  ggov: { E: [779, 991] },
+};
+const FORM_12: Record<string, Partial<Record<Src, number[]>>> = {
+  'GOV-GOV-001': { E: [766, 767, 768, 769, 770, 771, 772, 773, 774, 775, 776, 777, 778, 1275] },
+  'GOV-GOV-002': { E: [1309] },
+  'GOV-GOV-003': { E: [1310, 989] },
+  'GOV-GOV-004': { E: [979, 980, 981, 983, 987, 995, 996, 997] },
+  'GOV-GOV-005': { E: [1313] },
+  'GOV-GOV-006': {},
+  'GOV-GOV-010': {},
+  'GOV-GOV-014': {},
+  'GOV-REC-001': { E: [841, 843, 876] },
+  'GOV-REC-007': { E: [877, 886, 887] },
+  'GOV-REC-008': { E: [879, 888, 889, 891, 892, 1269] },
+  'GOV-REC-010': { E: [881, 893] },
+  'GOV-REC-011': { E: [882, 883, 893, 894, 901, 902] },
+  'GOV-REC-012': { E: [880, 890] },
+  'GOV-REC-017': { E: [1290] },
+  'GOV-REC-018': { E: [1290] },
+  'GOV-SVC-001': { E: [745, 743] },
+  'GOV-SVC-004': { E: [749, 751, 752, 754], C: [2229, 2231, 2232, 2233, 2234, 2235, 2236] },
+  'GOV-SVC-006': { E: [755, 757] },
+  'GOV-SVC-007': { E: [763] },
+  'GOV-SVC-008': { E: [763] },
+  'GOV-SVC-009': { E: [841, 843] },
+  'GOV-SVC-011': { E: [763, 987] },
+  'GOV-SVC-012': { E: [760, 761, 763] },
+  'GOV-SVC-013': { E: [748, 1272] },
+  'GOV-SVC-014': { E: [831, 832, 833, 834, 835, 836, 837, 838], C: [2251, 2253, 2254, 2255, 2256, 2257, 2258] },
+  'GOV-SVC-018': { E: [1266] },
+};
 function linesFor(id: string): [Src, number][] {
   const sets = batchOf(id) === 13
     ? [COMMON, GROUP_13.sec!, GROUP_13[family13(id)]!, FORM_13[id] ?? {}, { [sourceOf(id)]: [rowLine(id)] }]
     : batchOf(id) === 11
     ? [COMMON, GROUP_11[id.startsWith('GOV-WF') ? 'xi' : 'xex']!, { [sourceOf(id)]: [rowLine(id)] }]
+    : batchOf(id) === 12
+    ? [COMMON, GROUP_12.dgv!, GROUP_12[({ SVC: 'svc', REC: 'rec', GOV: 'ggov' } as Record<string, string>)[id.slice(4, 7)]!]!, FORM_12[id] ?? {}, { E: [rowLine(id)] }]
     : batchOf(id) === 10
     ? [COMMON, GROUP_10[({ LND: 'land', HPC: 'hpc', LRG: 'lrg', TRN: 'trn' } as Record<string, string>)[id.slice(0, 3)]!]!, FORM_10[id] ?? {}, { [sourceOf(id)]: [rowLine(id)] }]
     : batchOf(id) === 9
@@ -670,14 +715,14 @@ function linesFor(id: string): [Src, number][] {
 }
 
 const flat = (fs: ContractField[]): ContractField[] => fs.flatMap(f => [f, ...(f.items ? flat(f.items as ContractField[]) : [])]);
-const PROCEDURES = [...CROSS_INSTITUTION_PROCEDURES, ...FINANCE_PROCEDURES, ...CABINET_PROCEDURES, ...PROCUREMENT_PROCEDURES, ...HEALTH_PROCEDURES, ...PROFESSION_PROCEDURES, ...TAX_PROCEDURES, ...PRODUCT_PROCEDURES, ...PROGRAMME_PROCEDURES, ...COMPLAINT_PROCEDURES, ...ADMINISTRATION_PROCEDURES, ...INDEPENDENT_OVERSIGHT_PROCEDURES, ...LAND_PROCEDURES, ...BUILDING_PROCEDURES, ...HOUSING_PROCEDURES, ...LOCAL_GOVERNMENT_TEMPLATES, ...TRANSPORT_PROCEDURES, ...IDENTITY_PROCEDURES, ...PASSPORT_PROCEDURES, ...CITIZENSHIP_PROCEDURES, ...LABOUR_PROCEDURES, ...SOCIAL_PROCEDURES, ...SECURITY_PROCEDURES];
+const PROCEDURES = [...CROSS_INSTITUTION_PROCEDURES, ...FINANCE_PROCEDURES, ...CABINET_PROCEDURES, ...PROCUREMENT_PROCEDURES, ...HEALTH_PROCEDURES, ...PROFESSION_PROCEDURES, ...TAX_PROCEDURES, ...PRODUCT_PROCEDURES, ...PROGRAMME_PROCEDURES, ...COMPLAINT_PROCEDURES, ...ADMINISTRATION_PROCEDURES, ...INDEPENDENT_OVERSIGHT_PROCEDURES, ...LAND_PROCEDURES, ...BUILDING_PROCEDURES, ...HOUSING_PROCEDURES, ...LOCAL_GOVERNMENT_TEMPLATES, ...TRANSPORT_PROCEDURES, ...IDENTITY_PROCEDURES, ...PASSPORT_PROCEDURES, ...CITIZENSHIP_PROCEDURES, ...LABOUR_PROCEDURES, ...SOCIAL_PROCEDURES, ...SECURITY_PROCEDURES, ...FRONTDOOR_PROCEDURES, ...RECORDKEEPING_PROCEDURES];
 const SERVICES = serviceDirectory().map(s => s.id);
 const applicantKeys = (f: CatalogueLibraryForm) => f.fields.filter(x => (x.audience ?? 'applicant') === 'applicant').map(x => x.key);
 /** No patient, clinical, treatment, diagnosis or individual health field: by key and by label. */
 const CLINICAL = /patient|clinical|clinician|diagnos|prescri|dispens|treatment|medication|symptom|medical record|health condition|care plan/i;
 
-describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and medical devices regulation), 3 (taxpayer registration and account), 4 (public-health programme forms), 5 (internal administration), 6 (tax services), 7 (independent oversight), 8 (executive office, Cabinet, treasury and budget), 9 (human services), 10 (territory and infrastructure), 11 (federation and portability) and 13 (security governance and resilience)', () => {
-  it('holds exactly the 25 + 21 + 29 + 2 + 40 + 95 + 7 + 57 + 96 + 36 + 21 + 31 approved forms, one contract each, matched to the catalogue row it names', () => {
+describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and medical devices regulation), 3 (taxpayer registration and account), 4 (public-health programme forms), 5 (internal administration), 6 (tax services), 7 (independent oversight), 8 (executive office, Cabinet, treasury and budget), 9 (human services), 10 (territory and infrastructure), 11 (federation and portability), 12 (digital front door and records) and 13 (security governance and resilience)', () => {
+  it('holds exactly the 25 + 21 + 29 + 2 + 40 + 95 + 7 + 57 + 96 + 36 + 21 + 27 + 31 approved forms, one contract each, matched to the catalogue row it names', () => {
     expect(IDS_1.length).toBe(25);
     expect(IDS_2.length).toBe(21);
     expect(IDS_3.length).toBe(29);
@@ -690,6 +735,7 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
     expect(IDS_9.length).toBe(96);
     expect(IDS_13.length).toBe(31);
     expect(IDS_11.length).toBe(21);
+    expect(IDS_12.length).toBe(27);
     expect(CATALOGUE_CONTRACTS.map(f => f.specId).sort()).toEqual([...IDS].sort());
     const files = readdirSync(join(process.cwd(), 'src/lib/forms/library/catalogue-contracts')).filter(f => f.endsWith('.json'));
     expect(files.sort()).toEqual(IDS.map(i => `${i}.json`).sort());
@@ -706,7 +752,7 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
   });
 
   it('carries no status anywhere: the register status is derived, never written', () => {
-    for (const c of [...BATCH_1, ...BATCH_2, ...BATCH_3, ...BATCH_4, ...BATCH_5, ...BATCH_6, ...BATCH_7, ...BATCH_8, ...BATCH_9, ...BATCH_10, ...BATCH_11, ...BATCH_13]) {
+    for (const c of [...BATCH_1, ...BATCH_2, ...BATCH_3, ...BATCH_4, ...BATCH_5, ...BATCH_6, ...BATCH_7, ...BATCH_8, ...BATCH_9, ...BATCH_10, ...BATCH_11, ...BATCH_12, ...BATCH_13]) {
       expect('status' in c, c.form_id).toBe(false);
       expect(JSON.stringify(c)).not.toMatch(/"(status|state|approved|approved_by|production)"\s*:/);
     }
@@ -864,7 +910,7 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
           if (f.exchange) expect(SERVICES).toContain(f.exchange);
         }
         // Authority from the deployment profile, never a ministry by name.
-        expect(batchOf(id) === 11 ? ['institution', 'tax', 'businessRegister'] : batchOf(id) === 13 ? ['cyberAuthority', 'criticalInfrastructure', 'securityAccreditation'] : batchOf(id) === 10 ? TERRITORY_OWNERS : batchOf(id) === 8 ? ['finance', 'cabinetOffice'] : batchOf(id) === 5 ? ['institution'] : [3, 6].includes(batchOf(id)) ? ['tax'] : batchOf(id) === 7 ? OVERSIGHT_SLOTS : batchOf(id) === 9 ? HUMAN_SLOTS : ['healthRegulation', 'professionalRegulation', 'medicinesRegulation', 'controlledSubstances', 'publicHealth']).toContain(f.owner);
+        expect(batchOf(id) === 12 ? ['institution'] : batchOf(id) === 11 ? ['institution', 'tax', 'businessRegister'] : batchOf(id) === 13 ? ['cyberAuthority', 'criticalInfrastructure', 'securityAccreditation'] : batchOf(id) === 10 ? TERRITORY_OWNERS : batchOf(id) === 8 ? ['finance', 'cabinetOffice'] : batchOf(id) === 5 ? ['institution'] : [3, 6].includes(batchOf(id)) ? ['tax'] : batchOf(id) === 7 ? OVERSIGHT_SLOTS : batchOf(id) === 9 ? HUMAN_SLOTS : ['healthRegulation', 'professionalRegulation', 'medicinesRegulation', 'controlledSubstances', 'publicHealth']).toContain(f.owner);
         expect(JSON.stringify(f.json)).not.toMatch(/Ministry of/);
       });
     });

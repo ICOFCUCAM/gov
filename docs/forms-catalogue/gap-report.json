@@ -58,6 +58,33 @@
   "app/src/lib/forms/library/catalogue-contracts/DEM-CON-019.json": "99348afb496cf813b0c86008c4e05ba3b459e996a3a9327616dcd53eb38a3348",
   "app/src/lib/forms/library/catalogue-contracts/DEM-CON-020.json": "041daa30bb084cc6dff2bde2174ac85eb53f8dd3272a267295e4c9a39ca71d6b",
   "app/src/lib/forms/library/catalogue-contracts/DEM-PUB-009.json": "0b239913fbea157b5a0816c156db830e99993769e42b57760a69933d11eed91b",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-GOV-001.json": "a737e3b7ea55d77ccb55f1b01b13cc43c5cada55ca42f48e0c2ee9347a122d37",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-GOV-002.json": "981b4ce04ba25043719b92ca5efe4724396ad00e72a4d7c8b691b37f8a98dce4",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-GOV-003.json": "b60e91788fbfb18e0abd3e3ae75668af2f681e73c3062446ebfbcae82c43419f",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-GOV-004.json": "293214726e2042df3583e5dd4ef742c8029605b97960c5b5213a847f5acc97d9",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-GOV-005.json": "e55ba605b2c6b031ef45f37596e67d0729baec697b31629c4b87209b8779a655",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-GOV-006.json": "66c4dbfd0b17922610280af3d1358f76d836fd930d91f87d5bc977e2e10dd89a",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-GOV-010.json": "01b3aeee3e9384c7c4d694a964fcfe453083899a2c4c7d1200aa50d2af408530",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-GOV-014.json": "30396f288325d8d67fae25bf4ac77cf2ddd497e19c20268c9dbb36792bd4a132",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-REC-001.json": "e503d3f6205a2b327d3e70bad89a3ea313fcbadc989aa168e07043b4ff71a947",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-REC-007.json": "694712f2dd4e6d83cd0356b84311a3273d39467ef99ada7f5a3bca37e788ef83",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-REC-008.json": "9088d13d525dd988bcaccb9d79c7d31a3d099bb73cdf16ee371196b85c4d9056",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-REC-010.json": "1cbcd5ca901e358ee952c5b62b5ba98f785175e4e8fe7b70a868912c2b9c4887",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-REC-011.json": "bfc97e2b5efe3de326912974c96e4f07fe5cb38f16aac6fb793d463a33a82731",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-REC-012.json": "84877a9b552d13c846a0f37fd6a7a1af9dc10835b79606077a936ce834c203a7",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-REC-017.json": "887e21b742ec9ae680a8d7a19f1fd8456cabbd4cfc955c146a740f8ea7a9a4ef",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-REC-018.json": "a06790c9ec9f2b4bda792eb8b68e4cf5065a0c61849cbc1a8e41b7fd8c7fb981",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-SVC-001.json": "0e690b4448b497927b44a9640c1bd57e654ef1f209581bf1f8c124ee68f40e06",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-SVC-004.json": "380455aafc2e1f911bd7abb1bd07d7394d48d69d7ff047bbbb05f337ffdd76d2",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-SVC-006.json": "d1da961f427a5cdbc1855e3ae689ac01f372609b9e7c5b1113bc42539b69d11d",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-SVC-007.json": "4579c2df9ce1ed3b8247c4335f5896ff953964eade621030400cb81db8b2cab5",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-SVC-008.json": "08530ec03273415b2ed8a49cca15b30901493dd7717c98743b8ac4f9f25e4c89",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-SVC-009.json": "237c77f24ea36001cc7e6139ddd497c8e3bfd7dafb139f6652c9643e704174c2",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-SVC-011.json": "b196f08a4079d0054d89184f83ea8faea306fa5834bee4fdc1eb40b23390012b",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-SVC-012.json": "f68d42a7dcaa1fd2d78a00a8a0c130db9c9f11f8e4a53b83cfa759e32ef85aff",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-SVC-013.json": "7852b173e8721d79364c55cf2ca5c990084f65e1a6e964a375a6d3e8b996df55",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-SVC-014.json": "742b424df83b7e1e5ad689b059ba31a600c0250dcb6a7d1edbfd27975f757124",
+  "app/src/lib/forms/library/catalogue-contracts/GOV-SVC-018.json": "984e763e57fbb3b22ed9b9dc4e10e1778b47a885f44058e361f217b172c1b592",
   "app/src/lib/forms/library/catalogue-contracts/GOV-WF-001.json": "d10a3b22a2d9a0882f0704302ce0a324b5f2d202aad46f01f95a866f1bfb72ed",
   "app/src/lib/forms/library/catalogue-contracts/GOV-WF-002.json": "1f4ecfeb40c4f5f8b2bbc9adc89d543fd6116f9d1a73dfa13268ee96bf92f94f",
   "app/src/lib/forms/library/catalogue-contracts/GOV-WF-003.json": "1bbb00e9e957e6783b7e653e097e09d02e460743d6ba79a68a41480603a76da6",
@@ -514,8 +541,8 @@
   "Part 13 (supplement, Stage B contracts)": 10
  },
  "form_status": {
-  "contract_draft": 551,
-  "contract_missing": 1301,
+  "contract_draft": 578,
+  "contract_missing": 1274,
   "under_review": 91,
   "excluded": 128,
   "blocked": 1
@@ -537,10 +564,10 @@
    "LAB-EMP-001"
   ]
  },
- "forms_without_contract": 1505,
+ "forms_without_contract": 1478,
  "library_contracts": {
-  "total": 460,
-  "matched_to_one_form": 460,
+  "total": 487,
+  "matched_to_one_form": 487,
   "unmatched_or_ambiguous": [],
   "batches": [
    {
@@ -4494,6 +4521,257 @@
     }
    },
    {
+    "batch": 12,
+    "contracts": [
+     {
+      "id": "GOV-GOV-001",
+      "identity": "PARTS-12-13:GOV-GOV-001@1",
+      "row": "GOV-GOV-001",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-GOV-001.json",
+      "fields": 19,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-GOV-002",
+      "identity": "PARTS-12-13:GOV-GOV-002@1",
+      "row": "GOV-GOV-002",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-GOV-002.json",
+      "fields": 5,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-GOV-003",
+      "identity": "PARTS-12-13:GOV-GOV-003@1",
+      "row": "GOV-GOV-003",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-GOV-003.json",
+      "fields": 6,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-GOV-004",
+      "identity": "PARTS-12-13:GOV-GOV-004@1",
+      "row": "GOV-GOV-004",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-GOV-004.json",
+      "fields": 4,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-GOV-005",
+      "identity": "PARTS-12-13:GOV-GOV-005@1",
+      "row": "GOV-GOV-005",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-GOV-005.json",
+      "fields": 5,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-GOV-006",
+      "identity": "PARTS-12-13:GOV-GOV-006@1",
+      "row": "GOV-GOV-006",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-GOV-006.json",
+      "fields": 4,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-GOV-010",
+      "identity": "PARTS-12-13:GOV-GOV-010@1",
+      "row": "GOV-GOV-010",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-GOV-010.json",
+      "fields": 3,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-GOV-014",
+      "identity": "PARTS-12-13:GOV-GOV-014@1",
+      "row": "GOV-GOV-014",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-GOV-014.json",
+      "fields": 5,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-REC-001",
+      "identity": "PARTS-12-13:GOV-REC-001@1",
+      "row": "GOV-REC-001",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-REC-001.json",
+      "fields": 8,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-REC-007",
+      "identity": "PARTS-12-13:GOV-REC-007@1",
+      "row": "GOV-REC-007",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-REC-007.json",
+      "fields": 5,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-REC-008",
+      "identity": "PARTS-12-13:GOV-REC-008@1",
+      "row": "GOV-REC-008",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-REC-008.json",
+      "fields": 7,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-REC-010",
+      "identity": "PARTS-12-13:GOV-REC-010@1",
+      "row": "GOV-REC-010",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-REC-010.json",
+      "fields": 5,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-REC-011",
+      "identity": "PARTS-12-13:GOV-REC-011@1",
+      "row": "GOV-REC-011",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-REC-011.json",
+      "fields": 3,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-REC-012",
+      "identity": "PARTS-12-13:GOV-REC-012@1",
+      "row": "GOV-REC-012",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-REC-012.json",
+      "fields": 6,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-REC-017",
+      "identity": "PARTS-12-13:GOV-REC-017@1",
+      "row": "GOV-REC-017",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-REC-017.json",
+      "fields": 8,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-REC-018",
+      "identity": "PARTS-12-13:GOV-REC-018@1",
+      "row": "GOV-REC-018",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-REC-018.json",
+      "fields": 5,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-SVC-001",
+      "identity": "PARTS-12-13:GOV-SVC-001@1",
+      "row": "GOV-SVC-001",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-SVC-001.json",
+      "fields": 5,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-SVC-004",
+      "identity": "PARTS-12-13:GOV-SVC-004@1",
+      "row": "GOV-SVC-004",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-SVC-004.json",
+      "fields": 9,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-SVC-006",
+      "identity": "PARTS-12-13:GOV-SVC-006@1",
+      "row": "GOV-SVC-006",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-SVC-006.json",
+      "fields": 2,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-SVC-007",
+      "identity": "PARTS-12-13:GOV-SVC-007@1",
+      "row": "GOV-SVC-007",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-SVC-007.json",
+      "fields": 9,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-SVC-008",
+      "identity": "PARTS-12-13:GOV-SVC-008@1",
+      "row": "GOV-SVC-008",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-SVC-008.json",
+      "fields": 8,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-SVC-009",
+      "identity": "PARTS-12-13:GOV-SVC-009@1",
+      "row": "GOV-SVC-009",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-SVC-009.json",
+      "fields": 9,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-SVC-011",
+      "identity": "PARTS-12-13:GOV-SVC-011@1",
+      "row": "GOV-SVC-011",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-SVC-011.json",
+      "fields": 10,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-SVC-012",
+      "identity": "PARTS-12-13:GOV-SVC-012@1",
+      "row": "GOV-SVC-012",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-SVC-012.json",
+      "fields": 9,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-SVC-013",
+      "identity": "PARTS-12-13:GOV-SVC-013@1",
+      "row": "GOV-SVC-013",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-SVC-013.json",
+      "fields": 8,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-SVC-014",
+      "identity": "PARTS-12-13:GOV-SVC-014@1",
+      "row": "GOV-SVC-014",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-SVC-014.json",
+      "fields": 13,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     },
+     {
+      "id": "GOV-SVC-018",
+      "identity": "PARTS-12-13:GOV-SVC-018@1",
+      "row": "GOV-SVC-018",
+      "file": "app/src/lib/forms/library/catalogue-contracts/GOV-SVC-018.json",
+      "fields": 8,
+      "form_status": "contract_draft",
+      "scope": "allowed"
+     }
+    ],
+    "form_status": {
+     "contract_draft": 27
+    }
+   },
+   {
     "batch": 13,
     "contracts": [
      {
@@ -4867,9 +5145,16 @@
     "excluded": 128,
     "blocked": 1
    },
+   "12": {
+    "contract_draft": 550,
+    "contract_missing": 1302,
+    "under_review": 91,
+    "excluded": 128,
+    "blocked": 1
+   },
    "13": {
-    "contract_draft": 551,
-    "contract_missing": 1301,
+    "contract_draft": 578,
+    "contract_missing": 1274,
     "under_review": 91,
     "excluded": 128,
     "blocked": 1
@@ -4887,7 +5172,8 @@
    "9": 1581,
    "10": 1554,
    "11": 1533,
-   "13": 1505
+   "12": 1506,
+   "13": 1478
   }
  },
  "incomplete_contracts": [

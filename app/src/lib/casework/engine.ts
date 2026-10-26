@@ -658,10 +658,12 @@ export function lapseDeadlines(now = new Date()): { case: string; ref: string; d
  * own rule). Never a case under a legal hold, a sample, or a procedure whose
  * retention class is permanent (`…-permanent`, e.g. the civil register).
  */
-export function anonymiseClosedCases(before: string, now = new Date()): number {
+export function anonymiseClosedCases(before: string, now = new Date(), held?: (c: Case) => boolean): number {
   let n = 0;
   for (const c of db().cases) {
     if (!c.closedAt || c.closedAt >= before || c.anonymisedAt || c.legalHold || c.source === 'sample') continue;
+    // A legal hold of the records management register (plan I13): the caller says which cases one covers.
+    if (held?.(c)) continue;
     const pkg = getPackage(c.package.key, c.package.version);
     if (!pkg || /-permanent$/.test(pkg.retention)) continue;
     const personal = new Set(pkg.fields.filter(isPersonalField).map(f => f.key));

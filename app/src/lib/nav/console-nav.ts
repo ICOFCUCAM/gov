@@ -86,7 +86,9 @@ export const CONSOLE_NAV: NavSection[] = [
   ]},
   { label: 'Services', items: [
     { key: 'ops', icon: '⊞', label: 'Operations', href: '/ops', purpose: 'Day-to-day running of public services across institutions.',
-      tabs: [tab('Operations', '/ops', 'Operations Centre'), tab('Operations record', '/gov/ledger', 'Operations Ledger')] },
+      tabs: [tab('Operations', '/ops', 'Operations Centre'), tab('Operations record', '/gov/ledger', 'Operations Ledger'),
+        // I13: the public service catalogue and service management (plan step I13).
+        tab('Service catalogue', '/gov/services'), tab('Service management', '/gov/services/management')] },
     { key: 'sites', icon: '▤', label: 'Public websites', href: '/admin/sites', purpose: 'The ministries\' public websites: propose, review and publish changes.', tabs: [tab('Public websites', '/admin/sites', 'Site editor')] },
     { key: 'wal', icon: '◊', label: 'Citizen app preview', href: '/wallet', purpose: 'See the services as a citizen sees them.', tabs: [tab('Citizen app preview', '/wallet', 'Civic Wallet')] },
   ]},
@@ -111,7 +113,9 @@ export const CONSOLE_NAV: NavSection[] = [
       purpose: 'The tamper-evident record of every action, and the means to check it.',
       tabs: [tab('Audit record', '/audit', 'Oversight'), tab('Search the record', '/gov/audit', 'Audit Explorer'), tab('Activity', '/gov/activity', 'Activity Log'),
         tab('Signatures', '/gov/signatures', 'Signature Audit'), tab('Independent confirmations', '/gov/witnesses', 'Audit Witnesses'),
-        tab('Check an exported record', '/gov/audit-replay', 'Audit Replay'), tab('Who read what', '/gov/access-log'), tab('Independent oversight', '/gov/oversight')] },
+        tab('Check an exported record', '/gov/audit-replay', 'Audit Replay'), tab('Who read what', '/gov/access-log'), tab('Independent oversight', '/gov/oversight'),
+        // I13: records management (plan step I13).
+        tab('Records management', '/gov/records')] },
   ]},
   { label: 'People', items: [
     { key: 'staff', icon: '⚿', label: 'Staff', href: '/gov/officers', purpose: 'Officials, their roles and their accounts.',

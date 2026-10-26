@@ -88,7 +88,9 @@ const REGISTERS: Register[] = [
     reads: ['payrollBatch', 'accessOfCase', 'accessInForce', 'administrationOf', 'administrationCounts'] },
   { module: 'lib/records/delegations.ts', store: '__civicosDelegations', procedures: 'lib/administration/procedures.ts',
     changes: ['resetDelegations', 'grantDelegation', 'revokeDelegation', 'recordAuthorityDelegation', 'revokeAuthorityDelegation'],
-    reads: ['delegationFor', 'delegationsOf', 'authorityDelegationOfCase', 'authorityDelegationsOf', 'authorityGrantsFor'] },
+    reads: ['delegationFor', 'delegationsOf', 'authorityDelegationOfCase', 'authorityDelegationsOf', 'authorityGrantsFor',
+      // I13: the representations a person granted, and one by its id.
+      'delegationsGrantedBy', 'getDelegation'] },
   // The economic group (plan step I5).
   { module: 'lib/finance/register.ts', store: '__civicosFinance', procedures: 'lib/finance/procedures.ts',
     changes: ['resetFinance', 'issueCall', 'setCeiling', 'recordBid', 'reviseBid', 'negotiateBid', 'allocateBid', 'closeBid', 'enactAppropriation', 'validateAppropriation', 'releaseAppropriation', 'refuseRelease',
@@ -157,6 +159,15 @@ const REGISTERS: Register[] = [
       'attachPaymentDecision', 'recordOverpayment', 'decideOverpayment', 'attachOverpaymentDecision'],
     reads: ['CLAIM_STATE_LABEL', 'meansOf', 'ruleInputOf', 'checkInputs', 'getClaimant', 'getHousehold', 'claimOfCase', 'getClaim', 'latestAssessment', 'claimMoveRefusal', 'reproduceAssessment',
       'paymentOfCase', 'paidFor', 'overpaymentOfCase', 'findSocial', 'socialCounts'] },
+  // I13 (plan step I13): records management and the front door's own records.
+  { module: 'lib/recordkeeping/register.ts', store: '__civicosRecordkeeping', procedures: 'lib/recordkeeping/procedures.ts',
+    changes: ['resetRecordkeeping', 'approveSchedule', 'placeHold', 'attachHoldDecision', 'releaseHold', 'registerIncoming', 'listForDisposal', 'recordDisposal', 'transferToArchive', 'acknowledgeTransfer',
+      'planMigration', 'reconcileMigration', 'closeMigration', 'approveMigration'],
+    reads: ['TRIGGER_LABEL', 'DISPOSITION_LABEL', 'listDigest', 'classesOf', 'getClass', 'scheduleOf', 'holdsOf', 'holdOfCase', 'incomingOf', 'incomingOfCase', 'disposalsOf', 'disposalOfCase',
+      'transfersOf', 'transfersTo', 'getTransfer', 'migrationsOf', 'migrationOfCase', 'holdCovering', 'recordkeepingCounts'] },
+  { module: 'lib/frontdoor/register.ts', store: '__civicosFrontdoor', procedures: 'lib/frontdoor/procedures.ts',
+    changes: ['resetFrontdoor', 'recordRouting', 'setAppointment', 'recordComplaintOutcome', 'admitReconsideration', 'decideReconsideration'],
+    reads: ['routingOf', 'routingsFor', 'appointmentOf', 'appointmentsOf', 'complaintOutcomeOf', 'complaintsOf', 'reconsiderationOf', 'reconsiderationsOfOriginal', 'reconsiderationsOf', 'frontdoorCounts'] },
 ];
 
 /**
@@ -238,6 +249,11 @@ const EXCEPTIONS: { file: string; fn: string; why: string }[] = [
   { file: 'lib/portability/import.ts', fn: 'restoreImports', why: "the confirmed import of an institution's own export (two officials, the export verified, none of its records already here), keeping record identity" },
   { file: 'lib/portability/import.ts', fn: 'restoreControlled', why: "the confirmed import of an institution's own export (two officials, the export verified, none of its records already here), keeping record identity" },
   { file: 'lib/portability/import.ts', fn: 'restoreCapacity', why: "the confirmed import of an institution's own export (two officials, the export verified, none of its records already here), keeping record identity" },
+  // I13 (plan step I13): what the represented person does themselves, and what the front door and the archive record as their own.
+  { file: 'lib/frontdoor/representation.ts', fn: 'grantDelegation', why: 'a representation granted by the represented person themselves (signed in), for named services and acts, until a date or revoked; decides no one\'s standing' },
+  { file: 'lib/frontdoor/representation.ts', fn: 'revokeDelegation', why: 'the represented person revokes a representation they granted; kept, never deleted' },
+  { file: 'lib/frontdoor/journey.ts', fn: 'recordRouting', why: 'the front door\'s receipt of where an application went (service, procedure, competent institution, channel), written once at submission; changes no case or decision' },
+  { file: 'app/api/records-management/route.ts', fn: 'acknowledgeTransfer', why: 'the archive\'s own receipt of a transfer, by one of its officials, naming the manifest it received; the transfer itself was decided by two officials of the sending institution' },
 ];
 
 /** Files that may register an effect with the engine. */

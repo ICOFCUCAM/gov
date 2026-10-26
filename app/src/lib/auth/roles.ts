@@ -224,14 +224,14 @@ export const TASK_PERMISSIONS: TaskPermission[] = [
   T('political_finance.return.review', 'officer', { slot: 'electoral' }, 'campaign finance returns (plan I11)', 'not built'),
   T('independent_body.case.manage', 'officer', 'own', 'caseActRefusal(): an independent institution\'s cases are worked only by its own officials', 'built'),
   // Part 13 §11.1: the digital front door and records (plan I13).
-  T('government.service.publish', 'signatory', 'own', 'site editor: proposed by one official, published by another (lib/data/site-editorial.ts)', 'built', true),
+  T('government.service.publish', 'signatory', 'own', 'the public service catalogue (plan I13, lib/frontdoor/catalogue.ts): proposed by one official, published or retired by a different person who can sign at the owning institution; site editor for site content (lib/data/site-editorial.ts)', 'built', true),
   T('government.application.route', 'officer', 'own', 'openCase(): the procedure\'s owner from who is responsible', 'built'),
   T('government.workflow.manage', 'signatory', 'own', 'approving a procedure version (lib/casework/packages.ts, a different official)', 'built', true),
   T('government.document.issue', 'signatory', 'own', 'a decision step sealing a decision (lib/records/decisions.ts)', 'built', true),
   T('government.document.verify', 'any', 'own', '/verify and qualification.verify: public checks', 'built'),
   T('government.record.access', 'officer', 'own', 'caseReadRefusal() and register read rules; every read in the access log', 'built'),
   T('government.record.correct', 'signatory', 'own', 'a correction case under the register\'s procedure', 'built', true),
-  T('government.record.dispose', 'signatory', 'own', 'retention: disposal confirmed by two officials (lib/data/retention.ts)', 'built', true),
+  T('government.record.dispose', 'signatory', 'own', 'records disposal under an approved retention schedule, authorised by two officials other than the one who listed it (plan I13, rec.disposal, lib/recordkeeping); the platform retention rules (lib/data/retention.ts)', 'built', true),
   T('government.data_exchange.approve', 'administrator', 'own', 'proposeIntegrationApproval() / confirmIntegrationApproval(): two officials', 'built', true),
   T('government.statistics.publish', 'signatory', { slot: 'statistics' }, 'a statistical release procedure (plan I8)', 'not built', true),
   T('government.open_data.approve', 'signatory', 'own', 'an open data release (plan I8)', 'not built', true),
@@ -356,6 +356,7 @@ export const SELF_AUTHENTICATED: RegExp[] = [/^\/api\/cron\/[a-z0-9-]+$/, /^\/ap
   /^\/api\/oauth\/token$/,          // OAuth2 client credentials: the integration's id and key (lib/auth/client-credentials.ts)
   /^\/api\/exchange\/services\/[a-z0-9.-]+$/, // another system's call to a service: its integration key of scope service:<id> (verifyIntegrationKey in the route)
   /^\/api\/citizen\/applications$/, // a citizen's own applications: the route checks the citizen's session (lib/auth/citizen.ts)
+  /^\/api\/citizen\/representation$/, // I13: representations a citizen grants and revokes: the route checks the citizen's session (lib/auth/citizen.ts)
   /^\/api\/audit\/witnesses$/,      // a witness attestation: signed by a key an administrator registered (verifyWitnessStatement in the route)
   // I9: another installation's federation envelope: its integration key of scope events:inbound, the envelope's signature by a key two officials trust (receiveEnvelope())
   /^\/api\/federation\/inbound$/];
@@ -573,6 +574,13 @@ const OFFICIAL_WORK: RegExp[] = [
   // scope). Cases themselves move only through /api/cases.
   /^\/api\/building$/,
   /^\/api\/local-government$/,
+  // I13 (plan step I13): the public service catalogue (proposed by an official of the owning institution, published or retired by a
+  // different one who can sign there), service management (dashboards, objectives and targets, performance reports, disruptions,
+  // changes, architecture exceptions; each checked in lib/frontdoor) and records management (adopting the procedures, the archive's
+  // receipt of a transfer by its own official; schedules, holds, disposals and migrations move only through /api/cases).
+  /^\/api\/services$/,
+  /^\/api\/services\/management$/,
+  /^\/api\/records-management$/,
 ];
 
 export type MutationRule = 'public-write' | 'self-authenticated' | 'bearer' | 'any-role' | 'admin' | 'installation' | 'ministry' | 'official' | 'legislature';

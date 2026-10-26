@@ -74,6 +74,11 @@ const DEPLOYMENT_DOMAINS: [prefix: string, authority: string][] = [
   // I9: cross-institution workflow (xi.<template>.<institution>): the receiving institution's own procedure, decided by its own officials;
   // a request never becomes an order (lib/federation/procedures.ts natureOf()).
   ['xi', 'the institution whose own cross-institution procedure it is'],
+  // I13 (plan step I13): each institution's own front-door procedures (svc.<template>.<institution>: appointments, service
+  // complaints, reconsideration of its own decisions, refunds of its own fees) and records management (rec.<template>.<institution>:
+  // retention schedules, legal holds, disposal, transfer to the archive, migrations), decided by its own officials.
+  ['svc', 'the institution whose own service procedure it is'],
+  ['rec', 'the institution whose own records procedure it is'],
 ];
 
 /** Classify a decision step; null when the platform cannot say which authority it rests on. */

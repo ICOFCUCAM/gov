@@ -75,7 +75,7 @@ describe('procedure-link states', () => {
     installAll('Administrator');
     expect(listPackages({ key: 'health.facility' }).length).toBeGreaterThan(0);
     // Internal-administration templates are adopted per institution (the next test); local-government templates by each local government (below).
-    for (const f of CATALOGUE_CONTRACTS.filter(x => x.procedure && x.batch !== 5 && !x.procedure.key.startsWith('lg.') && !x.procedure.key.startsWith('xi.'))) {
+    for (const f of CATALOGUE_CONTRACTS.filter(x => x.procedure && x.batch !== 5 && x.batch !== 12 && !x.procedure.key.startsWith('lg.') && !x.procedure.key.startsWith('xi.'))) {
       const l = procedureLink({ identity: f.identity, procedure: f.procedure });
       expect(l.state, f.identity).toBe('draft');
       expect(l.detail).toMatch(/no version of it carries this contract yet/);
@@ -96,6 +96,17 @@ describe('procedure-link states', () => {
       expect(l, f.identity).toMatchObject({ state: 'draft', linked: { key: f.procedure!.key, inRegister: true } });
       expect(libraryPublicationOf(findLibraryForm(f.identity)!).status, f.identity).toBe('contract_draft');
     }
+  });
+
+  // I13: the front-door and records templates are each institution's own, like the internal-administration ones.
+  it('is draft for each batch-12 form once an institution has adopted its front-door or records template, never before (plan I13)', async () => {
+    const own = CATALOGUE_CONTRACTS.filter(f => f.batch === 12 && f.procedure);
+    expect(own.length).toBe(15);
+    for (const f of own) expect(procedureLink({ identity: f.identity, procedure: f.procedure }).state, f.identity).toBe('missing');
+    const { installFrontdoorProcedures } = await import('@/lib/frontdoor/procedures');
+    const { installRecordkeepingProcedures } = await import('@/lib/recordkeeping/procedures');
+    for (const r of [installFrontdoorProcedures(CIVIL, 'Administrator', 'admin'), installRecordkeepingProcedures(CIVIL, 'Administrator', 'admin')]) if ('error' in r) throw new Error(r.error);
+    for (const f of own) expect(procedureLink({ identity: f.identity, procedure: f.procedure }), f.identity).toMatchObject({ state: 'draft', linked: { key: f.procedure!.key, inRegister: true } });
   });
 
   it('is draft for each batch-10 local-government form once a local government has adopted its template, never before (plan I7)', async () => {

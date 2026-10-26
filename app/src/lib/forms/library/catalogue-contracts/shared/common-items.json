@@ -1,5 +1,5 @@
 {
- "about": "Catalogue passages answered the same way by many contracts, with how each is met. Every contract in applies_to answers the items without \"for\" (Part 1 shared rules, the supplement's conventions and gates); an item with \"for\" applies to that group only: \"health\" (batches 1 and 2: Part 6 common), \"tax\" (batch 3: Part 2 §2.6, §2.8 and §2.9, the specification's tax authority), \"adm\" (batch 5: the supplement's Part 21 internal administration rules and the specification's Part 1 §10), \"tax6\" (batch 6, tax services: the same parts beside registration), \"oversight\" (batch 7: Part 12's rules for independent institutions, findings and protected identities), \"econ8\" (batch 8: Part 2's implementation rules for the executive centre, finance, treasury and budget forms), \"human\" (batch 9, human services: the specification's separate institutional records and lawful authority, the field series' rule that a submission is not a decision, that a failed check is no ground for refusal and that no default is activated) and \"land\", \"hpc\", \"lrg\" and \"trn\" (batch 10: the territory and infrastructure families of Parts 8 and 9 and the supplement's Parts 19 and 20). \"sec\", \"cyb\", \"inf\" and \"clr\" (batch 13, plan I12: Part 11's classification, access, register-integrity and country-configuration rules for every security form, and the rules of its family: cybersecurity, critical infrastructure, clearances). \"xi\" (batch 11, plan I9: Part 13 §2.2 whole-of-government workflow) and \"xex\" (batch 11: field series Part 3 §3.6 cross-institution exchanges). Each contract lists its own passages; the conformance test (lib/forms/catalogue-contracts.test.ts) checks both against the documents.",
+ "about": "Catalogue passages answered the same way by many contracts, with how each is met. Every contract in applies_to answers the items without \"for\" (Part 1 shared rules, the supplement's conventions and gates); an item with \"for\" applies to that group only: \"health\" (batches 1 and 2: Part 6 common), \"tax\" (batch 3: Part 2 §2.6, §2.8 and §2.9, the specification's tax authority), \"adm\" (batch 5: the supplement's Part 21 internal administration rules and the specification's Part 1 §10), \"tax6\" (batch 6, tax services: the same parts beside registration), \"oversight\" (batch 7: Part 12's rules for independent institutions, findings and protected identities), \"econ8\" (batch 8: Part 2's implementation rules for the executive centre, finance, treasury and budget forms), \"human\" (batch 9, human services: the specification's separate institutional records and lawful authority, the field series' rule that a submission is not a decision, that a failed check is no ground for refusal and that no default is activated) and \"land\", \"hpc\", \"lrg\" and \"trn\" (batch 10: the territory and infrastructure families of Parts 8 and 9 and the supplement's Parts 19 and 20). \"sec\", \"cyb\", \"inf\" and \"clr\" (batch 13, plan I12: Part 11's classification, access, register-integrity and country-configuration rules for every security form, and the rules of its family: cybersecurity, critical infrastructure, clearances). \"xi\" (batch 11, plan I9: Part 13 §2.2 whole-of-government workflow) and \"xex\" (batch 11: field series Part 3 §3.6 cross-institution exchanges). \"dgv\", \"svc\", \"rec\" and \"ggov\" (batch 12, plan I13: Part 13's digital government front door, records management and service governance rules). Each contract lists its own passages; the conformance test (lib/forms/catalogue-contracts.test.ts) checks both against the documents.",
  "applies_to": [
   "HLT-FAC-001",
   "HLT-FAC-002",
@@ -460,7 +460,34 @@
   "exchange.tax_status.verify",
   "exchange.tax_status.response",
   "exchange.business_status.verify",
-  "exchange.business_status.response"
+  "exchange.business_status.response",
+  "GOV-GOV-001",
+  "GOV-GOV-002",
+  "GOV-GOV-003",
+  "GOV-GOV-004",
+  "GOV-GOV-005",
+  "GOV-GOV-006",
+  "GOV-GOV-010",
+  "GOV-GOV-014",
+  "GOV-REC-001",
+  "GOV-REC-007",
+  "GOV-REC-008",
+  "GOV-REC-010",
+  "GOV-REC-011",
+  "GOV-REC-012",
+  "GOV-REC-017",
+  "GOV-REC-018",
+  "GOV-SVC-001",
+  "GOV-SVC-004",
+  "GOV-SVC-006",
+  "GOV-SVC-007",
+  "GOV-SVC-008",
+  "GOV-SVC-009",
+  "GOV-SVC-011",
+  "GOV-SVC-012",
+  "GOV-SVC-013",
+  "GOV-SVC-014",
+  "GOV-SVC-018"
  ],
  "groups": {
   "health": [
@@ -987,6 +1014,68 @@
    "exchange.tax_status.response",
    "exchange.business_status.verify",
    "exchange.business_status.response"
+  ],
+  "dgv": [
+   "GOV-GOV-001",
+   "GOV-GOV-002",
+   "GOV-GOV-003",
+   "GOV-GOV-004",
+   "GOV-GOV-005",
+   "GOV-GOV-006",
+   "GOV-GOV-010",
+   "GOV-GOV-014",
+   "GOV-REC-001",
+   "GOV-REC-007",
+   "GOV-REC-008",
+   "GOV-REC-010",
+   "GOV-REC-011",
+   "GOV-REC-012",
+   "GOV-REC-017",
+   "GOV-REC-018",
+   "GOV-SVC-001",
+   "GOV-SVC-004",
+   "GOV-SVC-006",
+   "GOV-SVC-007",
+   "GOV-SVC-008",
+   "GOV-SVC-009",
+   "GOV-SVC-011",
+   "GOV-SVC-012",
+   "GOV-SVC-013",
+   "GOV-SVC-014",
+   "GOV-SVC-018"
+  ],
+  "svc": [
+   "GOV-SVC-001",
+   "GOV-SVC-004",
+   "GOV-SVC-006",
+   "GOV-SVC-007",
+   "GOV-SVC-008",
+   "GOV-SVC-009",
+   "GOV-SVC-011",
+   "GOV-SVC-012",
+   "GOV-SVC-013",
+   "GOV-SVC-014",
+   "GOV-SVC-018"
+  ],
+  "rec": [
+   "GOV-REC-001",
+   "GOV-REC-007",
+   "GOV-REC-008",
+   "GOV-REC-010",
+   "GOV-REC-011",
+   "GOV-REC-012",
+   "GOV-REC-017",
+   "GOV-REC-018"
+  ],
+  "ggov": [
+   "GOV-GOV-001",
+   "GOV-GOV-002",
+   "GOV-GOV-003",
+   "GOV-GOV-004",
+   "GOV-GOV-005",
+   "GOV-GOV-006",
+   "GOV-GOV-010",
+   "GOV-GOV-014"
   ]
  },
  "items": [
@@ -4779,6 +4868,174 @@
     "platform": {
      "file": "app/src/lib/data/store/relationships.ts",
      "how": "The exchange relationship names the services and purposes; the integration's purposes are approved by two officials; none ship"
+    }
+   }
+  },
+  {
+   "for": "dgv",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 620,
+   "quotes": [
+    "The catalogue IDs below are stable CivicOS identifiers.",
+    "They do not establish that a service or legal power exists in every country.",
+    "National law, institutional mandates, retention requirements, accessibility rules and data-sharing permissions must be configured before activation."
+   ],
+   "met_by": {
+    "deviation": "institution-owned",
+    "platform": {
+     "file": "app/src/lib/frontdoor/catalogue.ts",
+     "how": "serviceStatus(): a service is not active until its owner, approved procedure and fee rule exist; nothing ships as the nation's"
+    }
+   }
+  },
+  {
+   "for": "dgv",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 1387,
+   "quotes": [
+    "Every legally consequential action must have an identifiable authority.",
+    "Every authoritative record must have a defined owner.",
+    "Every cross-institution exchange must have an approved purpose.",
+    "Every material decision must be traceable.",
+    "Every public statistic must have provenance.",
+    "Every independent institution must retain its lawful independence."
+   ],
+   "met_by": {
+    "deviation": "two-officials",
+    "platform": {
+     "file": "app/src/lib/frontdoor/catalogue.ts",
+     "how": "ownerOf(): the authority from the deployment profile or the registry; every change audited"
+    }
+   }
+  },
+  {
+   "for": "svc",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 666,
+   "quotes": [
+    "A unified portal must not imply that a single application creates a single legal decision.",
+    "If a citizen applies for several services, each competent institution retains its own decision-making authority and applicable review process."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/frontdoor/journey.ts",
+     "how": "applyForService(): each application opens the competent institution's own procedure, decided and reviewed there"
+    }
+   }
+  },
+  {
+   "for": "svc",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 826,
+   "quotes": [
+    "A successful identity check establishes only what the verification method is authorized to establish.",
+    "It does not automatically establish citizenship, eligibility for a benefit, legal ownership, entitlement to a licence or authority to act for a company."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/frontdoor/representation.ts",
+     "how": "representationCovering(): signing in proves identity only; acting for another needs a representation that person granted"
+    }
+   }
+  },
+  {
+   "for": "svc",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 828,
+   "quotes": [
+    "CivicOS must separately evaluate the relevant legal requirements and permitted evidence."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/casework/engine.ts",
+     "how": "submitForm(): each procedure checks its own requirements and evidence"
+    }
+   }
+  },
+  {
+   "for": "rec",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 875,
+   "quotes": [
+    "Every official record must have a configured lifecycle covering:"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/recordkeeping/register.ts",
+     "how": "RecordClass and its schedule: the lifecycle each class is given by the nation's law"
+    }
+   }
+  },
+  {
+   "for": "rec",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 895,
+   "quotes": [
+    "Retention must not be based solely on a generic age threshold.",
+    "Different records may have different legal obligations, including permanent archival requirements."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/recordkeeping/procedures.ts",
+     "how": "rec.schedule: each class its own period, trigger and disposition, cited; permanent classes are never due"
+    }
+   }
+  },
+  {
+   "for": "rec",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 904,
+   "quotes": [
+    "A tamper-evident audit trail does not mean every personal datum must be retained forever.",
+    "CivicOS must balance integrity with the applicable rights, archival requirements and lawful retention limits."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/recordkeeping/procedures.ts",
+     "how": "dueItems(): a destroyed document keeps its record and SHA-256; the audit chain is never shortened here"
+    }
+   }
+  },
+  {
+   "for": "rec",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 1305,
+   "quotes": [
+    "Retention, legal holds and deletion rules are enforced."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/data/retention.ts",
+     "how": "runRetention(): skips what a legal hold covers; disposal only under an approved schedule"
+    }
+   }
+  },
+  {
+   "for": "ggov",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 779,
+   "quotes": [
+    "The service directory must distinguish an active, operational service from a planned, unavailable, pilot or informational-only service.",
+    "A published service description must not imply that a backend integration is operational when it has not been verified."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/frontdoor/catalogue.ts",
+     "how": "serviceStatus(): active, pilot, information only, not available yet or retired, computed each time; the reasons shown"
+    }
+   }
+  },
+  {
+   "for": "ggov",
+   "source": "docs/forms-catalogue/PARTS-12-13.md",
+   "line": 991,
+   "quotes": [
+    "Internal operational dashboards and public accountability dashboards should be separate views with their own authorization rules."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/frontdoor/service-management.ts",
+     "how": "proposeDashboard(): each dashboard internal or public, its own access class; only published public ones are shown"
     }
    }
   }

@@ -322,6 +322,28 @@ What has been built is locked. Work only upgrades it toward the vision in
   never orders unless an approved `instruct` relationship covers them. The
   institution export carries `configuration.json` (evidence, never adopted)
   and `verification.json`; `build:openapi` also writes `api-contract.json`.
+- Digital front door and records (plan I13): a public service is a record
+  of the catalogue (`lib/frontdoor/catalogue.ts`), proposed by one official
+  of the owning institution and published by a different one who can sign
+  there, every version kept; the owner comes from the deployment profile,
+  the law is cited from the laws register, forms by `formIdentity()`, a fee
+  only as an approved rule key. Its status is computed at each read, never
+  stored, and never active while its procedure, owner or fee rule is
+  missing; only published entries are public (`/services`); none ships.
+  Applications go through the service's own procedure, routed by
+  `authorityFor()` (`journey.ts`); without the nation's identity provider the
+  journey says so and offers assisted or paper application. Only the
+  represented person grants or revokes a representation, and every act
+  records both people. Appointments, complaints, reconsideration (by
+  officials who took no part; the original stays sealed) and refunds (only of
+  a receipt, through `instructRefund()`) are `svc.*` templates each
+  institution adopts. Records management (`lib/recordkeeping/`) disposes of
+  nothing without a schedule two officials approved citing the law; a legal
+  hold blocks disposal, transfer and the retention sweep; disposal never
+  deletes a record; transfers go to the `archives` slot (none ships);
+  migrations are reconciled by count and SHA-256. Service-level targets are
+  only the nation's, and performance is computed from cases with signal
+  markers (`service-management.ts`).
 - Security governance and resilience (plan I12, `lib/security/`) is metadata
   only. The nation's classification scheme and the installation's declared
   accreditation are one country rule set (`classification.ts`, through
@@ -388,7 +410,8 @@ What has been built is locked. Work only upgrades it toward the vision in
   batch 7, independent oversight, 7 forms; batch 8, executive office,
   Cabinet, treasury and budget, 57 forms; batch 9, human services, 96 forms;
   batch 10, territory and infrastructure, 36 forms; batch 11, federation
-  and cross-institution workflow, 21 forms; batch 13, security
+  and cross-institution workflow, 21 forms; batch 12, digital front door
+  and records, 27 forms; batch 13, security
   governance and resilience, 31 forms: owner 2026-10-21), as library
   drafts in `lib/forms/library/catalogue-contracts/`, each matched to one
   register row, never for an excluded form, regenerated into the register.
