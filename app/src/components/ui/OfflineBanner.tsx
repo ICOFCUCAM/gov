@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { StateNotice } from '@/components/ui/States';
 
 /**
  * Connectivity-aware banner. Low-connectivity is the norm in many
@@ -23,13 +24,11 @@ export function OfflineBanner() {
 
   if (online) return null;
 
+  // The shared offline state (plan I10): ink on the surface with the warning
+  // edge, word and shape; the earlier ink on a warn fill read below 4.5:1.
   return (
-    <div
-      role="status"
-      className="bg-warn px-4 py-2 text-center text-sm text-ink"
-    >
-      You're offline. You can keep working — actions are saved and will sync
-      when the connection returns.
-    </div>
+    <StateNotice state="offline" title="You're offline." className="rounded-none border-x-0 text-center">
+      You can keep working — actions are saved and will sync when the connection returns.
+    </StateNotice>
   );
 }

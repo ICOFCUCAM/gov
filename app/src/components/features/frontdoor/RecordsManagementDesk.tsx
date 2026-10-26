@@ -14,6 +14,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Section } from '@/components/ui/DataSystem';
 import { Button } from '@/components/ui/Button';
+import { LoadingState } from '@/components/ui/States';
 import { SignalTag } from '@/components/ui/SignalTag';
 
 type Who = { name: string };
@@ -53,7 +54,7 @@ export function RecordsManagementDesk() {
   const rules = data?.platformRules ?? {};
   return (
     <div className="space-y-5 p-4">
-      <h1 className="text-xl font-semibold">Records management</h1>
+      <h2 className="text-xl font-semibold">Records management</h2>
       <p className="max-w-3xl text-sm text-ink-muted">Each institution keeps its own records: classes with the retention schedule its law sets (none ships; nothing is disposed of without one), legal holds that stop any disposal, the platform&apos;s retention sweep included, disposal of exactly the records listed, authorised by two officials other than the one who listed them (the record and its fingerprint are kept), transfers to the archive the nation names, and migrations reconciled by counts and fingerprints. Every change is a decided case of the institution&apos;s records procedures; reading this page is recorded in the <Link className="underline" href="/gov/access-log">access log</Link>.</p>
       {msg ? <p role="status" className="text-sm">{msg}</p> : null}
       {data ? (
@@ -99,7 +100,7 @@ export function RecordsManagementDesk() {
             </>
           ) : <p className="text-sm text-ink-muted">Choose an institution.</p>}
         </>
-      ) : null}
+      ) : msg ? null : <LoadingState label="Loading records management" />}
     </div>
   );
 }

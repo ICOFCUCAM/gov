@@ -7,6 +7,21 @@ interface BaseProps {
   help?: string;
   required?: boolean;
   className?: string;
+  /** The field's validation message, shown beside it and read with it (plan I10; specification Part 6 §H). */
+  error?: string;
+}
+
+/** The ids a field is described by: its help and its error (each beside the field). */
+const describedBy = (name: string, help?: string, error?: string) =>
+  [help ? `${name}-help` : '', error ? `${name}-error` : ''].filter(Boolean).join(' ') || undefined;
+
+function FieldNotes({ name, help, error }: { name: string; help?: string; error?: string }) {
+  return (
+    <>
+      {help ? <p id={`${name}-help`} className="text-sm text-ink-muted mt-1">{help}</p> : null}
+      {error ? <p id={`${name}-error`} data-state="validation" className="text-sm font-medium text-alert mt-1"><span aria-hidden>! </span>Error: {error}</p> : null}
+    </>
+  );
 }
 
 export function TextField({
@@ -15,6 +30,7 @@ export function TextField({
   help,
   required,
   className,
+  error,
   ...rest
 }: BaseProps & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
@@ -27,10 +43,12 @@ export function TextField({
         id={name}
         name={name}
         required={required}
-        className="w-full min-h-tap p-3 border border-line rounded-sm bg-surface"
+        aria-invalid={error ? true : undefined}
+        aria-describedby={describedBy(name, help, error)}
+        className={cn('w-full min-h-tap p-3 border rounded-sm bg-surface disabled:cursor-not-allowed disabled:bg-surface-2', error ? 'border-alert border-2' : 'border-line')}
         {...rest}
       />
-      {help ? <p className="text-sm text-ink-muted mt-1">{help}</p> : null}
+      <FieldNotes name={name} help={help} error={error} />
     </div>
   );
 }
@@ -42,6 +60,7 @@ export function SelectField({
   required,
   className,
   children,
+  error,
   ...rest
 }: BaseProps & React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
@@ -54,12 +73,14 @@ export function SelectField({
         id={name}
         name={name}
         required={required}
-        className="w-full min-h-tap p-3 border border-line rounded-sm bg-surface"
+        aria-invalid={error ? true : undefined}
+        aria-describedby={describedBy(name, help, error)}
+        className={cn('w-full min-h-tap p-3 border rounded-sm bg-surface disabled:cursor-not-allowed disabled:bg-surface-2', error ? 'border-alert border-2' : 'border-line')}
         {...rest}
       >
         {children}
       </select>
-      {help ? <p className="text-sm text-ink-muted mt-1">{help}</p> : null}
+      <FieldNotes name={name} help={help} error={error} />
     </div>
   );
 }

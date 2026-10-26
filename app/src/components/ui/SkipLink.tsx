@@ -11,7 +11,7 @@ export function SkipLink({ href = '#main', children = 'Skip to main content', st
 }) {
   return (
     <a href={href} style={style}
-      className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-[100] focus:rounded-sm focus:bg-ink focus:px-3 focus:py-2 focus:text-[13px] focus:font-medium focus:text-surface focus:outline-none focus:ring-2 focus:ring-link">
+      className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-[100] focus:rounded-sm focus:bg-ink focus:px-3 focus:py-2 focus:text-compact focus:font-medium focus:text-surface focus:outline-none focus:ring-2 focus:ring-link">
       {children}
     </a>
   );

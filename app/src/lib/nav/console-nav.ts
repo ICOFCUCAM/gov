@@ -134,8 +134,10 @@ export const CONSOLE_NAV: NavSection[] = [
       tabs: [tab('System map', '/gov/map'), tab('Playground', '/gov/playground'), tab('API description', '/api/openapi'), tab('Developer guide', '/developers')] },
   ]},
   { label: 'Help', items: [
-    { key: 'help', icon: '?', label: 'Help', href: '/gov/help', purpose: 'Keyboard shortcuts and what the platform\'s words mean.',
-      tabs: [tab('Shortcuts', '/gov/help', 'Help'), tab('Glossary', '/gov/glossary')] },
+    { key: 'help', icon: '?', label: 'Help', href: '/gov/help', purpose: 'Keyboard shortcuts, what the platform\'s words mean and how its screens show each state.',
+      tabs: [tab('Shortcuts', '/gov/help', 'Help'), tab('Glossary', '/gov/glossary'),
+        // I10: every shared component in every state, on every ground (the component-state gallery).
+        tab('Screen states', '/gov/help/states')] },
   ]},
 ];
 
