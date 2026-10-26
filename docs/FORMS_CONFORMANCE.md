@@ -1592,3 +1592,83 @@ and 011, HPC-BLD-021 and 022, HPC-REG-023 and 024, the Part 19 forms not
 listed above, the other transport forms (licence renewals, vehicle
 inspection, road reports, maritime and aviation) and every environment form
 (integration register 21.79).
+
+## 21. Catalogue contracts, batch 13: security governance and resilience (26 October 2026)
+
+Plan step I12 wrote the contracts of the catalogue Part 11 forms its
+procedures carry or wait for (`docs/forms-catalogue/PARTS-08-11.md` §2.2–§2.4;
+`lib/security/procedures.ts`): fourteen cybersecurity forms, twelve critical
+infrastructure forms, the clearance application and review as metadata, and
+the supplement's three critical infrastructure contracts (CIP-REG-008,
+CIP-RSK-009, CIP-INC-010, given in its Part 11 JSON and now written in the
+canonical format line by line). Thirty-one forms in all, `batch: 13` in their
+`catalogue` block; 28 were `contract_missing`, the three CIP forms
+`contract_draft` (the supplement's baseline). The format, loader, gates and
+test are batch 1's (§8). The conformance test (`lib/forms/catalogue-contracts.test.ts`)
+holds the lines each form answers: Part 1's shared rules and the supplement's
+conventions and gates, as for every batch; Part 11's shared rules for every
+security form (group `sec`: lines 1621, 1623, 1658, 1739, 1753, 1763–1766,
+1768, 1772, 1954–1959, 1981, 2043, 2045, 2111 and 2122: the administrative
+layer only, configurable classification, deny by default, logged attempts,
+metadata and references, the accreditation, country rules citing the law, no
+power inferred, no invented record in production); the group of its family
+(`cyb`: 1718, 1842–1849, 2015; `inf`: 1737, 1851, 1873, 1886, 2018; `clr`:
+1784, 1787–1794, 1796–1803, 2014); and its own lines (its row, its workflow,
+record or register lines and, for the CIP contracts, every field line;
+`FORM_13` in the test). Source letters: no new source document (Part 11 is
+`F`, the supplement `C`).
+
+| Catalogue form | Title | Fields | Belongs to | Owner (slot) | Deviations (besides minimisation, evidence-requirement and scanning) |
+|---|---|---|---|---|---|
+| SEC-CYB-001 | Report a cybersecurity incident | 12 and the declaration | `cyber.incident`, stage `received`, step `register`, document `incident-report` | cyberAuthority | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists |
+| SEC-CYB-002 | Escalate a national cyber incident | 5 | `cyber.incident`, stage `coordinating`, step `escalate` | cyberAuthority | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists |
+| SEC-CYB-003 | Report a vulnerability in confidence | 8 and the declaration | `cyber.vulnerability`, stage `received`, step `register`, document `vulnerability-report` | cyberAuthority | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists |
+| SEC-CYB-004 | Record a vulnerability remediation plan | 4 | `cyber.vulnerability`, stage `coordinating`, step `plan-remediation` | cyberAuthority | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists |
+| SEC-CYB-008 | Record approved containment of a cyber incident | 5 | `cyber.incident`, stage `coordinating`, step `approve-containment` | cyberAuthority | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists |
+| SEC-CYB-009 | Record recovery and restoration after a cyber incident | 5 | `cyber.incident`, stage `contained`, step `recover` | cyberAuthority | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists |
+| SEC-CYB-010 | Record evidence preserved for a cyber incident | 5 | `cyber.incident`, stage `contained`, step `preserve-evidence` | cyberAuthority | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists |
+| SEC-CYB-011 | Assess a supplier's security | 9 | `cyber.supplier`, stage `received`, step `register`, document `assessment-report` | cyberAuthority | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists |
+| SEC-CYB-012 | Ask for a security exception | 9 and the declaration | `cyber.exception`, stage `received`, step `register`, document `exception-request` | cyberAuthority | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists |
+| SEC-CYB-013 | Renew or revoke a security exception | 5 | `cyber.exception`, stage `in-force`, step `renew` | cyberAuthority | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists |
+| SEC-CYB-014 | Record a post-incident review | 5 | `cyber.incident`, stage `recovered`, step `review`, document `review-report` | cyberAuthority | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists |
+| SEC-CYB-015 | Plan a national cyber exercise | 8 | `cyber.exercise`, stage `received`, step `register`, document `exercise-plan` | cyberAuthority | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists |
+| SEC-CYB-016 | Record cyber exercise findings | 4 | `cyber.exercise`, stage `held`, step `record-findings` | cyberAuthority | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists |
+| SEC-CYB-017 | Attest a patch or remediation | 4 | `cyber.vulnerability`, stage `remediating`, step `attest` | cyberAuthority | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists |
+| SEC-INF-001 | Propose a critical infrastructure designation | 11 | `ci.designation`, stage `received`, step `register`, document `designation-assessment` | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+| SEC-INF-002 | Record an essential service dependency | 17 | `ci.dependency`, stage `received`, step `register` | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+| SEC-INF-003 | Assess a critical infrastructure risk | 13 | `ci.risk`, stage `received`, step `register`, document `risk-assessment` | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+| SEC-INF-004 | Submit an infrastructure resilience plan | 15 and the declaration | `ci.resilience-plan`, stage `received`, step `register`, document `resilience-plan` | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+| SEC-INF-005 | Authorise a continuity exercise | 4 | `ci.resilience-plan`, stage `approved`, step `authorise-exercise` | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+| SEC-INF-006 | Evaluate a continuity exercise | 4 | `ci.resilience-plan`, stage `approved`, step `evaluate-exercise` | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+| SEC-INF-007 | Notify a critical infrastructure incident | 7 and the declaration | waits (no procedure yet) | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+| SEC-INF-009 | Report an essential service disruption | 7 and the declaration | waits (no procedure yet) | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+| SEC-INF-013 | Ask for a resilience exception | 8 and the declaration | waits (no procedure yet) | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+| SEC-INF-014 | Accept an infrastructure risk | 5 | `ci.risk`, stage `assessment`, step `accept-risk` | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+| SEC-INF-015 | Review an infrastructure risk acceptance | 4 | `ci.risk`, stage `accepted`, step `review` | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+| SEC-INF-016 | Review a release of critical infrastructure information | 7 | waits (no procedure yet) | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+| SEC-INT-007 | Apply for a security clearance (metadata) | 9 and the declaration | `security.clearance`, stage `received`, step `register`, document `sponsorship` | securityAccreditation | metadata-only, slot-owner, need-to-know, no-ai-decision, two-officials, nation-lists, vetting-elsewhere |
+| SEC-INT-008 | Review, renew or vary a security clearance (metadata) | 6 | `security.clearance`, stage `granted`, step `renew` | securityAccreditation | metadata-only, slot-owner, need-to-know, no-ai-decision, two-officials, nation-lists, vetting-elsewhere |
+| CIP-REG-008 | Register critical infrastructure | 8 | `ci.designation`, stage `received`, step `register`, document `designation-assessment` | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+| CIP-RSK-009 | Assess a critical infrastructure risk (supplement contract) | 10 | `ci.risk`, stage `received`, step `register`, document `risk-assessment` | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+| CIP-INC-010 | Report a critical infrastructure incident (supplement contract) | 10 and the declaration | waits (no procedure yet) | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+
+Owners are the slots the nation names (`cyberAuthority`, `criticalInfrastructure`,
+`securityAccreditation`), all shipped empty; 24 contracts are linked to their
+procedure by identity, 7 name what they wait for (an infrastructure incident,
+disruption, resilience exception and information release procedure).
+Metadata only: every record form carries a marking from the nation's levels
+(`security.country.classification_levels`, none ship), and a marking above the
+installation's accreditation is refused by the procedure (`markingRefusal()`).
+No field records a source, a collection method, a target, an attacker, an
+attribution or a score; a severity is the officials' choice on the nation's
+scale; a risk estimate is the assessor's under a named methodology version.
+Clearance forms hold the application and the decision only: vetting stays with
+the competent authority, by reference. Decision dates (an exception's or a
+clearance's end, a risk acceptance's review) are the deciding officials'
+choice; no period ships.
+
+Not written: every intelligence form (SEC-INT-001 … 006, 009 … 016 and the
+supplement's SEC-INT-006 and SEC-OVS-007: legal review first, owner's direction
+§1), the classified security incident (SEC-INC-005), SEC-CYB-005, 006, 007
+(data breach, plan I8) and 018, SEC-INF-008, 010, 011 and 012, and the defence
+forms (plan I11). Integration register 25.
