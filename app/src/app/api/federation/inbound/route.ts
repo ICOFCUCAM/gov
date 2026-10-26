@@ -12,6 +12,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyIntegrationKey } from '@/lib/data/store';
 import { receiveEnvelope } from '@/lib/federation/events';
 import { logExchange, noteUnauthenticated, RECEIPT_HEADER, ExchangeKeyError } from '@/lib/exchange/log';
+import { readText, TOO_LARGE, tooLargeAnswer } from '@/lib/net/body-limit';
+
+/** An envelope is references only: small. */
+const MAX_BYTES = 64_000;
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +25,8 @@ export async function POST(req: NextRequest) {
     noteUnauthenticated({ channel: 'federation', feedId: 'inbound', result: access.error });
     return NextResponse.json({ error: access.error }, { status: access.status });
   }
-  const text = await req.text();
+  const text = await readText(req, MAX_BYTES);
+  if (text === TOO_LARGE) return tooLargeAnswer(MAX_BYTES, 'The envelope');
   let b: { recipient?: unknown; envelope?: unknown };
   try { b = JSON.parse(text) as typeof b; } catch { return NextResponse.json({ error: 'The body is JSON: { recipient, envelope }' }, { status: 400 }); }
   const r = receiveEnvelope(b.envelope, typeof b.recipient === 'string' ? b.recipient : '', { via: access.client.id });

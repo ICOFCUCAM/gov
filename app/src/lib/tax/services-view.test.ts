@@ -21,7 +21,7 @@ describe('tax services view', () => {
     installProposedDefaults('Administrator');
     const v = taxServicesView();
     expect(v.procedures.every(p => p.state === 'draft')).toBe(true);
-    expect(v.counts).toMatchObject({ procedures: 11, approved: 0, mappingsApproved: 0, waiting: 39 + 12 });
+    expect(v.counts).toMatchObject({ procedures: 11, approved: 0, mappingsApproved: 0, waiting: 39 + 12 + 2 });  // I9: + the tax status check and its response (forms batch 11, answered by taxpayer.status)
     // Every decision is classified; each permit type's mapping is a proposal, unapproved.
     for (const p of v.procedures) for (const d of p.decisions) expect(d, `${p.key} ${d.step}`).toMatchObject({ permitType: expect.any(String), mapping: 'draft' });
     // The forms each procedure carries read draft (in the register, no version carries them yet).
