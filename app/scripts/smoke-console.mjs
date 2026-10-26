@@ -80,6 +80,11 @@ const PAGES = [
   { path: '/gov/health-regulation/programmes', map: false, text: /public-health programmes and workforce/i },
   // Independent oversight (plan I8): complaints, disclosures, audit engagements and data-protection requests; protected identities hidden.
   { path: '/gov/oversight', map: false, text: /independent oversight/i },
+  // Territory and infrastructure (plan I7): land dealings and disputes, building control and housing, local governments, transport.
+  { path: '/gov/land', map: false, text: /land dealings and disputes/i },
+  { path: '/gov/building', map: false, text: /planning, building control and housing/i },
+  { path: '/gov/local-government', map: false, text: /local and regional government/i },
+  { path: '/gov/transport', map: false, text: /transport registers/i },
   // Tax services (plan step I5) and forms batch 6: the procedures and a form of each kind, in three channels.
   { path: '/gov/tax/services', map: false, text: /tax services/i },
   { path: '/gov/law/procedures/forms/tax.return.periodic.nil', map: false, text: /register status/i },
