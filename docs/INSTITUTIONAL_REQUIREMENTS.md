@@ -23,16 +23,16 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | 2 | 141 | 300 | 118 | 16 | 0 | 0 | 575 |
 | 3 | 84 | 173 | 221 | 23 | 2 | 79 | 582 |
 | 4 | 178 | 146 | 105 | 0 | 1 | 50 | 480 |
-| 5 | 129 | 165 | 4 | 0 | 18 | 0 | 316 |
-| 6 | 91 | 168 | 34 | 8 | 8 | 2 | 311 |
-| **All** | **734** | **1169** | **652** | **52** | **41** | **179** | **2827** |
+| 5 | 130 | 164 | 4 | 0 | 18 | 0 | 316 |
+| 6 | 92 | 167 | 34 | 8 | 8 | 2 | 311 |
+| **All** | **736** | **1167** | **652** | **52** | **41** | **179** | **2827** |
 
 
 ### By plan step
 
 | Step | Met | Partial | Not yet | Platform rule stricter | Country decision | Lower priority | Total |
 |---|---|---|---|---|---|---|---|
-| — | 734 | 0 | 0 | 39 | 5 | 0 | 778 |
+| — | 736 | 0 | 0 | 39 | 5 | 0 | 780 |
 | I1 | 0 | 59 | 14 | 0 | 3 | 0 | 76 |
 | I2 | 0 | 109 | 3 | 0 | 0 | 0 | 112 |
 | I3 | 0 | 123 | 30 | 0 | 0 | 0 | 153 |
@@ -41,12 +41,12 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | I6 | 0 | 123 | 111 | 4 | 0 | 0 | 238 |
 | I7 | 0 | 65 | 208 | 0 | 0 | 0 | 273 |
 | I8 | 0 | 63 | 105 | 0 | 0 | 0 | 168 |
-| I9 | 0 | 219 | 11 | 0 | 17 | 0 | 247 |
+| I9 | 0 | 217 | 11 | 0 | 17 | 0 | 245 |
 | I10 | 0 | 147 | 22 | 6 | 0 | 2 | 177 |
 | I11 | 0 | 44 | 5 | 3 | 0 | 166 | 218 |
 | I12 | 0 | 5 | 0 | 0 | 0 | 0 | 5 |
 | Throughout | 0 | 4 | 0 | 0 | 0 | 9 | 13 |
-| **All** | **734** | **1169** | **652** | **52** | **41** | **179** | **2827** |
+| **All** | **736** | **1167** | **652** | **52** | **41** | **179** | **2827** |
 
 
 ### By sector
@@ -66,7 +66,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Internal administration | 2 | 7 | 3 | 0 | 0 | 0 | 12 |
 | Forms (common contract) | 1 | 9 | 3 | 0 | 0 | 0 | 13 |
 | National twin | 50 | 8 | 7 | 0 | 0 | 2 | 67 |
-| Acceptance | 21 | 5 | 0 | 0 | 0 | 0 | 26 |
+| Acceptance | 22 | 4 | 0 | 0 | 0 | 0 | 26 |
 | Institution catalogue | 1 | 0 | 0 | 0 | 0 | 0 | 1 |
 | Civil registration and identity | 25 | 43 | 0 | 0 | 0 | 0 | 68 |
 | Health | 10 | 43 | 1 | 3 | 0 | 0 | 57 |
@@ -127,8 +127,8 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Production, training, demo | 12 | 5 | 0 | 0 | 0 | 0 | 17 |
 | Roadmap | 23 | 9 | 4 | 0 | 8 | 0 | 44 |
 | Risks | 14 | 8 | 0 | 0 | 0 | 0 | 22 |
-| Launch checklist | 17 | 6 | 0 | 0 | 0 | 0 | 23 |
-| **All** | **734** | **1169** | **652** | **52** | **41** | **179** | **2827** |
+| Launch checklist | 18 | 5 | 0 | 0 | 0 | 0 | 23 |
+| **All** | **736** | **1167** | **652** | **52** | **41** | **179** | **2827** |
 
 
 ### By category
@@ -136,7 +136,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Category | Met | Partial | Not yet | Platform rule stricter | Country decision | Lower priority | Total |
 |---|---|---|---|---|---|---|---|
 | KPI | 1 | 96 | 76 | 1 | 0 | 21 | 195 |
-| acceptance | 62 | 22 | 7 | 0 | 0 | 0 | 91 |
+| acceptance | 64 | 20 | 7 | 0 | 0 | 0 | 91 |
 | architecture | 123 | 136 | 7 | 0 | 25 | 0 | 291 |
 | department | 0 | 179 | 152 | 13 | 0 | 47 | 391 |
 | design | 26 | 122 | 30 | 8 | 0 | 2 | 188 |
@@ -151,7 +151,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | security | 45 | 36 | 2 | 0 | 1 | 0 | 84 |
 | service | 3 | 12 | 13 | 0 | 0 | 0 | 28 |
 | twin | 52 | 29 | 16 | 0 | 0 | 2 | 99 |
-| **All** | **734** | **1169** | **652** | **52** | **41** | **179** | **2827** |
+| **All** | **736** | **1167** | **652** | **52** | **41** | **179** | **2827** |
 
 
 ## Plan gaps closed by the revised plan
@@ -2181,7 +2181,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 |---|---|---|---|---|---|---|---|
 | S3-G-01 | 2719 | prose-rule | A department is not ready for production simply because its interface renders. | Met | lib/onboarding/completeness.ts institutionCompleteness() (items over nine dimensions, each read from its record: state not_started, in_progress, verif |  | — |
 | S3-G-02 | 2719 | prose-rule | Each service needs evidence of legal grounding, configuration, staffing, records, security, integration and successful operational testing. | Partial | lib/onboarding/completeness.ts institutionCompleteness() (items over nine dimensions, each read from its record: state not_started, in_progress, verif | Evidence per service (legal grounding, configuration, staffing, records, security, integration, operational testing) | I2 |
-| S3-G-03 | 2721 | prose-rule | The following tests should be mandatory for this part: | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (62 proven, 22 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
+| S3-G-03 | 2721 | prose-rule | The following tests should be mandatory for this part: | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (64 proven, 20 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
 | S3-G-04 | 2723 | acceptance | A court can administer cases independently without an executive administrator altering case assignment or judicial decisions. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P3-01: `app/src/lib/courts/procedures.test.ts` "…stays isolated from other institutions" (another ministry and an adm |  | — |
 | S3-G-05 | 2724 | acceptance | A judgment cannot be silently overwritten; corrections and appeals produce separate, traceable events. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P3-02: `app/src/lib/records/decisions.test.ts` "seals the canonical record and detects any change", "needs reasons an | Sealing and correction-by-supersession are proven generically. No court test corrects a judgment or runs an appeal as a separate traceable event. | I11 |
 | S3-G-06 | 2725 | acceptance | A police allegation remains distinguishable from verified findings and judicial outcomes. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P3-03: `app/src/lib/police/procedures.test.ts` "takes a report from a person, classifies it only with a cited provisi |  | — |
@@ -2743,14 +2743,14 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S4-F-04 | 3346-3348 | architecture | Governance configured: Authorised appointments, roles, delegations and approval policies are defined. | Partial | Institution terms and offices recorded; lib/onboarding/completeness.ts institutionCompleteness() (items over nine dimensions, each read from its recor | Approval policies per institution as items | I2 |
 | S4-F-05 | 3350-3352 | architecture | Tenant isolation tested: Executive administrators and unrelated institutions cannot access protected records through ordinary roles. | Met | lib/auth/negative-authorization.test.ts |  | — |
 | S4-F-06 | 3354-3356 | architecture | Decision workflows tested: High-impact actions enforce authorised decision-makers, dual control where required, reasons and review paths. | Met | Acceptance P4-12, P5-03, P4-11 |  | — |
-| S4-F-07 | 3358-3360 | architecture | Audit integrity tested: Accesses, exports, changes, approvals and privileged operations are recorded and protected from silent alteration. | Partial | Acceptance P4-12 (chain), P3-13 (reads, refusals) | Exports beyond substrate export; privileged operations reviewable independently (P5-12) | I9 |
+| S4-F-07 | 3358-3360 | architecture | Audit integrity tested: Accesses, exports, changes, approvals and privileged operations are recorded and protected from silent alteration. | Partial | Acceptance P4-12 (chain), P3-13 (reads, refusals); privileged and key operations reviewed independently since plan I9 (lib/keys/key-review.ts, accepta | Exports beyond substrate export | I9 |
 | S4-F-08 | 3362-3364 | architecture | Publication controls tested: Public releases require the institution's own authorised approval process. | Met | lib/data/site-editorial.test.ts; legislature publication |  | — |
 | S4-F-09 | 3366-3368 | architecture | Exchange controls tested: Cross-institution requests enforce purpose, legal basis, permitted fields and auditable refusals. | Met | Acceptance P4-12, P5-03, P4-11 |  | — |
 | S4-F-10 | 3370-3372 | architecture | Portability tested: Records, documents, configuration and audit evidence can be exported with provenance intact. | Partial | lib/portability/export.ts, verify.ts, import.ts (one institution's registers, procedures, cases, sealed decisions, documents, audit and access-log seg | Data dictionaries in the export; postgres-mode export | I9 |
 | S4-F-11 | 3374-3376 | architecture | Continuity tested: Recovery, backups, key management, incident response and manual fallback procedures are exercised. | Not yet | No institution-specific recovery | I9 export and restore | I9 |
 | S4-F-12 | 3378 | architecture | Each item should be marked not_started, in_progress, verified, blocked or not_applicable, with evidence, an accountable owner, a verification date and the next corrective action. | Met | lib/onboarding/completeness.ts institutionCompleteness() (items over nine dimensions, each read from its record: state not_started, in_progress, verif |  | — |
 | S4-F-13 | 3378 | architecture | A high aggregate percentage must not conceal a failed critical safeguard. | Met | lib/onboarding/completeness.ts institutionCompleteness() (items over nine dimensions, each read from its record: state not_started, in_progress, verif |  | — |
-| S4-G-01 | 3382 | prose-rule | Before production, CivicOS should demonstrate that: | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (62 proven, 22 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
+| S4-G-01 | 3382 | prose-rule | Before production, CivicOS should demonstrate that: | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (64 proven, 20 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
 | S4-G-02 | 3384 | acceptance | An executive-wide administrator cannot read a protected parliamentary, judicial or independent-investigation record merely by virtue of their platform role. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P4-01: `app/src/lib/auth/negative-authorization.test.ts` "refuses a whole-government administrator, officer and audit |  | — |
 | S4-G-03 | 3385 | acceptance | An independent institution can manage its own users without giving its administrator authority over another independent institution. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P4-02: `app/src/lib/auth/negative-authorization.test.ts` "the court's own administrator acts directly; another instit |  | — |
 | S4-G-04 | 3386 | acceptance | An election result cannot be silently overwritten, and provisional results cannot be misrepresented as officially declared results. | Not yet | docs/INSTITUTIONAL_ACCEPTANCE.md P4-03: None. | Elections are not built (plan §4). | I11 |
@@ -3041,15 +3041,15 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S5-H-22 | 3872 | security | Do not put unnecessary sensitive payloads into audit logs. | Met | Access log holds no record content; exchange log keeps a digest only |  | — |
 | S5-H-23 | 3872 | security | A log that records that a restricted record was accessed may need a reference and action metadata, not a duplicate of the entire record. | Partial | Security architecture |  | I9 |
 | S5-H-24 | 3876 | security | A production deployment should define: | Partial | Security architecture |  | I9 |
-| S5-H-25 | 3878 | security | Who controls encryption keys | Partial | lib/keys/custody.ts (vault/KMS, rotation audited since I0.1, development key refused in production) | Per-institution key control decision; two-person key ceremony; revocation records (audit C K-1, K-2) | I9 |
-| S5-H-26 | 3879 | security | Which service identities can request cryptographic operations | Partial | lib/keys/custody.ts (vault/KMS, rotation audited since I0.1, development key refused in production) | Per-institution key control decision; two-person key ceremony; revocation records (audit C K-1, K-2) | I9 |
-| S5-H-27 | 3880 | security | Whether the key manager is institution-controlled or shared | Partial | lib/keys/custody.ts (vault/KMS, rotation audited since I0.1, development key refused in production) | Per-institution key control decision; two-person key ceremony; revocation records (audit C K-1, K-2) | I9 |
-| S5-H-28 | 3881 | security | How keys are rotated, backed up and recovered | Partial | lib/keys/custody.ts (vault/KMS, rotation audited since I0.1, development key refused in production) | Per-institution key control decision; two-person key ceremony; revocation records (audit C K-1, K-2) | I9 |
-| S5-H-29 | 3882 | security | How access is approved and audited | Partial | lib/keys/custody.ts (vault/KMS, rotation audited since I0.1, development key refused in production) | Per-institution key control decision; two-person key ceremony; revocation records (audit C K-1, K-2) | I9 |
-| S5-H-30 | 3883 | security | How keys are revoked during staff departure or compromise | Partial | lib/keys/custody.ts (vault/KMS, rotation audited since I0.1, development key refused in production) | Per-institution key control decision; two-person key ceremony; revocation records (audit C K-1, K-2) | I9 |
-| S5-H-31 | 3884 | security | What happens if the key service becomes unavailable | Partial | lib/keys/custody.ts (vault/KMS, rotation audited since I0.1, development key refused in production) | Per-institution key control decision; two-person key ceremony; revocation records (audit C K-1, K-2) | I9 |
-| S5-H-32 | 3885 | security | How the institution exits the platform without exposing private keys | Partial | lib/keys/custody.ts (vault/KMS, rotation audited since I0.1, development key refused in production) | Per-institution key control decision; two-person key ceremony; revocation records (audit C K-1, K-2) | I9 |
-| S5-H-33 | 3887 | security | A shared platform operator should not automatically possess unrestricted access to every institution's decryption keys. | Partial | lib/keys/custody.ts (vault/KMS, rotation audited since I0.1, development key refused in production) | Per-institution key control decision; two-person key ceremony; revocation records (audit C K-1, K-2) | I9 |
+| S5-H-25 | 3878 | security | Who controls encryption keys | Partial | lib/keys/custody.ts (vault/KMS, rotation audited since I0.1, development key refused in production); per-institution federation keys (lib/federation/k | Per-institution key control decision for data keys and decision seals; two-person key ceremony at the provider (audit C K-1, K-2) | I9 |
+| S5-H-26 | 3879 | security | Which service identities can request cryptographic operations | Partial | lib/keys/custody.ts (vault/KMS, rotation audited since I0.1, development key refused in production); per-institution federation keys (lib/federation/k | Per-institution key control decision for data keys and decision seals; two-person key ceremony at the provider (audit C K-1, K-2) | I9 |
+| S5-H-27 | 3880 | security | Whether the key manager is institution-controlled or shared | Partial | lib/keys/custody.ts (vault/KMS, rotation audited since I0.1, development key refused in production); per-institution federation keys (lib/federation/k | Per-institution key control decision for data keys and decision seals; two-person key ceremony at the provider (audit C K-1, K-2) | I9 |
+| S5-H-28 | 3881 | security | How keys are rotated, backed up and recovered | Partial | lib/keys/custody.ts (vault/KMS, rotation audited since I0.1, development key refused in production); per-institution federation keys (lib/federation/k | Per-institution key control decision for data keys and decision seals; two-person key ceremony at the provider (audit C K-1, K-2) | I9 |
+| S5-H-29 | 3882 | security | How access is approved and audited | Partial | lib/keys/custody.ts (vault/KMS, rotation audited since I0.1, development key refused in production); per-institution federation keys (lib/federation/k | Per-institution key control decision for data keys and decision seals; two-person key ceremony at the provider (audit C K-1, K-2) | I9 |
+| S5-H-30 | 3883 | security | How keys are revoked during staff departure or compromise | Partial | lib/keys/custody.ts (vault/KMS, rotation audited since I0.1, development key refused in production); per-institution federation keys (lib/federation/k | Per-institution key control decision for data keys and decision seals; two-person key ceremony at the provider (audit C K-1, K-2) | I9 |
+| S5-H-31 | 3884 | security | What happens if the key service becomes unavailable | Partial | lib/keys/custody.ts (vault/KMS, rotation audited since I0.1, development key refused in production); per-institution federation keys (lib/federation/k | Per-institution key control decision for data keys and decision seals; two-person key ceremony at the provider (audit C K-1, K-2) | I9 |
+| S5-H-32 | 3885 | security | How the institution exits the platform without exposing private keys | Partial | lib/keys/custody.ts (vault/KMS, rotation audited since I0.1, development key refused in production); per-institution federation keys (lib/federation/k | Per-institution key control decision for data keys and decision seals; two-person key ceremony at the provider (audit C K-1, K-2) | I9 |
+| S5-H-33 | 3887 | security | A shared platform operator should not automatically possess unrestricted access to every institution's decryption keys. | Partial | lib/keys/custody.ts (vault/KMS, rotation audited since I0.1, development key refused in production); per-institution federation keys (lib/federation/k | Per-institution key control decision for data keys and decision seals; two-person key ceremony at the provider (audit C K-1, K-2) | I9 |
 
 ### Hosting — Met 1, Partial 5, Country decision 17
 
@@ -3141,7 +3141,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S5-K-23 | 4035 | architecture | A gap should lead to a specific action: name an owner, explain what evidence is missing, state the dependency and define the acceptance test. | Met | lib/onboarding/completeness.ts institutionCompleteness() (items over nine dimensions, each read from its record: state not_started, in_progress, verif |  | — |
 | S5-K-24 | 4035 | architecture | A single overall percentage is not enough, especially if a critical legal or security requirement remains unverified. | Met | lib/onboarding/completeness.ts institutionCompleteness() (items over nine dimensions, each read from its record: state not_started, in_progress, verif |  | — |
 
-### Acceptance — Met 15, Partial 1
+### Acceptance — Met 16
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
@@ -3156,7 +3156,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S5-L-09 | 4049 | acceptance | An exported record can be validated without depending on access to the original production interface. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-09: `app/src/lib/portability/export.test.ts` "carries the institution's own records and nothing of another's, seal |  | — |
 | S5-L-10 | 4050 | acceptance | A backup can be restored into a clean environment using documented procedures. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-10: `app/src/lib/data/backups.test.ts` "takes an encrypted backup … and verifies it by a dry run" (scratch store); |  | — |
 | S5-L-11 | 4051 | acceptance | The restored environment preserves record relationships and audit-integrity verification. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-11: `app/src/lib/data/backups.test.ts` "restores four-eyes … the replaced state kept and named" (`verifyAuditChain |  | — |
-| S5-L-12 | 4052 | acceptance | Privileged access and key-management operations are recorded and independently reviewable. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P5-12: `app/src/lib/keys/custody.test.ts` "names the key version that signed after a rotation in Vault", "signs audit | Key and privileged operations are recorded, bulk officer creation included, and the audit chain is read through the API only by auditors and the data- | I9 |
+| S5-L-12 | 4052 | acceptance | Privileged access and key-management operations are recorded and independently reviewable. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-12: `app/src/lib/keys/custody.test.ts` "names the key version that signed after a rotation in Vault", "signs audit |  | — |
 | S5-L-13 | 4053 | acceptance | A service can operate in a declared degraded state without claiming that unavailable checks succeeded. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-13: `app/src/lib/messaging/messaging.test.ts` "keeps messages queued and says "not connected" while no provider is |  | — |
 | S5-L-14 | 4054 | acceptance | A software upgrade detects incompatible schema or policy changes before they corrupt production records. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-14: `app/src/lib/data/readiness.test.ts` "reports each customisation as compatible, needs change or blocking…", "b |  | — |
 | S5-L-15 | 4055 | acceptance | A disconnected institution can receive a controlled software update and verify its authenticity. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-15: `app/src/lib/data/mirror.test.ts` "each step is named, in order, audited; a matching seal makes the releases m |  | — |
@@ -3483,20 +3483,20 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S6-J-21 | 4670 | risk | The AI service must be opt-in at the level specified by national policy and institution configuration. | Met | SovereignProfile.aiAssistant opt-in; /api/ai/advisory audited, behind the sovereignty gate, reads no records; aiLabel() | Institution-level opt-in (nation-level only) | — |
 | S6-J-22 | 4671 | risk | Sensitive data must not be sent to an external AI service unless the use, transfer and provider are specifically authorised. | Met | SovereignProfile.aiAssistant opt-in; /api/ai/advisory audited, behind the sovereignty gate, reads no records; aiLabel() | Institution-level opt-in (nation-level only) | — |
 
-### Launch checklist — Met 17, Partial 6
+### Launch checklist — Met 18, Partial 5
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
-| S6-K-01 | 4675 | design | Before CivicOS is declared ready for a real institution, require evidence for each of the following. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (62 proven, 22 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
-| S6-K-02 | 4681 | design | Use this as a working checklist. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (62 proven, 22 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
-| S6-K-03 | 4681 | design | Ticking an item tracks your review here; it does not verify the underlying system or certify production readiness. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (62 proven, 22 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
+| S6-K-01 | 4675 | design | Before CivicOS is declared ready for a real institution, require evidence for each of the following. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (64 proven, 20 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
+| S6-K-02 | 4681 | design | Use this as a working checklist. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (64 proven, 20 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
+| S6-K-03 | 4681 | design | Ticking an item tracks your review here; it does not verify the underlying system or certify production readiness. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (64 proven, 20 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
 | S6-K-04 | 4685 | acceptance | Institution mandate and record ownership approved | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-01: `app/src/lib/data/store/institutions.test.ts` "after setup changes only by proposal citing the law and a diffe |  | — |
 | S6-K-05 | 4687 | acceptance | Legal instruments versioned and effective dates validated | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-02: `app/src/lib/law/register.test.ts` "records a version that cannot be cited until a different official confirms |  | — |
 | S6-K-06 | 4689 | acceptance | Decision authorities and delegations verified | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-03: `app/src/lib/permits/authority.test.ts` "governs decisions only once a second official approves a version with |  | — |
 | S6-K-07 | 4691 | acceptance | Required dual approvals tested | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-04: `app/src/lib/casework/dual-control.test.ts` (all); `app/src/lib/data/integration-approval.test.ts`; `app/src/l |  | — |
 | S6-K-08 | 4695 | acceptance | Role and purpose policies tested | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-05: `app/src/lib/auth/roles.test.ts`; `app/src/lib/auth/case-rules.test.ts`; `app/src/lib/auth/api-permission-cove |  | — |
 | S6-K-09 | 4697 | acceptance | Sensitive reads and exports audited | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-06: See P3-13; `app/src/lib/portability/export.test.ts` "carries the institution's own records and nothing of anot |  | — |
-| S6-K-10 | 4699 | acceptance | Privileged access and key controls reviewed | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P6-07: See P5-12. Since plan I9 the publisher keys a nation trusts for its software are two-official records, revocab | Recorded, but no independent review is tested. | I9 |
+| S6-K-10 | 4699 | acceptance | Privileged access and key controls reviewed | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-07: See P5-12: since plan I9 key-management and privileged operations are reviewed afterwards by an auditor or the |  | — |
 | S6-K-11 | 4701 | acceptance | Retention and privacy requirements configured | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-08: `app/src/lib/data/retention.test.ts` "keeps permits and cases unless two administrators confirm a rule…", "dis |  | — |
 | S6-K-12 | 4705 | acceptance | Representative workflow passes end-to-end testing | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-09: `app/src/lib/proof/birth-registration.test.ts` (nine steps, citizen notice to auditor reconstruction); also `a |  | — |
 | S6-K-13 | 4707 | acceptance | Production contains no sample or fabricated metrics | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P6-10: `app/src/lib/data/store/seed-mode.test.ts`; `app/src/apps/_shared/register-sources.test.ts` "production: folde | The public pages (`/government`, `/health`), `/health-ecosystem`, the ministry workspace sections, the interior record screens, the agency apps, the e | I3 |

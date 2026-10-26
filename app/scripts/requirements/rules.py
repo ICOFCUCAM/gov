@@ -104,7 +104,7 @@ R(None, None, r'risk score|risk-based selection|automated student risk score', '
 
 # framing sentences of the acceptance lists
 R(None, None, r'(tests should be mandatory|should demonstrate that|require evidence for each of the following|Use this as a working checklist|Ticking an item|I would not accept these institutions)', 'Met',
-  'docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (62 proven, 22 partial, 7 not yet); plan §3.5 makes it the definition of done', '', '—')
+  'docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (64 proven, 20 partial, 7 not yet); plan §3.5 makes it the definition of done', '', '—')
 R(3, r'^G$', r'not ready for production simply because its interface renders', 'Met', COMPLETE, '', '—')
 R(3, r'^G$', r'Each service needs evidence', 'Partial', COMPLETE + ' (per institution)', 'Evidence per service (legal grounding, configuration, staffing, records, security, integration, operational testing)', 'I2')
 R(1, r'^2$', r'(CivicOS should use international standards|It is a disclosure standard)', 'Lower priority', 'Plan §4 "Reference lists of standards. Informative; cited where a feature uses one."', '', 'Unassigned')
@@ -802,7 +802,7 @@ R(4, r'^E$', r'two distinct authorised people|genuinely distinct', 'Met', 'dualC
 R(4, r'^E$', r'.', 'Met', ROLES, '', '—')
 # F readiness for independent institutions
 R(4, r'^F$', r'^Tenant isolation tested', 'Met', 'lib/auth/negative-authorization.test.ts', '', '—')
-R(4, r'^F$', r'^Audit integrity tested', 'Partial', 'Acceptance P4-12 (chain), P3-13 (reads, refusals)', 'Exports beyond substrate export; privileged operations reviewable independently (P5-12)', 'I9')
+R(4, r'^F$', r'^Audit integrity tested', 'Partial', 'Acceptance P4-12 (chain), P3-13 (reads, refusals); privileged and key operations reviewed independently since plan I9 (lib/keys/key-review.ts, acceptance P5-12)', 'Exports beyond substrate export', 'I9')
 R(4, r'^F$', r'^(Exchange controls tested|Decision workflows tested)', 'Met', 'Acceptance P4-12, P5-03, P4-11', '', '—')
 R(4, r'^F$', r'^Portability tested', 'Partial', PORTABLE + '; ' + CONFEX + '; ' + FEDLATER, 'Data dictionaries in the export; postgres-mode export', 'I9')
 R(4, r'^F$', r'^Continuity tested', 'Not yet', 'No institution-specific recovery', 'I9 export and restore', 'I9')
@@ -888,7 +888,7 @@ R(5, r'^H$', r'(Event ID and event type|Actor or service identity|Action and res
 R(5, r'^H$', r'(Institution and resource reference|Purpose and applicable authority)', 'Not yet', 'Institution and purpose only inside detail', 'Separate fields', 'I8')
 R(5, r'^H$', r'hash chain alone|Independent checkpoints', 'Met', 'Signed heads, external anchors, RFC 3161 time-stamps, witnesses (lib/audit/)', '', '—')
 R(5, r'^H$', r'unnecessary sensitive payloads', 'Met', 'Access log holds no record content; exchange log keeps a digest only', '', '—')
-R(5, r'^H$', r'(Who controls encryption keys|Which service identities|institution-controlled or shared|rotated, backed up|access is approved and audited|revoked during staff|key service becomes unavailable|exits the platform without exposing|decryption keys)', 'Partial', 'lib/keys/custody.ts (vault/KMS, rotation audited since I0.1, development key refused in production)', 'Per-institution key control decision; two-person key ceremony; revocation records (audit C K-1, K-2)', 'I9')
+R(5, r'^H$', r'(Who controls encryption keys|Which service identities|institution-controlled or shared|rotated, backed up|access is approved and audited|revoked during staff|key service becomes unavailable|exits the platform without exposing|decryption keys)', 'Partial', 'lib/keys/custody.ts (vault/KMS, rotation audited since I0.1, development key refused in production); per-institution federation keys (lib/federation/keys.ts); since plan I9 every key operation reviewed afterwards by an auditor or the data-protection authority, never by one who took it (lib/keys/key-review.ts, /api/audit/key-reviews; acceptance P5-12)', 'Per-institution key control decision for data keys and decision seals; two-person key ceremony at the provider (audit C K-1, K-2)', 'I9')
 R(5, r'^H$', r'.', 'Partial', 'Security architecture', '', 'I9')
 R(5, r'^I$', r'^(Institution-operated|National sovereign cloud|Private cloud|Hybrid hosting|Isolated or disconnected)', 'Country decision', 'Platform provides four hosting paths with an estimate model and engineering review (lib/data/hosting.ts, lib/updates/hosting-model.ts, /updates/hosting) and a mirror for air-gapped nations (lib/data/mirror.ts)', 'Key control, provider-access and independent-assurance requirements recorded per deployment', 'Unassigned')
 R(5, r'^I$', r'(Availability and recovery-time|Recovery-point|Backup frequency|Encryption and key ownership|Data residency|Administrator and subcontractor|Network zones|Vulnerability and patch|Monitoring and incident|Disaster-recovery location|Capacity, latency|Contractual and technical exit)', 'Country decision', 'Platform provides: backup schedule and retention, hosting paths, contracts (lib/data/contracts.ts), advisories', 'Per-deployment record of RTO/RPO, residency, admin access, network zones — no plan step', 'Unassigned')
