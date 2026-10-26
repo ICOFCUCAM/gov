@@ -114,6 +114,9 @@ const REGISTERS: Register[] = [
   { module: 'lib/localgov/register.ts', store: '__civicosLocalGov', procedures: 'lib/localgov/procedures.ts',
     changes: ['resetLocalGov', 'proposeCouncilRules', 'confirmCouncilRules', 'withdrawCouncilRules', 'recordResolution', 'adoptBudget', 'openRequest', 'closeRequest'],
     reads: ['MAJORITIES', 'councilRules', 'councilRuleChanges', 'checkVote', 'getResolution', 'resolutionOfCase', 'budgetOfCase', 'requestOfCase', 'localRecords', 'requestPlaces', 'localCounts'] },
+  { module: 'lib/transport/register.ts', store: '__civicosTransport', procedures: 'lib/transport/procedures.ts',
+    changes: ['resetTransport', 'registerVehicle', 'transferVehicle', 'issueLicence', 'grantRoadWorks', 'licenseOperator'],
+    reads: ['VIN', 'vehicleByVin', 'vehicleByMark', 'licenceOfCase', 'roadWorksOfCase', 'operatorOfCase', 'transportRegister', 'transportCounts'] },
 ];
 
 /**

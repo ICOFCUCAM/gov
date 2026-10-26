@@ -36,6 +36,7 @@ import { TAX_PERMITS } from '@/lib/tax/procedures';
 import { LAND_PERMITS } from '@/lib/land/procedures';
 import { BUILDING_DECISION_PERMITS } from '@/lib/building/procedures';
 import { HOUSING_PERMITS } from '@/lib/housing/procedures';
+import { TRANSPORT_PERMITS } from '@/lib/transport/procedures';
 import { mappingInForce, powerRefusal, type Power } from './authority';
 import type { ActionSpec, Case, CasePackage } from '@/lib/casework/types';
 
@@ -111,6 +112,8 @@ export function classifyDecision(c: Case, a: ActionSpec, pkg: Pick<CasePackage, 
     for (const [prefix, permitType] of Object.entries(BUILDING_DECISION_PERMITS)) if (key.startsWith(prefix)) return mapped(permitType);
   }
   for (const [prefix, permitType] of Object.entries(HOUSING_PERMITS)) if (key.startsWith(prefix)) return mapped(permitType);
+  // Transport (plan I7, lib/transport): vehicles, driving licences, road works and operators, each its own permit type.
+  for (const [prefix, permitType] of Object.entries(TRANSPORT_PERMITS)) if (key.startsWith(prefix)) return mapped(permitType);
   for (const [prefix, authority] of DEPLOYMENT_DOMAINS) if (key.startsWith(`${prefix}.`)) return { kind: 'deployment', authority };
   return mapped(pkg.authority?.permitType);
 }
