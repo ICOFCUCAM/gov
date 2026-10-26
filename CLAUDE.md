@@ -305,6 +305,66 @@ What has been built is locked. Work only upgrades it toward the vision in
   governments (standing `subnational`) adopt the `lg.*` templates as their
   own; transport keeps vehicles, licences (medical fitness only as a sealed
   document's reference), road works and operators apart.
+- Federation and portability (plan I9, `lib/federation/`): an exchange
+  service answers a caller from another registered institution only under
+  an approved `exchange` relationship in force (`exchangeBinding()` inside
+  `callService()`; a suspended, ended or expired relationship stops the next
+  call; none ships). Events between installations are envelopes of
+  references only (schema version, source institution, legal context from
+  the laws register), signed with the institution's own key through key
+  custody (`lib/federation/keys.ts`; development keys refused in
+  production); another installation's key is trusted by two officials and
+  revoked by one. Received envelopes go only through `receiveEnvelope()`
+  (credential, schema, signature, relationship, duplicates; kept as
+  accepted, rejected or pending; applied to nothing). Webhook subscribers
+  get no actor name or free text (`subscriberEvent()`). Requests between
+  institutions are cases of the receiving institution's `xi.*` procedures,
+  never orders unless an approved `instruct` relationship covers them. The
+  institution export carries `configuration.json` (evidence, never adopted)
+  and `verification.json`; `build:openapi` also writes `api-contract.json`.
+- Digital front door and records (plan I13): a public service is a record
+  of the catalogue (`lib/frontdoor/catalogue.ts`), proposed by one official
+  of the owning institution and published by a different one who can sign
+  there, every version kept; the owner comes from the deployment profile,
+  the law is cited from the laws register, forms by `formIdentity()`, a fee
+  only as an approved rule key. Its status is computed at each read, never
+  stored, and never active while its procedure, owner or fee rule is
+  missing; only published entries are public (`/services`); none ships.
+  Applications go through the service's own procedure, routed by
+  `authorityFor()` (`journey.ts`); without the nation's identity provider the
+  journey says so and offers assisted or paper application. Only the
+  represented person grants or revokes a representation, and every act
+  records both people. Appointments, complaints, reconsideration (by
+  officials who took no part; the original stays sealed) and refunds (only of
+  a receipt, through `instructRefund()`) are `svc.*` templates each
+  institution adopts. Records management (`lib/recordkeeping/`) disposes of
+  nothing without a schedule two officials approved citing the law; a legal
+  hold blocks disposal, transfer and the retention sweep; disposal never
+  deletes a record; transfers go to the `archives` slot (none ships);
+  migrations are reconciled by count and SHA-256. Service-level targets are
+  only the nation's, and performance is computed from cases with signal
+  markers (`service-management.ts`).
+- Security governance and resilience (plan I12, `lib/security/`) is metadata
+  only. The nation's classification scheme and the installation's declared
+  accreditation are one country rule set (`classification.ts`, through
+  `policy-change.ts`, shipped empty); until both are adopted nothing above
+  the platform default is held, and a record or upload marked above the
+  accreditation is refused (`markingRefusal()`, also in `addDocument()`).
+  Cyber incidents, vulnerabilities, supplier assessments, exceptions,
+  exercises, critical infrastructure designations, dependencies, risk
+  assessments, resilience plans and clearance decisions change only in the
+  effects of `lib/security/procedures.ts` (slots `cyberAuthority`,
+  `criticalInfrastructure`, `securityAccreditation`, shipped empty; two
+  officials, unapproved mappings). A security record is read only under
+  `securityAccessRefusal()`: need to know, a stated purpose, the action and,
+  for a marked record, a valid clearance at its level, each checked on its
+  own; a clearance alone grants nothing; every attempt is logged. National
+  security directives (`directives.ts`, slot `nationalSecurity`) stay apart
+  from the general directives register and reach an independent institution
+  only as a request. Never add an intelligence register, a source,
+  collection method, target, surveillance, attack attribution or any score
+  about a person without the nation's legal review (integration register
+  §25); AI never attributes an attack, accepts a risk or decides a clearance.
 
 ## Constitutional architecture
 
@@ -349,7 +409,10 @@ What has been built is locked. Work only upgrades it toward the vision in
   internal administration, 40 forms; batch 6, tax services, 95 forms;
   batch 7, independent oversight, 7 forms; batch 8, executive office,
   Cabinet, treasury and budget, 57 forms; batch 9, human services, 96 forms;
-  batch 10, territory and infrastructure, 36 forms: owner 2026-10-21), as library
+  batch 10, territory and infrastructure, 36 forms; batch 11, federation
+  and cross-institution workflow, 21 forms; batch 12, digital front door
+  and records, 27 forms; batch 13, security
+  governance and resilience, 31 forms: owner 2026-10-21), as library
   drafts in `lib/forms/library/catalogue-contracts/`, each matched to one
   register row, never for an excluded form, regenerated into the register.
 - Every requirement of that specification is a row of

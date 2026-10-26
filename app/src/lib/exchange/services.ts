@@ -9,7 +9,9 @@
 // receipt in the exchange log with the declared purpose; an outside caller
 // may declare only a purpose approved for it and that service. Events (a
 // registered birth) reach permitted subscribers through the signed webhooks
-// of the event outbox; the directory lists them too.
+// of the event outbox; the directory lists them too. Between two registered
+// institutions a call answers only under an approved `exchange` relationship
+// in force (plan I9, lib/federation/binding.ts).
 
 import { logExchange, type ExchangeReceipt } from './log';
 import { getPerson, current, fold } from '@/lib/civil/register';
@@ -31,6 +33,7 @@ import { verifyIdentity, VERIFY_MEANING } from '@/lib/identity/register';
 import { documentStatus } from '@/lib/passports/register';
 import { employerStanding } from '@/lib/labour/register';
 import { authorityFor } from '@/lib/data/store';
+import { exchangeBinding, bindingNote } from '@/lib/federation/binding';
 
 export interface Caller { kind: 'module' | 'integration'; id: string; name: string; institution?: string }
 export interface ServiceResult { status: number; result: string; data: Record<string, unknown> }
@@ -266,6 +269,11 @@ export async function callService(caller: Caller, serviceId: string, input: Reco
       return { status: 403, error: `Purpose '${stated}' is not approved for this caller and ${serviceId} (approved: ${named})`, receipt };
     }
   }
+  // I9: between institutions, only under an approved `exchange` relationship in force (lib/federation/binding.ts):
+  // a suspended, ended or expired relationship stops this call at once; the receipt names the relationship and version.
+  const bound = exchangeBinding(s.id, { slot: s.owner }, caller, purpose);
+  if (bound.kind === 'refused') { const { receipt } = await log(bound.status, `no relationship in force (${bound.from} → ${bound.to})`); return { status: bound.status, error: bound.error, receipt }; }
+  note += bindingNote(bound);
   const r = s.handle(input, caller, purposeSlug(purpose));
   // Only the fields the service defines.
   const data = Object.fromEntries(Object.entries(r.data).filter(([k]) => k in s.returns));

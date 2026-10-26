@@ -1592,3 +1592,228 @@ and 011, HPC-BLD-021 and 022, HPC-REG-023 and 024, the Part 19 forms not
 listed above, the other transport forms (licence renewals, vehicle
 inspection, road reports, maritime and aviation) and every environment form
 (integration register 21.79).
+
+## 19. Catalogue contracts, batch 11: federation and portability (26 October 2026)
+
+Plan step I9 wrote the contracts of the cross-institution workflow and exchange
+forms: the catalogue Part 13 §2.2 whole-of-government workflow forms (GOV-WF-001
+… 006 and 009 … 015 of `docs/forms-catalogue/PARTS-12-13.md`; GOV-WF-007 and 008
+are directives, the executive office's) and the field series Part 3 §3.6
+cross-institution exchange forms for referrals and the tax and business status
+checks (`docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md`). Twenty-one forms
+that were `contract_missing` have a CivicOS contract with `batch: 11` in their
+`catalogue` block. The format, loader, gates and test are batch 1's (§8). The
+conformance test (`lib/forms/catalogue-contracts.test.ts`, sources `E` and `G`,
+no new source document) holds the lines each form answers: Part 1's shared
+rules and the supplement's conventions and gates, as for every batch; the
+shared group of its family (`xi`: Part 13 line 684, "Cross-institution tasks
+must not silently become binding orders …", and line 1270, CFG-GOV-011; `xex`:
+the field series Part 3 line 1220, "They do not transfer ownership of the
+underlying record", and line 1814, CFG-INT-001); and its own row.
+
+| Catalogue form | Title | Fields | Belongs to | Owner | Deviations (besides minimisation, evidence-requirement and scanning) |
+|---|---|---|---|---|---|
+| GOV-WF-001 | Refer a matter to another institution | 6 | waits for the referral procedure (`referral.<institution>`) to carry it | institution | institution-owned, not-an-order, referral-procedure |
+| GOV-WF-002 | Request information from another institution | 7 | `xi.information-request`, stage `received`, step `assess` | institution | institution-owned, not-an-order |
+| GOV-WF-003 | Propose handing over a service to another institution | 5 | `xi.handover`, stage `proposed`, step `assess`, document `handover-plan` | institution | institution-owned, not-an-order, no-power-granted |
+| GOV-WF-004 | Ask another institution to carry out a task | 7 | `xi.task`, stage `received`, step `accept` | institution | institution-owned, not-an-order |
+| GOV-WF-005 | Ask the competent institution for a decision | 6 | `xi.decision-request`, stage `received`, step `assess` | institution | institution-owned, not-an-order |
+| GOV-WF-006 | Consult another institution | 7 | `xi.consultation`, stage `received`, step `accept` | institution | institution-owned, not-an-order |
+| GOV-WF-009 | Declare a service dependency between institutions | 5 | `xi.dependency`, stage `declared`, step `confirm` | institution | institution-owned, not-an-order |
+| GOV-WF-010 | Refer a dispute between institutions to the body that resolves it | 6 | `xi.dispute`, stage `received`, step `refer`, document `dispute-file` | institution | institution-owned, not-an-order, no-power-granted |
+| GOV-WF-011 | Register an inter-agency agreement | 7 | `xi.agreement`, stage `draft`, step `register`, document `signed-agreement` | institution | institution-owned, not-an-order, no-power-granted |
+| GOV-WF-012 | Review, amend or terminate an inter-agency agreement | 3 | `xi.agreement`, stage `under-review`, step `amend` | institution | institution-owned, not-an-order, no-power-granted |
+| GOV-WF-013 | Onboard an institution to a shared service | 5 | `xi.onboarding`, stage `received`, step `test`, document `acceptance-test-report` | institution | institution-owned, not-an-order, no-power-granted |
+| GOV-WF-014 | Request access to a shared service | 5 | `xi.access`, stage `received`, step `approve` | institution | institution-owned, not-an-order, no-power-granted |
+| GOV-WF-015 | Request an exception to a cross-institution workflow | 6 | `xi.exception`, stage `received`, step `grant` | institution | institution-owned, not-an-order |
+| exchange.business_status.response | Return the business-status result | 3 | no case: the `organisation.standing` exchange service | businessRegister | no-case, relationship-bound |
+| exchange.business_status.verify | Verify a business-registration status | 4 | no case: the `organisation.standing` exchange service | businessRegister | no-case, relationship-bound |
+| exchange.referral.accept | Accept or decline an incoming referral | 3 | waits for the referral procedure (`referral.<institution>`) to carry it | institution | institution-owned, not-an-order, referral-procedure |
+| exchange.referral.close | Close an inter-institution referral | 2 | waits for the referral procedure (`referral.<institution>`) to carry it | institution | institution-owned, referral-procedure |
+| exchange.referral.create | Refer a case to another institution under an approved relationship | 4 | waits for the referral procedure (`referral.<institution>`) to carry it | institution | institution-owned, not-an-order, referral-procedure |
+| exchange.referral.update | Return a permitted referral-status update | 2 | waits for the referral procedure (`referral.<institution>`) to carry it | institution | institution-owned, referral-procedure |
+| exchange.tax_status.response | Return the permitted tax-status result | 3 | no case: the `taxpayer.status` exchange service | tax | no-case, relationship-bound |
+| exchange.tax_status.verify | Request verification of a tax-registration status | 4 | no case: the `taxpayer.status` exchange service | tax | no-case, relationship-bound |
+
+Each GOV-WF form is carried by the receiving institution's own procedure: the
+`xi.*` templates (`lib/federation/procedures.ts`) each institution adopts as
+`xi.<template>.<institution>`, drafted by one of its officials and approved by
+another (`procedure-link.ts` finds them adopted, as it finds `adm.*`, `lg.*` and
+`proc.*`). None becomes an order: when a request is taken in, its nature is
+recorded (`natureOf()`): an instruction only under an approved `instruct`
+relationship from the requester (`directiveTargetRefusal()`), otherwise a
+request the institution may decline with reasons. An agreement, an accepted
+handover, an onboarding or an access approval grants no power: an exchange
+needs an approved `exchange` relationship (`lib/federation/binding.ts`), a read
+an `audit` or `request_information` relationship, a change of who is
+responsible its own change process. The status checks open no case: the
+`taxpayer.status` and `organisation.standing` exchange services answer,
+between institutions only under an exchange relationship in force. The four
+referral forms wait for the referral procedure (`lib/casework/referral.ts`) to
+carry a contract; across installations a referral's status travels as the
+`referral.status.changed` federation event, references only. Nothing a law
+decides is set: the response days are named (`xi.information-request.response-days`,
+unset), the choice lists are marked proposed.
+
+The binding validation rules the field series names for exchange requests
+(`approved_relationship_exists`, `purpose_authorized_for_relationship`,
+`lawful_basis_covers_data_and_purpose`) stay `binding` in the rule registry:
+the relationship binding is enforced by `callService()` for every call, not yet
+as a form-level check. Left for later batches: the other Part 3 §3.6 exchange
+forms (trade authority, customs permit response, investment approval,
+procurement and financial references) and the Part 13 §2.2 directive forms
+(integration register 24.12).
+
+## 20. Catalogue contracts, batch 12: digital front door and records (26 October 2026)
+
+Plan step I13 wrote the contracts of the forms its systems carry: the citizen
+and business digital services (catalogue Part 13 §2.1), records,
+correspondence and digital documents (§2.3) and government service
+governance and performance (§2.5), with the supplement's DGV contracts for
+applying and representation (Part 21, DGV-SVC-001 and DGV-REP-003) answered
+line by line in GOV-SVC-004 and GOV-SVC-014. Twenty-seven forms of
+`docs/forms-catalogue/PARTS-12-13.md`, which were `contract_missing`, have a
+CivicOS contract with `batch: 12` in their `catalogue` block. The internal
+administration's records forms (ADM-REC-025, 026) stay batch 5's. The format,
+loader, gates and test are batch 1's (§8). The conformance test
+(`lib/forms/catalogue-contracts.test.ts`, source `E`) holds the lines each
+form answers: Part 1's shared rules and the supplement's conventions and
+gates, as for every batch; Part 13's lines every batch-12 form answers
+(`dgv`: lines 620 and 1387, configured before activation and accountable
+authority); the shared group of its family (`svc`: lines 666, 826 and 828,
+separate decisions and identity that is not authorisation; `rec`: lines 875,
+895, 904 and 1305, the configured lifecycle, retention by law and holds;
+`ggov`: lines 779 and 991, a status that never implies an integration works
+and separate dashboards); and its own lines (`FORM_12` in the test).
+
+| Catalogue form | Title | Fields | Belongs to | Owner | Deviations (besides minimisation, evidence-requirement and scanning) |
+|---|---|---|---|---|---|
+| GOV-GOV-001 | Register a service in the catalogue | 19 | no case: the catalogue (`catalogue.ts`) | institution | institution-owned, two-officials, no-ai-decision, no-case-of-its-own, status-computed, fee-by-rule |
+| GOV-GOV-002 | Assign a service's owner | 5 | no case: the catalogue (`catalogue.ts`) | institution | institution-owned, two-officials, no-ai-decision, no-case-of-its-own |
+| GOV-GOV-003 | Approve a service-level objective | 6 | no case: service management (`service-management.ts`) | institution | institution-owned, two-officials, no-ai-decision, no-case-of-its-own, target-is-nations |
+| GOV-GOV-004 | Record a service performance report | 4 | no case: service management (`service-management.ts`) | institution | institution-owned, two-officials, no-ai-decision, no-case-of-its-own, computed-figures |
+| GOV-GOV-005 | Report a service disruption | 5 | no case: service management (`service-management.ts`) | institution | institution-owned, two-officials, no-ai-decision, no-case-of-its-own |
+| GOV-GOV-006 | Request a change to a service | 4 | no case: service management (`service-management.ts`) | institution | institution-owned, two-officials, no-ai-decision, no-case-of-its-own |
+| GOV-GOV-010 | Retire a service | 3 | no case: the catalogue (`catalogue.ts`) | institution | institution-owned, two-officials, no-ai-decision, no-case-of-its-own, status-computed |
+| GOV-GOV-014 | Request an architecture exception | 5 | no case: service management (`service-management.ts`) | institution | institution-owned, two-officials, no-ai-decision, no-case-of-its-own, expires |
+| GOV-REC-001 | Register incoming correspondence or a document | 8 | `rec.incoming.<institution>`, stage `received`, step `register` | institution | institution-owned, two-officials, no-ai-decision, schedule-by-law |
+| GOV-REC-007 | Classify a record class | 5 | `rec.schedule.<institution>`, stage `drafted`, step `review` | institution | institution-owned, two-officials, no-ai-decision, schedule-by-law |
+| GOV-REC-008 | Approve a retention schedule | 7 | `rec.schedule.<institution>`, stage `review`, step `approve` | institution | institution-owned, two-officials, no-ai-decision, schedule-by-law |
+| GOV-REC-010 | Transfer records to the archive | 4 | `rec.transfer.<institution>`, stage `prepared`, step `send` | institution | institution-owned, two-officials, no-ai-decision, schedule-by-law, hold-blocks |
+| GOV-REC-011 | Authorise a records disposal | 3 | `rec.disposal.<institution>`, stage `opened`, step `list` | institution | institution-owned, two-officials, no-ai-decision, schedule-by-law, hold-blocks, never-deleted |
+| GOV-REC-012 | Place a legal hold | 6 | `rec.hold.<institution>`, stage `requested`, step `place` | institution | institution-owned, two-officials, no-ai-decision, hold-blocks |
+| GOV-REC-017 | Approve a records migration | 8 | `rec.migration.<institution>`, stage `drafted`, step `record-plan` | institution | institution-owned, two-officials, no-ai-decision, counts-and-hashes |
+| GOV-REC-018 | Reconcile a records migration | 5 | `rec.migration.<institution>`, stage `approved`, step `reconcile` | institution | institution-owned, two-officials, no-ai-decision, counts-and-hashes |
+| GOV-SVC-001 | Find a government service | 5 | no case: the catalogue (`catalogue.ts`) | institution | institution-owned, two-officials, no-ai-decision, no-case-of-its-own, status-computed, fee-by-rule |
+| GOV-SVC-004 | Apply for a public service | 5 and the declaration | no case: the journey (`journey.ts`) | institution | institution-owned, two-officials, no-ai-decision, no-case-of-its-own, separate-decisions, identity-not-authorisation |
+| GOV-SVC-006 | Ask where your application stands | 2 | no case: the journey (`journey.ts`) | institution | institution-owned, two-officials, no-ai-decision, no-case-of-its-own, identity-not-authorisation |
+| GOV-SVC-007 | Book an appointment | 5 and the declaration | `svc.appointment.<institution>`, stage `requested`, step `confirm` | institution | institution-owned, two-officials, no-ai-decision |
+| GOV-SVC-008 | Change or cancel an appointment | 4 and the declaration | `svc.appointment.<institution>`, stage `confirmed`, step `cancel` | institution | institution-owned, two-officials, no-ai-decision |
+| GOV-SVC-009 | Write to an institution | 5 and the declaration | `rec.incoming.<institution>`, stage `received`, step `register` | institution | institution-owned, two-officials, no-ai-decision |
+| GOV-SVC-011 | Complain about a service | 6 and the declaration | `svc.complaint.<institution>`, stage `received`, step `acknowledge` | institution | institution-owned, two-officials, no-ai-decision |
+| GOV-SVC-012 | Ask for a decision to be reconsidered | 5 and the declaration | `svc.reconsideration.<institution>`, stage `received`, step `admit` | institution | institution-owned, two-officials, no-ai-decision, reconsideration-independent |
+| GOV-SVC-013 | Ask for help to use a service | 4 and the declaration | `svc.appointment.<institution>`, stage `requested`, step `confirm` | institution | institution-owned, two-officials, no-ai-decision |
+| GOV-SVC-014 | Let someone act for you | 10 and the declaration | no case: representation (`representation.ts`) | institution | institution-owned, two-officials, no-ai-decision, no-case-of-its-own, identity-not-authorisation |
+| GOV-SVC-018 | Ask for a fee to be refunded | 4 and the declaration | `svc.refund.<institution>`, stage `received`, step `assess` | institution | institution-owned, two-officials, no-ai-decision, refund-from-receipt, fee-by-rule |
+
+The owner is each institution itself (`institution`): the front-door
+templates (`svc.appointment`, `svc.complaint`, `svc.reconsideration`,
+`svc.refund`, `lib/frontdoor/procedures.ts`) and the records templates
+(`rec.incoming`, `rec.schedule`, `rec.hold`, `rec.disposal`, `rec.transfer`,
+`rec.migration`, `lib/recordkeeping/procedures.ts`) are adopted by an
+institution as `svc.<template>.<institution>` and `rec.<template>.<institution>`
+(`procedure-link.ts` finds them adopted; `procedure-link.test.ts` "is draft
+for each batch-12 form once an institution has adopted its front-door or
+records template"). Twelve forms open no case of their own: the catalogue,
+the journey, representation and service management keep what they record
+under their own two-official rules, and each says so in `intended`. Nothing a
+law decides is set: no service, fee, period, retention schedule or target
+ships; a fee is named only as a rule of Rates and tariffs; the
+reconsideration period, each class's retention period and each service's
+target are named nation values, unset.
+
+Left for later batches: GOV-SVC-002, 003, 005, 010, 015 … 017, 019 and
+020; GOV-REC-002 … 006, 009 and 013 … 016 (signatures, certificates,
+verification and custody, which the documents, seal and certificate systems
+already hold in part); GOV-GOV-007 … 009, 011 … 013 and 015; the workflow,
+statistics and interoperability forms of Part 13 (integration register 26).
+
+## 21. Catalogue contracts, batch 13: security governance and resilience (26 October 2026)
+
+Plan step I12 wrote the contracts of the catalogue Part 11 forms its
+procedures carry or wait for (`docs/forms-catalogue/PARTS-08-11.md` §2.2–§2.4;
+`lib/security/procedures.ts`): fourteen cybersecurity forms, twelve critical
+infrastructure forms, the clearance application and review as metadata, and
+the supplement's three critical infrastructure contracts (CIP-REG-008,
+CIP-RSK-009, CIP-INC-010, given in its Part 11 JSON and now written in the
+canonical format line by line). Thirty-one forms in all, `batch: 13` in their
+`catalogue` block; 28 were `contract_missing`, the three CIP forms
+`contract_draft` (the supplement's baseline). The format, loader, gates and
+test are batch 1's (§8). The conformance test (`lib/forms/catalogue-contracts.test.ts`)
+holds the lines each form answers: Part 1's shared rules and the supplement's
+conventions and gates, as for every batch; Part 11's shared rules for every
+security form (group `sec`: lines 1621, 1623, 1658, 1739, 1753, 1763–1766,
+1768, 1772, 1954–1959, 1981, 2043, 2045, 2111 and 2122: the administrative
+layer only, configurable classification, deny by default, logged attempts,
+metadata and references, the accreditation, country rules citing the law, no
+power inferred, no invented record in production); the group of its family
+(`cyb`: 1718, 1842–1849, 2015; `inf`: 1737, 1851, 1873, 1886, 2018; `clr`:
+1784, 1787–1794, 1796–1803, 2014); and its own lines (its row, its workflow,
+record or register lines and, for the CIP contracts, every field line;
+`FORM_13` in the test). Source letters: no new source document (Part 11 is
+`F`, the supplement `C`).
+
+| Catalogue form | Title | Fields | Belongs to | Owner (slot) | Deviations (besides minimisation, evidence-requirement and scanning) |
+|---|---|---|---|---|---|
+| SEC-CYB-001 | Report a cybersecurity incident | 12 and the declaration | `cyber.incident`, stage `received`, step `register`, document `incident-report` | cyberAuthority | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists |
+| SEC-CYB-002 | Escalate a national cyber incident | 5 | `cyber.incident`, stage `coordinating`, step `escalate` | cyberAuthority | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists |
+| SEC-CYB-003 | Report a vulnerability in confidence | 8 and the declaration | `cyber.vulnerability`, stage `received`, step `register`, document `vulnerability-report` | cyberAuthority | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists |
+| SEC-CYB-004 | Record a vulnerability remediation plan | 4 | `cyber.vulnerability`, stage `coordinating`, step `plan-remediation` | cyberAuthority | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists |
+| SEC-CYB-008 | Record approved containment of a cyber incident | 5 | `cyber.incident`, stage `coordinating`, step `approve-containment` | cyberAuthority | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists |
+| SEC-CYB-009 | Record recovery and restoration after a cyber incident | 5 | `cyber.incident`, stage `contained`, step `recover` | cyberAuthority | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists |
+| SEC-CYB-010 | Record evidence preserved for a cyber incident | 5 | `cyber.incident`, stage `contained`, step `preserve-evidence` | cyberAuthority | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists |
+| SEC-CYB-011 | Assess a supplier's security | 9 | `cyber.supplier`, stage `received`, step `register`, document `assessment-report` | cyberAuthority | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists |
+| SEC-CYB-012 | Ask for a security exception | 9 and the declaration | `cyber.exception`, stage `received`, step `register`, document `exception-request` | cyberAuthority | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists |
+| SEC-CYB-013 | Renew or revoke a security exception | 5 | `cyber.exception`, stage `in-force`, step `renew` | cyberAuthority | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists |
+| SEC-CYB-014 | Record a post-incident review | 5 | `cyber.incident`, stage `recovered`, step `review`, document `review-report` | cyberAuthority | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists |
+| SEC-CYB-015 | Plan a national cyber exercise | 8 | `cyber.exercise`, stage `received`, step `register`, document `exercise-plan` | cyberAuthority | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists |
+| SEC-CYB-016 | Record cyber exercise findings | 4 | `cyber.exercise`, stage `held`, step `record-findings` | cyberAuthority | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists |
+| SEC-CYB-017 | Attest a patch or remediation | 4 | `cyber.vulnerability`, stage `remediating`, step `attest` | cyberAuthority | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists |
+| SEC-INF-001 | Propose a critical infrastructure designation | 11 | `ci.designation`, stage `received`, step `register`, document `designation-assessment` | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+| SEC-INF-002 | Record an essential service dependency | 17 | `ci.dependency`, stage `received`, step `register` | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+| SEC-INF-003 | Assess a critical infrastructure risk | 13 | `ci.risk`, stage `received`, step `register`, document `risk-assessment` | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+| SEC-INF-004 | Submit an infrastructure resilience plan | 15 and the declaration | `ci.resilience-plan`, stage `received`, step `register`, document `resilience-plan` | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+| SEC-INF-005 | Authorise a continuity exercise | 4 | `ci.resilience-plan`, stage `approved`, step `authorise-exercise` | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+| SEC-INF-006 | Evaluate a continuity exercise | 4 | `ci.resilience-plan`, stage `approved`, step `evaluate-exercise` | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+| SEC-INF-007 | Notify a critical infrastructure incident | 7 and the declaration | waits (no procedure yet) | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+| SEC-INF-009 | Report an essential service disruption | 7 and the declaration | waits (no procedure yet) | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+| SEC-INF-013 | Ask for a resilience exception | 8 and the declaration | waits (no procedure yet) | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+| SEC-INF-014 | Accept an infrastructure risk | 5 | `ci.risk`, stage `assessment`, step `accept-risk` | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+| SEC-INF-015 | Review an infrastructure risk acceptance | 4 | `ci.risk`, stage `accepted`, step `review` | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+| SEC-INF-016 | Review a release of critical infrastructure information | 7 | waits (no procedure yet) | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+| SEC-INT-007 | Apply for a security clearance (metadata) | 9 and the declaration | `security.clearance`, stage `received`, step `register`, document `sponsorship` | securityAccreditation | metadata-only, slot-owner, need-to-know, no-ai-decision, two-officials, nation-lists, vetting-elsewhere |
+| SEC-INT-008 | Review, renew or vary a security clearance (metadata) | 6 | `security.clearance`, stage `granted`, step `renew` | securityAccreditation | metadata-only, slot-owner, need-to-know, no-ai-decision, two-officials, nation-lists, vetting-elsewhere |
+| CIP-REG-008 | Register critical infrastructure | 8 | `ci.designation`, stage `received`, step `register`, document `designation-assessment` | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+| CIP-RSK-009 | Assess a critical infrastructure risk (supplement contract) | 10 | `ci.risk`, stage `received`, step `register`, document `risk-assessment` | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+| CIP-INC-010 | Report a critical infrastructure incident (supplement contract) | 10 and the declaration | waits (no procedure yet) | criticalInfrastructure | metadata-only, slot-owner, need-to-know, no-attribution-no-score, no-ai-decision, two-officials, nation-lists, risk-method |
+
+Owners are the slots the nation names (`cyberAuthority`, `criticalInfrastructure`,
+`securityAccreditation`), all shipped empty; 24 contracts are linked to their
+procedure by identity, 7 name what they wait for (an infrastructure incident,
+disruption, resilience exception and information release procedure).
+Metadata only: every record form carries a marking from the nation's levels
+(`security.country.classification_levels`, none ship), and a marking above the
+installation's accreditation is refused by the procedure (`markingRefusal()`).
+No field records a source, a collection method, a target, an attacker, an
+attribution or a score; a severity is the officials' choice on the nation's
+scale; a risk estimate is the assessor's under a named methodology version.
+Clearance forms hold the application and the decision only: vetting stays with
+the competent authority, by reference. Decision dates (an exception's or a
+clearance's end, a risk acceptance's review) are the deciding officials'
+choice; no period ships.
+
+Not written: every intelligence form (SEC-INT-001 … 006, 009 … 016 and the
+supplement's SEC-INT-006 and SEC-OVS-007: legal review first, owner's direction
+§1), the classified security incident (SEC-INC-005), SEC-CYB-005, 006, 007
+(data breach, plan I8) and 018, SEC-INF-008, 010, 011 and 012, and the defence
+forms (plan I11). Integration register 25.

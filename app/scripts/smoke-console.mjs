@@ -80,11 +80,27 @@ const PAGES = [
   { path: '/gov/health-regulation/programmes', map: false, text: /public-health programmes and workforce/i },
   // Independent oversight (plan I8): complaints, disclosures, audit engagements and data-protection requests; protected identities hidden.
   { path: '/gov/oversight', map: false, text: /independent oversight/i },
+  // I12: security governance and resilience (metadata only; classification status, records by need to know).
+  { path: '/gov/security/resilience', map: false, text: /cyber and resilience/i },
+  // Forms batch 13 (I12): a security library form with its catalogue row and publication gates.
+  { path: '/gov/law/procedures/forms/SEC-CYB-001', map: false, text: /register status/i },
+  // Federation and portability (plan I9): envelopes and requests between institutions, declared degraded states, the endpoint contract.
+  { path: '/gov/exchange/federation', map: false, text: /events one institution tells another/i },
+  { path: '/gov/exchange/workflows', map: false, text: /nothing here is an order/i },
+  { path: '/gov/exchange/states', map: false, text: /said in advance/i },
+  { path: '/gov/exchange/contract', map: false, text: /every endpoint of this installation/i },
+  { path: '/gov/exchange/contract?family=exchanges', map: false, text: /federation\/inbound/i },
+  { path: '/gov/law/procedures/forms/GOV-WF-002', map: false, text: /register status/i },
+  { path: '/gov/law/procedures/forms/exchange.tax_status.verify', map: false, text: /register status/i },
   // Territory and infrastructure (plan I7): land dealings and disputes, building control and housing, local governments, transport.
   { path: '/gov/land', map: false, text: /land dealings and disputes/i },
   { path: '/gov/building', map: false, text: /planning, building control and housing/i },
   { path: '/gov/local-government', map: false, text: /local and regional government/i },
   { path: '/gov/transport', map: false, text: /transport registers/i },
+  // I13 (plan step I13): the public service catalogue, service management and records management.
+  { path: '/gov/services', map: false, text: /service catalogue/i },
+  { path: '/gov/services/management', map: false, text: /service management/i },
+  { path: '/gov/records', map: false, text: /records management/i },
   // Human services (plan I6): identity, passports and travel documents, labour, social protection.
   { path: '/gov/identity', map: false, text: /national identity/i },
   { path: '/gov/passports', map: false, text: /passports and travel documents/i },

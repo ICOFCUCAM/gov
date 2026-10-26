@@ -1,0 +1,170 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "exchange.referral.close",
+ "record_type": "exchange.referral.closure",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-INT-001: authorized cross-institution exchanges and contract versions (exchange relationships and the integration's purposes, approved by two officials; none ship).",
+  "CFG-DAT-001: retention and disclosure of the exchange log and receipts."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+  "id": "exchange.referral.close",
+  "part": 3,
+  "section": "3.6",
+  "line": 1240,
+  "batch": 11
+ },
+ "library": {
+  "title": "Close an inter-institution referral",
+  "intro": "Close a referral once it has been reported on or declined.",
+  "owner": "institution",
+  "filled_by": "An official of the receiving institution.",
+  "authority": "Each institution's own: the referral is a case of the receiving institution's referral procedure, worked by its own officials.",
+  "procedure": null,
+  "lists": {},
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "institution-owned",
+    "what": "The owner is each institution itself: it adopts the cross-institution templates as its own procedures (xi.<template>.<institution>), drafted by one of its officials and approved by another; the case belongs to the institution that receives the request",
+    "why": "Every institution decides what is asked of it under its own powers; no central administrator works another institution's cases.",
+    "rule": "lib/federation/procedures.ts installCrossInstitutionProcedures(); lib/auth/roles.ts caseActRefusal()"
+   },
+   {
+    "id": "referral-procedure",
+    "what": "The receiving institution's referral procedure (referral.<institution>, lib/casework/referral.ts) carries this form's work: a referral is opened from the referring institution's own case (engine refer(), linked both ways) and accepted, reported or declined there; its link by identity to this library form is not built",
+    "why": "Referrals between institutions are cases (CLAUDE.md); the referral template predates the library and carries no form contract yet.",
+    "rule": "lib/casework/referral.ts referralTemplate(); lib/casework/engine.ts refer()"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+    "line": 1240,
+    "quotes": [
+     "exchange.referral.close",
+     "Close an inter-institution referral",
+     "Authorized officer",
+     "Closure",
+     "Closure record"
+    ],
+    "met_by": {
+     "fields": [
+      "closure.referral",
+      "closure.report"
+     ]
+    }
+   }
+  ],
+  "intended": "The receiving institution's referral procedure (referral.<institution>, report or decline): its link by identity to this library form is not built"
+ },
+ "fields": [
+  {
+   "id": "closure.referral",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 80
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The referral (its case reference)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the referral (its case reference).",
+     "length": "The referral (its case reference) is too long."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Closure"
+   }
+  },
+  {
+   "id": "closure.report",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Report to the referring institution"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter report to the referring institution.",
+     "length": "Report to the referring institution is too long."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "Closure"
+   }
+  },
+  {
+   "id": "closure.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

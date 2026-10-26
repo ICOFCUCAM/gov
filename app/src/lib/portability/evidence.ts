@@ -27,6 +27,8 @@ export interface EvidenceSegment {
   audit: { head: { seq: number; hash: string } | null; items: (AuditEntry | AuditLink)[] };
   accessLog: { base: { hash: string; removed: number }; items: (AccessEntry | AccessLink)[] };
   trustList: TrustListCopy;
+  /** Plan I9: the configuration the records rested on in that installation (lib/portability/export.ts configurationOf()), as evidence; never adopted. */
+  configuration?: import('./export').PortableConfiguration;
 }
 
 interface Db { segments: EvidenceSegment[] }

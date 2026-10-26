@@ -88,7 +88,9 @@ const REGISTERS: Register[] = [
     reads: ['payrollBatch', 'accessOfCase', 'accessInForce', 'administrationOf', 'administrationCounts'] },
   { module: 'lib/records/delegations.ts', store: '__civicosDelegations', procedures: 'lib/administration/procedures.ts',
     changes: ['resetDelegations', 'grantDelegation', 'revokeDelegation', 'recordAuthorityDelegation', 'revokeAuthorityDelegation'],
-    reads: ['delegationFor', 'delegationsOf', 'authorityDelegationOfCase', 'authorityDelegationsOf', 'authorityGrantsFor'] },
+    reads: ['delegationFor', 'delegationsOf', 'authorityDelegationOfCase', 'authorityDelegationsOf', 'authorityGrantsFor',
+      // I13: the representations a person granted, and one by its id.
+      'delegationsGrantedBy', 'getDelegation'] },
   // The economic group (plan step I5).
   { module: 'lib/finance/register.ts', store: '__civicosFinance', procedures: 'lib/finance/procedures.ts',
     changes: ['resetFinance', 'issueCall', 'setCeiling', 'recordBid', 'reviseBid', 'negotiateBid', 'allocateBid', 'closeBid', 'enactAppropriation', 'validateAppropriation', 'releaseAppropriation', 'refuseRelease',
@@ -106,6 +108,10 @@ const REGISTERS: Register[] = [
     changes: ['resetCabinet', 'proposeCabinetRules', 'confirmCabinetRules', 'withdrawCabinetRules', 'registerSubmission', 'reviewSubmission', 'setSubmissionState', 'recordCabinetDecision', 'attachCabinetDecision',
       'correctCabinetDecision', 'distribute', 'setDisclosure', 'assignAction', 'reportAction', 'proposeActionClosure', 'decideActionClosure'],
     reads: ['samePerson', 'CLASSIFICATIONS', 'cabinetRules', 'cabinetRuleChanges', 'checkVote', 'getSubmission', 'getCabinetDecision', 'getAction', 'actionsOf', 'cabinetRecords', 'cabinetIndicators', 'cabinetCounts'] },
+  // I12: security governance and resilience (lib/security): written only by the security procedures' effects.
+  { module: 'lib/security/register.ts', store: '__civicosSecurityRecords', procedures: 'lib/security/procedures.ts',
+    changes: ['resetSecurityRecords', 'openSecurityRecord', 'updateSecurityRecord', 'shareSecurityRecord', 'needToKnowGrant'],
+    reads: ['KIND_LABEL', 'KIND_REGISTER', 'SECURITY_REGISTER', 'effectiveStatus', 'listingOf', 'securityRecordRaw', 'securityRecordOfCase', 'securityRecordsRaw', 'clearanceOf', 'securityCounts'] },
   { module: 'lib/courts/hearings.ts', store: '__civicosHearings', procedures: 'lib/courts/procedures.ts',
     changes: ['resetHearings', 'scheduleHearing', 'concludeHearing'],
     reads: ['causeList', 'hearingsOf'] },
@@ -153,6 +159,15 @@ const REGISTERS: Register[] = [
       'attachPaymentDecision', 'recordOverpayment', 'decideOverpayment', 'attachOverpaymentDecision'],
     reads: ['CLAIM_STATE_LABEL', 'meansOf', 'ruleInputOf', 'checkInputs', 'getClaimant', 'getHousehold', 'claimOfCase', 'getClaim', 'latestAssessment', 'claimMoveRefusal', 'reproduceAssessment',
       'paymentOfCase', 'paidFor', 'overpaymentOfCase', 'findSocial', 'socialCounts'] },
+  // I13 (plan step I13): records management and the front door's own records.
+  { module: 'lib/recordkeeping/register.ts', store: '__civicosRecordkeeping', procedures: 'lib/recordkeeping/procedures.ts',
+    changes: ['resetRecordkeeping', 'approveSchedule', 'placeHold', 'attachHoldDecision', 'releaseHold', 'registerIncoming', 'listForDisposal', 'recordDisposal', 'transferToArchive', 'acknowledgeTransfer',
+      'planMigration', 'reconcileMigration', 'closeMigration', 'approveMigration'],
+    reads: ['TRIGGER_LABEL', 'DISPOSITION_LABEL', 'listDigest', 'classesOf', 'getClass', 'scheduleOf', 'holdsOf', 'holdOfCase', 'incomingOf', 'incomingOfCase', 'disposalsOf', 'disposalOfCase',
+      'transfersOf', 'transfersTo', 'getTransfer', 'migrationsOf', 'migrationOfCase', 'holdCovering', 'recordkeepingCounts'] },
+  { module: 'lib/frontdoor/register.ts', store: '__civicosFrontdoor', procedures: 'lib/frontdoor/procedures.ts',
+    changes: ['resetFrontdoor', 'recordRouting', 'setAppointment', 'recordComplaintOutcome', 'admitReconsideration', 'decideReconsideration'],
+    reads: ['routingOf', 'routingsFor', 'appointmentOf', 'appointmentsOf', 'complaintOutcomeOf', 'complaintsOf', 'reconsiderationOf', 'reconsiderationsOfOriginal', 'reconsiderationsOf', 'frontdoorCounts'] },
 ];
 
 /**
@@ -221,6 +236,9 @@ const EXCEPTIONS: { file: string; fn: string; why: string }[] = [
   { file: 'app/api/cabinet-office/route.ts', fn: 'proposeCabinetRules', why: 'the Cabinet rules, a country rule set: proposed citing the law, confirmed by a different official; records no decision' },
   { file: 'app/api/cabinet-office/route.ts', fn: 'confirmCabinetRules', why: 'the Cabinet rules, a country rule set: proposed citing the law, confirmed by a different official; records no decision' },
   { file: 'app/api/cabinet-office/route.ts', fn: 'withdrawCabinetRules', why: 'withdraws a waiting rules proposal' },
+  // I12: one who can sign at the keeping institution names an official who needs to know a security record (or withdraws that),
+  // with the reason, written to the access log as a change of who may see what; the record's terms are never changed by it.
+  { file: 'app/api/security/route.ts', fn: 'needToKnowGrant', why: 'names (or withdraws) an official who needs to know a security record: a signatory of the keeping institution, logged in the access log; the record itself is unchanged' },
   { file: 'lib/organisations/import.ts', fn: 'organisationsDb', why: 'the checked load of an existing register: proposed by one official of the keeping authority, confirmed by a different one, under the approved mapping in production' },
   { file: 'lib/organisations/import.ts', fn: 'nextOrganisationNumber', why: 'numbers the organisations a confirmed load enters' },
   // An institution's own records coming back from its portable export (Health I4 standalone-and-pilot): nothing is decided;
@@ -231,6 +249,11 @@ const EXCEPTIONS: { file: string; fn: string; why: string }[] = [
   { file: 'lib/portability/import.ts', fn: 'restoreImports', why: "the confirmed import of an institution's own export (two officials, the export verified, none of its records already here), keeping record identity" },
   { file: 'lib/portability/import.ts', fn: 'restoreControlled', why: "the confirmed import of an institution's own export (two officials, the export verified, none of its records already here), keeping record identity" },
   { file: 'lib/portability/import.ts', fn: 'restoreCapacity', why: "the confirmed import of an institution's own export (two officials, the export verified, none of its records already here), keeping record identity" },
+  // I13 (plan step I13): what the represented person does themselves, and what the front door and the archive record as their own.
+  { file: 'lib/frontdoor/representation.ts', fn: 'grantDelegation', why: 'a representation granted by the represented person themselves (signed in), for named services and acts, until a date or revoked; decides no one\'s standing' },
+  { file: 'lib/frontdoor/representation.ts', fn: 'revokeDelegation', why: 'the represented person revokes a representation they granted; kept, never deleted' },
+  { file: 'lib/frontdoor/journey.ts', fn: 'recordRouting', why: 'the front door\'s receipt of where an application went (service, procedure, competent institution, channel), written once at submission; changes no case or decision' },
+  { file: 'app/api/records-management/route.ts', fn: 'acknowledgeTransfer', why: 'the archive\'s own receipt of a transfer, by one of its officials, naming the manifest it received; the transfer itself was decided by two officials of the sending institution' },
 ];
 
 /** Files that may register an effect with the engine. */

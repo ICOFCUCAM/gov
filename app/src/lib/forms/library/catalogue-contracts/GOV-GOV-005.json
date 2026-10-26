@@ -1,0 +1,263 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "GOV-GOV-005",
+ "record_type": "frontdoor.disruption",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-GOV-009: personal-data protection and lawful disclosure (retention and disclosure of what the form collects)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/PARTS-12-13.md",
+  "id": "GOV-GOV-005",
+  "part": 13,
+  "section": "2.5",
+  "line": 729,
+  "batch": 12
+ },
+ "library": {
+  "title": "Report a service disruption",
+  "intro": "Report that a service is disrupted: since when, its impact on people using it and the channels affected; record updates and the recovery. An open disruption shows on the service's public page.",
+  "owner": "institution",
+  "filled_by": "An official of the institution that owns the service.",
+  "authority": "The institution that owns the service or the records (an institution of the registry, or the one the deployment profile names for its slot); never a ministry by name.",
+  "procedure": null,
+  "intended": "no case is opened: recorded by an official of the owning institution and approved by a different one who can sign there (lib/frontdoor/service-management.ts; /gov/services/management)",
+  "lists": {
+   "frontdoor.service_channels": {
+    "values": [
+     {
+      "value": "online",
+      "label": "Online"
+     },
+     {
+      "value": "assisted",
+      "label": "In person at an office"
+     },
+     {
+      "value": "paper",
+      "label": "Paper form"
+     },
+     {
+      "value": "post",
+      "label": "By post"
+     },
+     {
+      "value": "telephone",
+      "label": "By telephone"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "institution-owned",
+    "what": "The owner is each institution itself for its own services and records: it adopts the front-door and records procedures as its own (svc.<template>.<institution>, rec.<template>.<institution>), drafted by one of its officials and approved by another; a service names its owner as a slot of the deployment profile or an institution of the registry, never a ministry by name",
+    "why": "Part 13 §12.3: each institution keeps its own records, service ownership and decisions; the shared platform is no authority over them.",
+    "rule": "lib/frontdoor/procedures.ts installFrontdoorProcedures(); lib/recordkeeping/procedures.ts installRecordkeepingProcedures(); lib/frontdoor/catalogue.ts ownerOf()"
+   },
+   {
+    "id": "two-officials",
+    "what": "Every publication, approval and decision is proposed by one official and confirmed by a different person, compared as persons and never only as accounts",
+    "why": "Part 13 §7.3 and §15 Gate 3: required dual control prevents self-approval.",
+    "rule": "lib/casework/engine.ts act() (fourEyes, distinctFrom); lib/data/dual-control.ts dualControlRefusal()"
+   },
+   {
+    "id": "no-ai-decision",
+    "what": "No step is decided by a model or a score: officials decide with reasons",
+    "why": "Part 13 §11.3: AI must not issue legally consequential decisions.",
+    "rule": "CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   },
+   {
+    "id": "no-case-of-its-own",
+    "what": "This form opens no case of its own: what it records is kept by the platform system named in its intended stage, under that system's own two-official rules",
+    "why": "The catalogue item is a record of the front door or of service management, not a decision procedure.",
+    "rule": "lib/frontdoor/catalogue.ts, lib/frontdoor/service-management.ts, lib/frontdoor/representation.ts, lib/frontdoor/journey.ts"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 729,
+    "quotes": [
+     "GOV-GOV-005",
+     "Service outage or disruption report",
+     "Incident, impact and recovery tracking"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/frontdoor/catalogue.ts",
+      "how": "the form's register row, carried by the platform system its intended stage names"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 1313,
+    "quotes": [
+     "Manual fallback and outage procedures are documented."
+    ],
+    "met_by": {
+     "fields": [
+      "disruption.recovery",
+      "disruption.channels"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "disruption.service",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 80
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The service (its catalogue id)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the service (its catalogue id).",
+     "length": "The service (its catalogue id) must be 80 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "disruption.started_on",
+   "type": "date",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Started on"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter started on."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "disruption.impact",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 2000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Impact on people using the service"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter impact on people using the service.",
+     "length": "Impact on people using the service must be 2000 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "disruption.channels",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "frontdoor.service_channels",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Channels affected"
+   },
+   "error_text": {
+    "en": {
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null,
+   "multiple": true
+  },
+  {
+   "id": "disruption.recovery",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 2000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Recovery"
+   },
+   "error_text": {
+    "en": {
+     "length": "Recovery must be 2000 characters or fewer."
+    }
+   },
+   "country_decision": null
+  }
+ ]
+}

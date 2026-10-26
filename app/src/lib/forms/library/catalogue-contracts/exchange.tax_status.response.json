@@ -1,0 +1,206 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "exchange.tax_status.response",
+ "record_type": "exchange.response",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-INT-001: authorized cross-institution exchanges and contract versions (exchange relationships and the integration's purposes, approved by two officials; none ship).",
+  "CFG-DAT-001: retention and disclosure of the exchange log and receipts."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+  "id": "exchange.tax_status.response",
+  "part": 3,
+  "section": "3.6",
+  "line": 1228,
+  "batch": 11
+ },
+ "library": {
+  "title": "Return the permitted tax-status result",
+  "intro": "The tax authority's answer: registered or not, active or not, and for which taxes; nothing under tax secrecy.",
+  "owner": "tax",
+  "filled_by": "The tax authority, through its exchange service.",
+  "authority": "The tax authority named for the tax slot answers through the taxpayer.status exchange service; never a ministry by name.",
+  "procedure": null,
+  "lists": {},
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "no-case",
+    "what": "A status response, not a case: the exchange service answers at once and logs the request with a signed receipt",
+    "why": "A verification decides nothing; the owning institution's register is the authoritative record.",
+    "rule": "CLAUDE.md Government operating model: the twin and checks never create authoritative facts; lib/exchange/services.ts callService()"
+   },
+   {
+    "id": "relationship-bound",
+    "what": "Between two institutions the service answers only while an approved exchange relationship in force covers it and the purpose stated; a suspended, ended or expired relationship stops the next call at once",
+    "why": "Specification Part 5 E and L test 5: a revoked relationship stops new exchanges while preserving prior records.",
+    "rule": "lib/federation/binding.ts exchangeBinding() in lib/exchange/services.ts callService() (plan I9)"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+    "line": 1228,
+    "quotes": [
+     "exchange.tax_status.response",
+     "Return the permitted tax-status result",
+     "Revenue Authority",
+     "Response",
+     "Status response"
+    ],
+    "met_by": {
+     "fields": [
+      "response.registered",
+      "response.active",
+      "response.receipt"
+     ],
+     "exchange": "taxpayer.status"
+    }
+   }
+  ],
+  "exchange": "taxpayer.status",
+  "intended": "Answered by the taxpayer.status exchange service with a signed receipt; no case is opened."
+ },
+ "fields": [
+  {
+   "id": "response.registered",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 10
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Registered"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter registered.",
+     "length": "Registered is too long."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The answer"
+   }
+  },
+  {
+   "id": "response.active",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 10
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Active"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter active.",
+     "length": "Active is too long."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The answer"
+   }
+  },
+  {
+   "id": "response.receipt",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 80
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The signed receipt (its id)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the signed receipt (its id).",
+     "length": "The signed receipt (its id) is too long."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The answer"
+   }
+  },
+  {
+   "id": "response.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

@@ -28,6 +28,18 @@ export interface Delegation {
   grantedBy: string;
   grantedAt: string;
   revoked?: { by: string; at: string; reason: string };
+  /**
+   * Plan step I13 (forms catalogue Part 13 §5.3): granted by the represented
+   * person themselves through the front door (lib/frontdoor/representation.ts),
+   * not by an official. Revoked only by them.
+   */
+  byPrincipal?: true;
+  /** The catalogue services it covers ('*' for all), when granted through the front door. */
+  services?: string[];
+  /** What the agent may do (apply, track, add-information, challenge, receive-decision); absent on earlier delegations: every act in the procedures covered. */
+  actions?: string[];
+  /** Restrictions the represented person set, in their words. */
+  restrictions?: string;
 }
 
 /**
@@ -99,6 +111,11 @@ export function delegationFor(agent: Pick<Agent, 'kind' | 'id'>, principal: Pick
     && (x.procedures.includes('*') || x.procedures.includes(procedure)) && x.validFrom <= on && (!x.validUntil || on < x.validUntil));
   return d ? structuredClone(d) : undefined;
 }
+
+/** The delegations a principal granted or that name them, every one kept (in force, ended or revoked). */
+export const delegationsGrantedBy = (principal: Pick<Principal, 'kind' | 'id'>): Delegation[] => db().delegations.filter(x => x.principal.kind === principal.kind && x.principal.id === principal.id).map(x => structuredClone(x));
+/** One delegation by its id. */
+export const getDelegation = (id: string): Delegation | undefined => { const d = db().delegations.find(x => x.id === id); return d ? structuredClone(d) : undefined; };
 
 export const delegationsOf = (agent: Pick<Agent, 'kind' | 'id'>): Delegation[] => db().delegations.filter(x => x.agent.kind === agent.kind && x.agent.id === agent.id).map(x => structuredClone(x));
 

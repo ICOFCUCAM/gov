@@ -1,0 +1,254 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "GOV-SVC-018",
+ "record_type": "svc.refund",
+ "form_version": 1,
+ "procedure_package_id": "svc.refund",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-GOV-007: government fees, payments, refunds and exemptions.",
+  "CFG-GOV-009: personal-data protection and lawful disclosure (retention and disclosure of what the form collects)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/PARTS-12-13.md",
+  "id": "GOV-SVC-018",
+  "part": 13,
+  "section": "2.1",
+  "line": 663,
+  "batch": 12
+ },
+ "library": {
+  "title": "Ask for a fee to be refunded",
+  "intro": "Ask the institution that charged you a fee to refund it. Only a payment it received for its own bill is refunded, for exactly what was paid, through the payments system.",
+  "owner": "institution",
+  "filled_by": "The person who paid; an official at an office.",
+  "authority": "The institution that owns the service or the records (an institution of the registry, or the one the deployment profile names for its slot); never a ministry by name. Only the institution that issued the bill refunds it.",
+  "procedure": {
+   "key": "svc.refund",
+   "stage": "received",
+   "action": "assess"
+  },
+  "lists": {},
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "institution-owned",
+    "what": "The owner is each institution itself for its own services and records: it adopts the front-door and records procedures as its own (svc.<template>.<institution>, rec.<template>.<institution>), drafted by one of its officials and approved by another; a service names its owner as a slot of the deployment profile or an institution of the registry, never a ministry by name",
+    "why": "Part 13 §12.3: each institution keeps its own records, service ownership and decisions; the shared platform is no authority over them.",
+    "rule": "lib/frontdoor/procedures.ts installFrontdoorProcedures(); lib/recordkeeping/procedures.ts installRecordkeepingProcedures(); lib/frontdoor/catalogue.ts ownerOf()"
+   },
+   {
+    "id": "two-officials",
+    "what": "Every publication, approval and decision is proposed by one official and confirmed by a different person, compared as persons and never only as accounts",
+    "why": "Part 13 §7.3 and §15 Gate 3: required dual control prevents self-approval.",
+    "rule": "lib/casework/engine.ts act() (fourEyes, distinctFrom); lib/data/dual-control.ts dualControlRefusal()"
+   },
+   {
+    "id": "no-ai-decision",
+    "what": "No step is decided by a model or a score: officials decide with reasons",
+    "why": "Part 13 §11.3: AI must not issue legally consequential decisions.",
+    "rule": "CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   },
+   {
+    "id": "refund-from-receipt",
+    "what": "A refund is only of a receipt the payments system holds for a bill this institution issued, for exactly what was paid, never a typed amount; instructed by two officials other than the assessor and recorded paid from the rail's reference by a different official",
+    "why": "CFG-GOV-007 and CLAUDE.md: refunds only through the payments system.",
+    "rule": "lib/data/store/payments.ts instructRefund(); lib/frontdoor/procedures.ts svc.refund"
+   },
+   {
+    "id": "fee-by-rule",
+    "what": "A fee is named only as a rule of Rates and tariffs, never as an amount; until the rule is approved the service says its fee is not set",
+    "why": "CLAUDE.md: rates, bands and tariffs come only from lib/law/rules.ts; never type a statutory rate.",
+    "rule": "lib/frontdoor/catalogue.ts checkTerms(); lib/law/rules.ts ruleInForce()"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 663,
+    "quotes": [
+     "GOV-SVC-018",
+     "Service fee refund request",
+     "Refund assessment and disposition"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/frontdoor/procedures.ts",
+      "how": "the form's register row, carried by svc.refund"
+     },
+     "procedure": "assess"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 1266,
+    "quotes": [
+     "CFG-GOV-007",
+     "Government fees, payments, refunds and exemptions"
+    ],
+    "met_by": {
+     "country_decision": "CFG-GOV-007",
+     "deviation": "refund-from-receipt"
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "refund.receipt",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 60
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The payment receipt (its number)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the payment receipt (its number).",
+     "length": "The payment receipt (its number) must be 60 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "refund.service",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 80
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The service the fee was for (its catalogue id)"
+   },
+   "error_text": {
+    "en": {
+     "length": "The service the fee was for (its catalogue id) must be 80 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "refund.grounds",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Why the fee should be refunded"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter why the fee should be refunded.",
+     "length": "Why the fee should be refunded must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "refund.evidence",
+   "type": "document",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "evidence",
+     "when": "when_the_person_has_it"
+    }
+   ],
+   "label": {
+    "en": "Supporting documents"
+   },
+   "country_decision": null,
+   "multiple": true
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "only": [
+    "declaration.text_version",
+    "declaration.confirmed",
+    "declaration.signed_at"
+   ],
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "refund.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

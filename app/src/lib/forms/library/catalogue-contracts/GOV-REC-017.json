@@ -1,0 +1,362 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "GOV-REC-017",
+ "record_type": "rec.migration",
+ "form_version": 1,
+ "procedure_package_id": "rec.migration",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-GOV-009: personal-data protection and lawful disclosure (retention and disclosure of what the form collects)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/PARTS-12-13.md",
+  "id": "GOV-REC-017",
+  "part": 13,
+  "section": "2.3",
+  "line": 703,
+  "batch": 12
+ },
+ "library": {
+  "title": "Approve a records migration",
+  "intro": "Record the plan for moving records into the platform or out of it: the source and target systems, how many records and the fingerprint of the source extract. Two officials other than the one who recorded it approve it.",
+  "owner": "institution",
+  "filled_by": "An official records the plan; two officials who can sign approve.",
+  "authority": "The institution that owns the service or the records (an institution of the registry, or the one the deployment profile names for its slot); never a ministry by name.",
+  "procedure": {
+   "key": "rec.migration",
+   "stage": "drafted",
+   "action": "record-plan"
+  },
+  "lists": {
+   "records.migration_targets": {
+    "values": [
+     {
+      "value": "documents",
+      "label": "Documents of a record class"
+     },
+     {
+      "value": "cases",
+      "label": "Cases of a procedure"
+     },
+     {
+      "value": "external",
+      "label": "An external system"
+     }
+    ],
+    "proposed": true
+   }
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "institution-owned",
+    "what": "The owner is each institution itself for its own services and records: it adopts the front-door and records procedures as its own (svc.<template>.<institution>, rec.<template>.<institution>), drafted by one of its officials and approved by another; a service names its owner as a slot of the deployment profile or an institution of the registry, never a ministry by name",
+    "why": "Part 13 §12.3: each institution keeps its own records, service ownership and decisions; the shared platform is no authority over them.",
+    "rule": "lib/frontdoor/procedures.ts installFrontdoorProcedures(); lib/recordkeeping/procedures.ts installRecordkeepingProcedures(); lib/frontdoor/catalogue.ts ownerOf()"
+   },
+   {
+    "id": "two-officials",
+    "what": "Every publication, approval and decision is proposed by one official and confirmed by a different person, compared as persons and never only as accounts",
+    "why": "Part 13 §7.3 and §15 Gate 3: required dual control prevents self-approval.",
+    "rule": "lib/casework/engine.ts act() (fourEyes, distinctFrom); lib/data/dual-control.ts dualControlRefusal()"
+   },
+   {
+    "id": "no-ai-decision",
+    "what": "No step is decided by a model or a score: officials decide with reasons",
+    "why": "Part 13 §11.3: AI must not issue legally consequential decisions.",
+    "rule": "CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   },
+   {
+    "id": "counts-and-hashes",
+    "what": "A migration is reconciled by count and by a SHA-256 manifest (kind, id and hash of each record); the target side is computed from the platform's own records where they are here",
+    "why": "Part 13 §15 Gate 2: migrations preserve identifiers, history and required relationships.",
+    "rule": "lib/recordkeeping/procedures.ts rec.migration; lib/recordkeeping/register.ts listDigest()"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 703,
+    "quotes": [
+     "GOV-REC-017",
+     "Records migration approval",
+     "Migration plan, validation and sign-off"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/recordkeeping/procedures.ts",
+      "how": "the form's register row, carried by rec.migration"
+     },
+     "procedure": "record-plan"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 1290,
+    "quotes": [
+     "Migrations preserve identifiers, history and required relationships."
+    ],
+    "met_by": {
+     "fields": [
+      "migration.source_manifest",
+      "migration.source_count"
+     ],
+     "deviation": "counts-and-hashes"
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "migration.institution",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "actor_authorized_for_institution",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.institutions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Your institution"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter your institution.",
+     "reference_exists": "There is no record with that reference in the register."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "migration.source_system",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 200
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Source system"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter source system.",
+     "length": "Source system must be 200 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "migration.target_system",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 200
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Target system"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter target system.",
+     "length": "Target system must be 200 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "migration.target_kind",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "records.migration_targets",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Where the records land"
+   },
+   "error_text": {
+    "en": {
+     "required": "Select an answer.",
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "migration.target_reference",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 80
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The record class or procedure key they land under"
+   },
+   "error_text": {
+    "en": {
+     "length": "The record class or procedure key they land under must be 80 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "migration.source_count",
+   "type": "number",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "integer_range",
+     "params": {
+      "min": 0
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Records in the source extract"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter records in the source extract."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "migration.source_manifest",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 64
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "SHA-256 of the source manifest"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter sHA-256 of the source manifest.",
+     "length": "SHA-256 of the source manifest must be 64 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "migration.plan",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [
+    {
+     "kind": "migration-plan",
+     "when": "always"
+    }
+   ],
+   "label": {
+    "en": "The migration plan and its validation rules"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the migration plan and its validation rules."
+    }
+   },
+   "country_decision": null
+  }
+ ]
+}

@@ -7,6 +7,7 @@ import { db } from './state';
 import { uid, hash } from './shared';
 import { recordAudit } from './audit';
 import { samplesAllowed } from '@/lib/ops/mode';
+import { touch } from '@/lib/data/repo/track';
 
 // ── Payments ──────────────────────────────────────────────────────────
 export function listBills(): Bill[] {
@@ -99,3 +100,72 @@ export function recordTransfer(input: { reference: string; amountMinor: number; 
 
 /** Everything paid against a liability reference, for reconciliation. */
 export const receiptsFor = (reference: string): PaymentReceipt[] => db.receipts.filter(r => r.reference === reference);
+
+// ── Refunds (plan step I13) ─────────────────────────────────────────────
+// A fee is refunded only through the payments system and only as what was
+// paid: a refund names the receipt it returns, its amount is that receipt's
+// amount (never typed), the bill it settled was issued by the refunding
+// institution, and a receipt is refunded once. It is instructed by the
+// decision of a refund case (lib/frontdoor/procedures.ts, two officials) and
+// recorded paid from the rail's reference by an official, like a transfer
+// that arrived outside the platform. No payment provider is connected
+// (integration register 1.8): a stand-in receipt is never refunded in
+// production. Held apart from the store's state object, under its own key.
+
+export interface Refund {
+  id: string;
+  receipt: string;
+  billId: string;
+  reference?: string;
+  amountMinor: number;
+  currency: string;
+  issuer: string;
+  /** The refund case that decided it. */
+  case: string;
+  instructedBy: string;
+  instructedAt: string;
+  paid?: { at: string; rail: string; railReference: string; by: string };
+  /** Refunds a stand-in receipt (demo and training only). */
+  simulated?: true;
+}
+type RefundDb = { refunds: Refund[] };
+const refundStore = globalThis as unknown as { __civicosRefunds?: RefundDb };
+const refundDb = (): RefundDb => touch('__civicosRefunds', refundStore.__civicosRefunds ??= { refunds: [] });
+export function resetRefunds(): void { refundStore.__civicosRefunds = undefined; }
+
+/** The receipt and its bill when this institution may refund it, else why not. */
+export function refundableReceipt(receiptId: string, institution: string): { receipt: PaymentReceipt; bill: Bill } | { error: string } {
+  const receipt = db.receipts.find(r => r.id === receiptId);
+  if (!receipt) return { error: 'No such payment receipt' };
+  const bill = db.bills.find(b => b.id === receipt.billId) ?? (receipt.reference ? db.bills.find(b => b.reference === receipt.reference) : undefined);
+  if (!bill) return { error: 'The receipt settles no bill of this installation: nothing to refund here' };
+  if (bill.issuer !== institution) return { error: 'The bill this receipt paid was issued by another institution: only the institution that charged a fee refunds it' };
+  if (receipt.simulated && !samplesAllowed()) return { error: 'A stand-in payment (no money moved) is never refunded in production' };
+  if (refundDb().refunds.some(x => x.receipt === receipt.id)) return { error: 'This receipt has already been refunded' };
+  return { receipt, bill };
+}
+
+/** Instruct the refund of exactly what a receipt paid (the refund case's decision). */
+export function instructRefund(input: { receipt: string; institution: string; case: string }, by: string, now = new Date()): Refund | { error: string } {
+  const r = refundableReceipt(input.receipt, input.institution);
+  if ('error' in r) return r;
+  const refund: Refund = { id: uid('RF'), receipt: r.receipt.id, billId: r.bill.id, ...(r.receipt.reference ? { reference: r.receipt.reference } : {}), amountMinor: r.receipt.amountMinor, currency: r.receipt.currency, issuer: input.institution, case: input.case, instructedBy: by, instructedAt: now.toISOString(), ...(r.receipt.simulated ? { simulated: true as const } : {}) };
+  refundDb().refunds.unshift(refund);
+  recordAudit(by, 'payment.refund.instruct', `Refund:${refund.id}`, 'ok', `receipt ${refund.receipt} · ${refund.currency} ${refund.amountMinor / 100} · case ${input.case}`);
+  return { ...refund };
+}
+
+/** Record that an instructed refund was paid out on the rail (its reference); once. */
+export function recordRefundPaid(refundId: string, input: { rail: string; railReference: string; paidAt: string }, by: string): Refund | { error: string } {
+  const x = refundDb().refunds.find(r => r.id === refundId);
+  if (!x) return { error: 'No such refund' };
+  if (x.paid) return x.paid.railReference === input.railReference ? { ...x } : { error: 'This refund is already recorded as paid' };
+  if (!input.rail.trim() || !input.railReference.trim()) return { error: 'Give the rail and the payment reference of the refund' };
+  if (!/^\d{4}-\d{2}-\d{2}/.test(input.paidAt)) return { error: 'Give the date it was paid' };
+  x.paid = { at: input.paidAt, rail: input.rail.trim().slice(0, 60), railReference: input.railReference.trim().slice(0, 120), by };
+  recordAudit(by, 'payment.refund.paid', `Refund:${x.id}`, 'ok', `${x.paid.rail} ${x.paid.railReference}`);
+  return { ...x };
+}
+
+export const refundOfServiceCase = (caseRef: string): Refund | undefined => { const x = refundDb().refunds.find(r => r.case === caseRef); return x ? { ...x } : undefined; };
+export const listRefunds = (issuer?: string): Refund[] => refundDb().refunds.filter(r => !issuer || r.issuer === issuer).map(r => ({ ...r }));

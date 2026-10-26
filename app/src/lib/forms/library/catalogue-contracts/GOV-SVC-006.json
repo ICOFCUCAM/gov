@@ -1,0 +1,182 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "GOV-SVC-006",
+ "record_type": "frontdoor.status",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-GOV-009: personal-data protection and lawful disclosure (retention and disclosure of what the form collects)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/PARTS-12-13.md",
+  "id": "GOV-SVC-006",
+  "part": 13,
+  "section": "2.1",
+  "line": 651,
+  "batch": 12
+ },
+ "library": {
+  "title": "Ask where your application stands",
+  "intro": "See where an application you made, or one made for you, stands: its stage, the institution handling it, any deadline, its decisions and whether you can ask for it to be reconsidered.",
+  "owner": "institution",
+  "filled_by": "The applicant, the person an application was made for, or a representative allowed to follow it.",
+  "authority": "The institution that owns the service or the records (an institution of the registry, or the one the deployment profile names for its slot); never a ministry by name.",
+  "procedure": null,
+  "intended": "no case is opened: the person's own applications are read from the case engine (lib/frontdoor/journey.ts trackFor(), /wallet/applications)",
+  "lists": {},
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "institution-owned",
+    "what": "The owner is each institution itself for its own services and records: it adopts the front-door and records procedures as its own (svc.<template>.<institution>, rec.<template>.<institution>), drafted by one of its officials and approved by another; a service names its owner as a slot of the deployment profile or an institution of the registry, never a ministry by name",
+    "why": "Part 13 §12.3: each institution keeps its own records, service ownership and decisions; the shared platform is no authority over them.",
+    "rule": "lib/frontdoor/procedures.ts installFrontdoorProcedures(); lib/recordkeeping/procedures.ts installRecordkeepingProcedures(); lib/frontdoor/catalogue.ts ownerOf()"
+   },
+   {
+    "id": "two-officials",
+    "what": "Every publication, approval and decision is proposed by one official and confirmed by a different person, compared as persons and never only as accounts",
+    "why": "Part 13 §7.3 and §15 Gate 3: required dual control prevents self-approval.",
+    "rule": "lib/casework/engine.ts act() (fourEyes, distinctFrom); lib/data/dual-control.ts dualControlRefusal()"
+   },
+   {
+    "id": "no-ai-decision",
+    "what": "No step is decided by a model or a score: officials decide with reasons",
+    "why": "Part 13 §11.3: AI must not issue legally consequential decisions.",
+    "rule": "CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   },
+   {
+    "id": "no-case-of-its-own",
+    "what": "This form opens no case of its own: what it records is kept by the platform system named in its intended stage, under that system's own two-official rules",
+    "why": "The catalogue item is a record of the front door or of service management, not a decision procedure.",
+    "rule": "lib/frontdoor/catalogue.ts, lib/frontdoor/service-management.ts, lib/frontdoor/representation.ts, lib/frontdoor/journey.ts"
+   },
+   {
+    "id": "identity-not-authorisation",
+    "what": "Signing in through the nation's identity provider proves who someone is; whether they may act for another is decided by a representation that person granted, checked at every act",
+    "why": "Part 13 §5.2: identity is not authorisation.",
+    "rule": "lib/frontdoor/representation.ts representationCovering()"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 651,
+    "quotes": [
+     "GOV-SVC-006",
+     "Application status inquiry",
+     "Authorized status disclosure"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/frontdoor/catalogue.ts",
+      "how": "the form's register row, carried by the platform system its intended stage names"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 755,
+    "quotes": [
+     "Track"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/frontdoor/journey.ts",
+      "how": "trackFor(): the track step"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 757,
+    "quotes": [
+     "Display authorized status information, requests for further evidence, applicable deadlines and the next required action."
+    ],
+    "met_by": {
+     "fields": [
+      "inquiry.case_reference"
+     ],
+     "platform": {
+      "file": "app/src/lib/frontdoor/journey.ts",
+      "how": "trackFor(): stage, deadlines, decisions and whether a reconsideration can be asked"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "inquiry.case_reference",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 40
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Your application's reference"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter your application's reference.",
+     "length": "Your application's reference must be 40 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "inquiry.on_behalf_of",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 120
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "personal",
+   "evidence": [],
+   "label": {
+    "en": "Asking for another person: their identifier (within the representation they granted you)"
+   },
+   "error_text": {
+    "en": {
+     "length": "Asking for another person: their identifier (within the representation they granted you) must be 120 characters or fewer."
+    }
+   },
+   "country_decision": null
+  }
+ ]
+}

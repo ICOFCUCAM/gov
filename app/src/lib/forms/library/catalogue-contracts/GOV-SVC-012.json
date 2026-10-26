@@ -1,0 +1,300 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "GOV-SVC-012",
+ "record_type": "svc.reconsideration",
+ "form_version": 1,
+ "procedure_package_id": "svc.reconsideration",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-GOV-009: personal-data protection and lawful disclosure (retention and disclosure of what the form collects)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/PARTS-12-13.md",
+  "id": "GOV-SVC-012",
+  "part": 13,
+  "section": "2.1",
+  "line": 657,
+  "batch": 12
+ },
+ "library": {
+  "title": "Ask for a decision to be reconsidered",
+  "intro": "Ask the institution that decided your application to reconsider its decision. Officials who took no part in it decide; the original decision is kept as it was and the outcome is recorded beside it.",
+  "owner": "institution",
+  "filled_by": "The applicant, the person the application was made for, or a representative allowed to challenge it.",
+  "authority": "The institution that owns the service or the records (an institution of the registry, or the one the deployment profile names for its slot); never a ministry by name. Only the institution that made the decision reconsiders it.",
+  "procedure": {
+   "key": "svc.reconsideration",
+   "stage": "received",
+   "action": "admit"
+  },
+  "lists": {},
+  "nation_values": [
+   {
+    "key": "frontdoor.reconsideration.period",
+    "kind": "days",
+    "source": "procedure",
+    "decision": "The period to ask for a reconsideration and to decide it, set by the nation on its approved version of svc.reconsideration (shipped unset)"
+   }
+  ],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "institution-owned",
+    "what": "The owner is each institution itself for its own services and records: it adopts the front-door and records procedures as its own (svc.<template>.<institution>, rec.<template>.<institution>), drafted by one of its officials and approved by another; a service names its owner as a slot of the deployment profile or an institution of the registry, never a ministry by name",
+    "why": "Part 13 §12.3: each institution keeps its own records, service ownership and decisions; the shared platform is no authority over them.",
+    "rule": "lib/frontdoor/procedures.ts installFrontdoorProcedures(); lib/recordkeeping/procedures.ts installRecordkeepingProcedures(); lib/frontdoor/catalogue.ts ownerOf()"
+   },
+   {
+    "id": "two-officials",
+    "what": "Every publication, approval and decision is proposed by one official and confirmed by a different person, compared as persons and never only as accounts",
+    "why": "Part 13 §7.3 and §15 Gate 3: required dual control prevents self-approval.",
+    "rule": "lib/casework/engine.ts act() (fourEyes, distinctFrom); lib/data/dual-control.ts dualControlRefusal()"
+   },
+   {
+    "id": "no-ai-decision",
+    "what": "No step is decided by a model or a score: officials decide with reasons",
+    "why": "Part 13 §11.3: AI must not issue legally consequential decisions.",
+    "rule": "CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   },
+   {
+    "id": "reconsideration-independent",
+    "what": "A reconsideration is decided by two officials of the institution who took no part in the decision reconsidered; the original decision stays sealed and the outcome sits beside it, a correction made through the original procedure",
+    "why": "Part 13 §3.1 step 7 and the review rights of a decision.",
+    "rule": "lib/frontdoor/procedures.ts svc.reconsideration (svc.reconsideration.decide)"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 657,
+    "quotes": [
+     "GOV-SVC-012",
+     "Administrative reconsideration request",
+     "Review request linked to the original decision"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/frontdoor/procedures.ts",
+      "how": "the form's register row, carried by svc.reconsideration"
+     },
+     "procedure": "admit"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 760,
+    "quotes": [
+     "Deliver the authenticated decision, reasons where required, conditions, effective date and review rights."
+    ],
+    "met_by": {
+     "fields": [
+      "reconsideration.original_case"
+     ],
+     "platform": {
+      "file": "app/src/lib/records/decisions.ts",
+      "how": "Sealed decisions with reasons and the law cited; the appeal window from the approved procedure"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 761,
+    "quotes": [
+     "Complete or challenge"
+    ],
+    "met_by": {
+     "procedure": "admit"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 763,
+    "quotes": [
+     "Provide the relevant payment, appointment, certificate, correction, complaint or appeal workflow."
+    ],
+    "met_by": {
+     "procedure": "confirm-decision",
+     "platform": {
+      "file": "app/src/lib/frontdoor/journey.ts",
+      "how": "requestReconsideration(): a case of the deciding institution's own procedure"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "reconsideration.original_case",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 40
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The decision's case reference"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the decision's case reference.",
+     "length": "The decision's case reference must be 40 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "reconsideration.grounds",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 8000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Why it should be reconsidered"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter why it should be reconsidered.",
+     "length": "Why it should be reconsidered must be 8000 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "reconsideration.new_evidence",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Anything new to consider"
+   },
+   "error_text": {
+    "en": {
+     "length": "Anything new to consider must be 4000 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "reconsideration.documents",
+   "type": "document",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "reconsideration-evidence",
+     "when": "when_the_person_has_it"
+    }
+   ],
+   "label": {
+    "en": "Supporting documents"
+   },
+   "country_decision": null,
+   "multiple": true
+  },
+  {
+   "id": "reconsideration.asked_within_period",
+   "type": "boolean",
+   "required": false,
+   "validation": [
+    {
+     "rule": "review_request_period_from_rule",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Asked within the period the law allows"
+   },
+   "country_decision": null
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "only": [
+    "declaration.text_version",
+    "declaration.confirmed",
+    "declaration.signed_at"
+   ],
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "reconsideration.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

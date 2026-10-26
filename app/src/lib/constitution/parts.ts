@@ -21,6 +21,8 @@
 //                   digest of every profile drafted before stays as it was
 //   cabinetRules    the Cabinet's members counted, quorum and decision rule (lib/cabinet/register.ts, plan
 //                   step I5); counted only once the nation adopts them
+//   securityClassification  the nation's classification scheme and the installation's declared accreditation
+//                   (lib/security/classification.ts, plan step I12); counted only once the nation adopts them
 
 import { sha256Hex } from '@/lib/audit/sha256';
 import { canonicalJson } from '@/lib/data/store/shared';
@@ -36,6 +38,7 @@ import { PART_KEYS, PART_LABELS, type PartKey, type PartRef } from './profile-st
 import { sealKeyRules } from '@/lib/keys/seal-register';
 import { competencesInForce, competenceVersions, competencesWaiting, transitionRules } from '@/lib/transitions/state';
 import { cabinetRules, cabinetRuleChanges } from '@/lib/cabinet/register';
+import { securityClassification, securityClassificationChanges } from '@/lib/security/classification';
 
 const digestOf = (v: unknown) => sha256Hex(canonicalJson(v));
 const adoptedCount = (h?: { history?: { outcome: string }[] }) => (h?.history ?? []).filter(x => x.outcome === 'adopted').length;
@@ -109,11 +112,17 @@ function read(key: PartKey, now: Date): LivePart {
       return { key, label, version: adoptedCount(ch), digest: digestOf(values), waiting: waitingOf(ch),
         summary: version ? `${values.members} members; quorum ${values.quorum?.numerator}/${values.quorum?.denominator}; ${values.rule}` : 'None adopted by the nation' };
     }
+    case 'securityClassification': {
+      const { version, ...values } = securityClassification();
+      const ch = securityClassificationChanges();
+      return { key, label, version: adoptedCount(ch), digest: digestOf(values), waiting: waitingOf(ch),
+        summary: version ? `${values.scheme ? `${values.scheme.name}, ${values.scheme.levels.length} level(s)` : 'No scheme'}; ${values.accreditation ? `accredited up to ${values.accreditation.level}` : 'no accreditation declared'}` : 'None adopted by the nation' };
+    }
   }
 }
 
 /** Parts that count only once the nation adopts them (added after profiles existed; their absence leaves earlier digests as they were). */
-const ONCE_ADOPTED: PartKey[] = ['sealKeys', 'cabinetRules'];
+const ONCE_ADOPTED: PartKey[] = ['sealKeys', 'cabinetRules', 'securityClassification'];
 
 /** Every part as it stands today, in a fixed order. */
 export function currentParts(now = new Date()): LivePart[] {

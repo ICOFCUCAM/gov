@@ -66,8 +66,10 @@ export function procedureLink(f: LinkSubject, opts: { services?: string[]; packa
   const carriers = packages.filter(p => (want && sameForm(identityOfForm(p.form), want)) || (f.procedure?.carried && p.key === f.procedure.key))
     .filter(p => p.state !== 'superseded').sort((a, b) => rank(b) - rank(a) || b.version - a.version);
   // An internal-administration (adm.*), local-government (lg.*, plan I7) or procurement template (proc.*, plan I5) is in the register once any institution has
-  // adopted it as its own (adm.<template>.<institution>, lg.<template>.<local government>, proc.<template>.<institution>).
-  const adopted = (k: string, p: CasePackage) => p.key === k || (/^(adm|lg|proc)\./.test(k) && p.key.startsWith(`${k}.`));
+  // adopted it as its own (adm.<template>.<institution>, lg.<template>.<local government>, proc.<template>.<institution>; since I13 the
+  // front-door and records templates, svc.<template>.<institution> and rec.<template>.<institution>).
+  // I9: the cross-institution workflow templates (xi.<template>.<institution>) are adopted the same way.
+  const adopted = (k: string, p: CasePackage) => p.key === k || (/^(adm|lg|proc|xi|svc|rec)\./.test(k) && p.key.startsWith(`${k}.`));
   const linked = f.procedure ? { key: f.procedure.key, inRegister: packages.some(p => adopted(f.procedure!.key, p)) } : undefined;
   const exchange = noCase || (!f.procedure && f.exchange) ? { id: f.exchange ?? null, exists: !!f.exchange && (opts.services ?? []).includes(f.exchange) } : undefined;
   const top = carriers[0];

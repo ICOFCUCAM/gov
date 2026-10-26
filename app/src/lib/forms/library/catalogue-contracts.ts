@@ -122,6 +122,37 @@
 // are linked to the procedures of lib/identity, lib/passports,
 // lib/citizenship, lib/labour and lib/social; the others name what they wait
 // for.
+// Batch 13 (plan step I12, security governance and resilience): the catalogue
+// Part 11 forms the security procedures carry or wait for
+// (docs/forms-catalogue/PARTS-08-11.md §2.2–§2.4; lib/security/procedures.ts):
+// fourteen cybersecurity forms (SEC-CYB-001 … 004, 008 … 017), twelve critical
+// infrastructure forms (SEC-INF-001 … 007, 009, 013 … 016), the clearance
+// application and review as metadata (SEC-INT-007, 008) and the supplement's
+// three critical infrastructure contracts (CIP-REG-008, CIP-RSK-009,
+// CIP-INC-010), answered field by field. Owners are the slots cyberAuthority,
+// criticalInfrastructure and securityAccreditation, shipped empty. Metadata
+// only: a form's marking is checked against the installation's accreditation;
+// no field records a source, a target, an attacker or an attribution, nothing
+// computes a score, vetting stays with the competent authority (its reference
+// only). Every intelligence form (SEC-INT-001 … 006, 009 … 016, SEC-OVS-007)
+// and the defence forms are not written: the first wait for the nation's legal
+// review, the second are plan I11.
+//
+// Batch 11 (owner's assignment; plan step I9, federation and portability): the
+// catalogue Part 13 §2.2 whole-of-government workflow forms GOV-WF-001 … 006 and
+// 009 … 015 (docs/forms-catalogue/PARTS-12-13.md; GOV-WF-007 and 008, directives,
+// belong to the executive office's step) and the field series Part 3 §3.6
+// cross-institution exchange forms for referrals and the tax and business
+// status checks (docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md), 21 in all.
+// Each GOV-WF form is carried by the receiving institution's own
+// cross-institution procedure (xi.<template>.<institution>,
+// lib/federation/procedures.ts) and never becomes a binding order: its nature
+// (a request, or an instruction under an approved instruct relationship) is
+// recorded when it is taken in. The status checks are answered by the
+// taxpayer.status and organisation.standing exchange services (no case),
+// between institutions only under an approved exchange relationship
+// (lib/federation/binding.ts); the referral forms wait for the referral
+// procedure (lib/casework/referral.ts) to carry a contract.
 //
 // Each contract is a JSON file in the canonical format
 // (civicos.form-contract.v1, lib/forms/canonical.ts; never a second format),
@@ -366,6 +397,28 @@ import con018 from './catalogue-contracts/DEM-CON-018.json';
 import con019 from './catalogue-contracts/DEM-CON-019.json';
 import con020 from './catalogue-contracts/DEM-CON-020.json';
 import pub009 from './catalogue-contracts/DEM-PUB-009.json';
+// Batch 11: federation and portability (plan I9): cross-institution workflow and controlled exchanges.
+import b11GovWf001 from './catalogue-contracts/GOV-WF-001.json';
+import b11GovWf002 from './catalogue-contracts/GOV-WF-002.json';
+import b11GovWf003 from './catalogue-contracts/GOV-WF-003.json';
+import b11GovWf004 from './catalogue-contracts/GOV-WF-004.json';
+import b11GovWf005 from './catalogue-contracts/GOV-WF-005.json';
+import b11GovWf006 from './catalogue-contracts/GOV-WF-006.json';
+import b11GovWf009 from './catalogue-contracts/GOV-WF-009.json';
+import b11GovWf010 from './catalogue-contracts/GOV-WF-010.json';
+import b11GovWf011 from './catalogue-contracts/GOV-WF-011.json';
+import b11GovWf012 from './catalogue-contracts/GOV-WF-012.json';
+import b11GovWf013 from './catalogue-contracts/GOV-WF-013.json';
+import b11GovWf014 from './catalogue-contracts/GOV-WF-014.json';
+import b11GovWf015 from './catalogue-contracts/GOV-WF-015.json';
+import b11ExchangeReferralCreate from './catalogue-contracts/exchange.referral.create.json';
+import b11ExchangeReferralAccept from './catalogue-contracts/exchange.referral.accept.json';
+import b11ExchangeReferralUpdate from './catalogue-contracts/exchange.referral.update.json';
+import b11ExchangeReferralClose from './catalogue-contracts/exchange.referral.close.json';
+import b11ExchangeTaxStatusVerify from './catalogue-contracts/exchange.tax_status.verify.json';
+import b11ExchangeTaxStatusResponse from './catalogue-contracts/exchange.tax_status.response.json';
+import b11ExchangeBusinessStatusVerify from './catalogue-contracts/exchange.business_status.verify.json';
+import b11ExchangeBusinessStatusResponse from './catalogue-contracts/exchange.business_status.response.json';
 // Batch 10: territory and infrastructure (plan I7).
 import b10LndReg005 from './catalogue-contracts/LND-REG-005.json';
 import b10LndReg007 from './catalogue-contracts/LND-REG-007.json';
@@ -556,7 +609,67 @@ import b9SOCBEN015 from './catalogue-contracts/SOC-BEN-015.json';
 import b9SOCBEN018 from './catalogue-contracts/SOC-BEN-018.json';
 import b9SOCBEN019 from './catalogue-contracts/SOC-BEN-019.json';
 import b9SOCBEN020 from './catalogue-contracts/SOC-BEN-020.json';
+// I13: batch 12, digital government front door and records (catalogue Part 13 §2.1, §2.3, §2.5; supplement Part 21 DGV-*).
+import b12GOVGOV001 from './catalogue-contracts/GOV-GOV-001.json';
+import b12GOVGOV002 from './catalogue-contracts/GOV-GOV-002.json';
+import b12GOVGOV003 from './catalogue-contracts/GOV-GOV-003.json';
+import b12GOVGOV004 from './catalogue-contracts/GOV-GOV-004.json';
+import b12GOVGOV005 from './catalogue-contracts/GOV-GOV-005.json';
+import b12GOVGOV006 from './catalogue-contracts/GOV-GOV-006.json';
+import b12GOVGOV010 from './catalogue-contracts/GOV-GOV-010.json';
+import b12GOVGOV014 from './catalogue-contracts/GOV-GOV-014.json';
+import b12GOVREC001 from './catalogue-contracts/GOV-REC-001.json';
+import b12GOVREC007 from './catalogue-contracts/GOV-REC-007.json';
+import b12GOVREC008 from './catalogue-contracts/GOV-REC-008.json';
+import b12GOVREC010 from './catalogue-contracts/GOV-REC-010.json';
+import b12GOVREC011 from './catalogue-contracts/GOV-REC-011.json';
+import b12GOVREC012 from './catalogue-contracts/GOV-REC-012.json';
+import b12GOVREC017 from './catalogue-contracts/GOV-REC-017.json';
+import b12GOVREC018 from './catalogue-contracts/GOV-REC-018.json';
+import b12GOVSVC001 from './catalogue-contracts/GOV-SVC-001.json';
+import b12GOVSVC004 from './catalogue-contracts/GOV-SVC-004.json';
+import b12GOVSVC006 from './catalogue-contracts/GOV-SVC-006.json';
+import b12GOVSVC007 from './catalogue-contracts/GOV-SVC-007.json';
+import b12GOVSVC008 from './catalogue-contracts/GOV-SVC-008.json';
+import b12GOVSVC009 from './catalogue-contracts/GOV-SVC-009.json';
+import b12GOVSVC011 from './catalogue-contracts/GOV-SVC-011.json';
+import b12GOVSVC012 from './catalogue-contracts/GOV-SVC-012.json';
+import b12GOVSVC013 from './catalogue-contracts/GOV-SVC-013.json';
+import b12GOVSVC014 from './catalogue-contracts/GOV-SVC-014.json';
+import b12GOVSVC018 from './catalogue-contracts/GOV-SVC-018.json';
 
+// Batch 13: security governance and resilience (plan I12).
+import b13SECCYB001 from './catalogue-contracts/SEC-CYB-001.json';
+import b13SECCYB002 from './catalogue-contracts/SEC-CYB-002.json';
+import b13SECCYB003 from './catalogue-contracts/SEC-CYB-003.json';
+import b13SECCYB004 from './catalogue-contracts/SEC-CYB-004.json';
+import b13SECCYB008 from './catalogue-contracts/SEC-CYB-008.json';
+import b13SECCYB009 from './catalogue-contracts/SEC-CYB-009.json';
+import b13SECCYB010 from './catalogue-contracts/SEC-CYB-010.json';
+import b13SECCYB011 from './catalogue-contracts/SEC-CYB-011.json';
+import b13SECCYB012 from './catalogue-contracts/SEC-CYB-012.json';
+import b13SECCYB013 from './catalogue-contracts/SEC-CYB-013.json';
+import b13SECCYB014 from './catalogue-contracts/SEC-CYB-014.json';
+import b13SECCYB015 from './catalogue-contracts/SEC-CYB-015.json';
+import b13SECCYB016 from './catalogue-contracts/SEC-CYB-016.json';
+import b13SECCYB017 from './catalogue-contracts/SEC-CYB-017.json';
+import b13SECINF001 from './catalogue-contracts/SEC-INF-001.json';
+import b13SECINF002 from './catalogue-contracts/SEC-INF-002.json';
+import b13SECINF003 from './catalogue-contracts/SEC-INF-003.json';
+import b13SECINF004 from './catalogue-contracts/SEC-INF-004.json';
+import b13SECINF005 from './catalogue-contracts/SEC-INF-005.json';
+import b13SECINF006 from './catalogue-contracts/SEC-INF-006.json';
+import b13SECINF007 from './catalogue-contracts/SEC-INF-007.json';
+import b13SECINF009 from './catalogue-contracts/SEC-INF-009.json';
+import b13SECINF013 from './catalogue-contracts/SEC-INF-013.json';
+import b13SECINF014 from './catalogue-contracts/SEC-INF-014.json';
+import b13SECINF015 from './catalogue-contracts/SEC-INF-015.json';
+import b13SECINF016 from './catalogue-contracts/SEC-INF-016.json';
+import b13SECINT007 from './catalogue-contracts/SEC-INT-007.json';
+import b13SECINT008 from './catalogue-contracts/SEC-INT-008.json';
+import b13CIPREG008 from './catalogue-contracts/CIP-REG-008.json';
+import b13CIPRSK009 from './catalogue-contracts/CIP-RSK-009.json';
+import b13CIPINC010 from './catalogue-contracts/CIP-INC-010.json';
 /** What meets a catalogue passage: fields of the contract, a documented deviation, a platform rule (with the file that enforces it), a country decision, a step of the linked procedure, an exchange service or a policy of the form. */
 export interface MetBy {
   fields?: string[];
@@ -682,7 +795,19 @@ export const BATCH_9 = [
   b9SOCBEN009, b9SOCBEN011, b9SOCBEN012, b9SOCBEN014, b9SOCBEN010, b9SOCBEN008, b9SOCBEN013, b9SOCBEN016,
   b9SOCBEN021, b9SOCBEN022, b9SOCBEN023, b9SOCBEN024, b9SOCBEN015, b9SOCBEN018, b9SOCBEN019, b9SOCBEN020,
 ] as unknown as CatalogueContractJson[];
-/** The passages contracts answer the same way: every item applies to the forms in applies_to, an item with `for` only to that group (health: batches 1 and 2; tax: batch 3; adm: batch 5; oversight: batch 7; land, hpc, lrg, trn: batch 10). */
+/** Batch 11: federation and portability, catalogue Part 13 §2.2 and field series Part 3 §3.6 (owner's assignment; plan I9). */
+export const BATCH_11 = [
+  b11GovWf001, b11GovWf002, b11GovWf003, b11GovWf004, b11GovWf005, b11GovWf006, b11GovWf009, b11GovWf010, b11GovWf011, b11GovWf012, b11GovWf013, b11GovWf014, b11GovWf015, b11ExchangeReferralCreate, b11ExchangeReferralAccept, b11ExchangeReferralUpdate, b11ExchangeReferralClose, b11ExchangeTaxStatusVerify, b11ExchangeTaxStatusResponse, b11ExchangeBusinessStatusVerify, b11ExchangeBusinessStatusResponse,
+] as unknown as CatalogueContractJson[];
+/** Batch 13: security governance and resilience, catalogue Part 11 §2.2–§2.4 and the supplement's Part 11 contracts (plan I12). */
+export const BATCH_13 = [
+  b13SECCYB001, b13SECCYB002, b13SECCYB003, b13SECCYB004, b13SECCYB008, b13SECCYB009, b13SECCYB010, b13SECCYB011, b13SECCYB012, b13SECCYB013, b13SECCYB014, b13SECCYB015, b13SECCYB016, b13SECCYB017, b13SECINF001, b13SECINF002, b13SECINF003, b13SECINF004, b13SECINF005, b13SECINF006, b13SECINF007, b13SECINF009, b13SECINF013, b13SECINF014, b13SECINF015, b13SECINF016, b13SECINT007, b13SECINT008, b13CIPREG008, b13CIPRSK009, b13CIPINC010,
+] as unknown as CatalogueContractJson[];
+/** Batch 12: the digital government front door, records management and service governance, catalogue Part 13 §2.1, §2.3 and §2.5 with the supplement's DGV contracts (owner's assignment; plan I13). Each institution owns its own. */
+export const BATCH_12 = [
+  b12GOVGOV001, b12GOVGOV002, b12GOVGOV003, b12GOVGOV004, b12GOVGOV005, b12GOVGOV006, b12GOVGOV010, b12GOVGOV014, b12GOVREC001, b12GOVREC007, b12GOVREC008, b12GOVREC010, b12GOVREC011, b12GOVREC012, b12GOVREC017, b12GOVREC018, b12GOVSVC001, b12GOVSVC004, b12GOVSVC006, b12GOVSVC007, b12GOVSVC008, b12GOVSVC009, b12GOVSVC011, b12GOVSVC012, b12GOVSVC013, b12GOVSVC014, b12GOVSVC018,
+] as unknown as CatalogueContractJson[];
+/** The passages contracts answer the same way: every item applies to the forms in applies_to, an item with `for` only to that group (health: batches 1 and 2; tax: batch 3; adm: batch 5; oversight: batch 7; land, hpc, lrg, trn: batch 10; dgv, svc, rec, ggov: batch 12; sec, cyb, inf, clr: batch 13). */
 export const COMMON_ITEMS = (common as unknown as { applies_to: string[]; groups: Record<string, string[]>; items: (CatalogueItem & { for?: string })[] });
 /** The shared items that apply to one contract. */
 export const commonItemsFor = (formId: string): CatalogueItem[] => (COMMON_ITEMS.applies_to.includes(formId) ? COMMON_ITEMS.items.filter(i => !i.for || COMMON_ITEMS.groups[i.for]?.includes(formId)).map(({ for: _for, ...i }) => i) : []);
@@ -694,6 +819,10 @@ const INSTITUTION: Record<string, string> = {
   landRegistry: 'The land registry', buildingControl: 'The planning and building control authority', housing: 'The housing authority',
   vehicleRegistration: 'The vehicle and driver licensing authority', roadAuthority: 'The road authority', transportRegulator: 'The transport regulator',
   finance: 'The finance authority', cabinetOffice: 'The executive office',
+  // I12
+  cyberAuthority: 'The national cybersecurity authority', criticalInfrastructure: 'The critical infrastructure authority', securityAccreditation: 'The security authority',
+  // I9: the business register answers the business status check.
+  businessRegister: 'The business register',
 };
 
 function load(c: CatalogueContractJson, batch: number): CatalogueLibraryForm {
@@ -724,7 +853,9 @@ function load(c: CatalogueContractJson, batch: number): CatalogueLibraryForm {
 }
 
 /** Every catalogue contract CivicOS has written, as library drafts. */
-export const CATALOGUE_CONTRACTS: CatalogueLibraryForm[] = [...BATCH_1.map(c => load(c, 1)), ...BATCH_2.map(c => load(c, 2)), ...BATCH_3.map(c => load(c, 3)), ...BATCH_4.map(c => load(c, 4)), ...BATCH_5.map(c => load(c, 5)), ...BATCH_6.map(c => load(c, 6)), ...BATCH_7.map(c => load(c, 7)), ...BATCH_8.map(c => load(c, 8)), ...BATCH_9.map(c => load(c, 9)), ...BATCH_10.map(c => load(c, 10))];
+export const CATALOGUE_CONTRACTS: CatalogueLibraryForm[] = [...BATCH_1.map(c => load(c, 1)), ...BATCH_2.map(c => load(c, 2)), ...BATCH_3.map(c => load(c, 3)), ...BATCH_4.map(c => load(c, 4)), ...BATCH_5.map(c => load(c, 5)), ...BATCH_6.map(c => load(c, 6)), ...BATCH_7.map(c => load(c, 7)), ...BATCH_8.map(c => load(c, 8)), ...BATCH_9.map(c => load(c, 9)), ...BATCH_10.map(c => load(c, 10)), ...BATCH_11.map(c => load(c, 11)),
+  // I12
+  ...BATCH_12.map(c => load(c, 12)), ...BATCH_13.map(c => load(c, 13))];
 
 /**
  * A catalogue contract by its identity (CATALOGUE:FORM-ID@VERSION; without

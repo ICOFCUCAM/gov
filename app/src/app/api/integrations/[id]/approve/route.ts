@@ -13,7 +13,10 @@
 // [{ instrument, eId }] from the laws register; required in production), and
 // in production an official of every institution that owns a service the
 // terms open confirms it (the owners are worked out here from the directory
-// and the deployment profile, never taken from the request).
+// and the deployment profile, never taken from the request). I9: `institution`
+// names the registered institution the integration acts for (another
+// institution's installation); its exchanges then answer only under an
+// approved `exchange` relationship (lib/federation/binding.ts).
 import { NextRequest, NextResponse } from 'next/server';
 import { proposeIntegrationApproval, confirmIntegrationApproval, withdrawIntegrationApproval } from '@/lib/data/store';
 import { routeActor } from '@/lib/casework/actor';
@@ -25,7 +28,7 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const { id } = await props.params;
-  const b = (await req.json().catch(() => ({}))) as { op?: string; scopes?: unknown; purposes?: unknown; note?: unknown; legalBasis?: unknown; by?: string };
+  const b = (await req.json().catch(() => ({}))) as { op?: string; scopes?: unknown; purposes?: unknown; institution?: unknown; note?: unknown; legalBasis?: unknown; by?: string };
   const actor = await routeActor(b.by);
   const out = (r: Awaited<ReturnType<typeof confirmIntegrationApproval>>) =>
     'error' in r ? NextResponse.json(r, { status: r.error === 'Integration not found' ? 404 : 422 }) : NextResponse.json({ integration: r });
@@ -40,7 +43,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
   // The institutions that own the services these terms open: each must agree (production).
   const scopes = Array.isArray(b.scopes) ? b.scopes.map(String) : Object.keys((b.purposes && typeof b.purposes === 'object' ? b.purposes : {}) as object).map(k => `service:${k}`);
   const owners = [...new Set(scopes.filter(x => x.startsWith('service:')).map(x => SERVICES.find(s => s.id === x.slice('service:'.length))?.owner).filter((o): o is NonNullable<typeof o> => !!o).map(o => ownerInstitution(o, authorityFor)).filter((x): x is string => !!x))];
-  const r = proposeIntegrationApproval(id, { scopes: b.scopes, purposes: b.purposes, note: b.note, legalBasis: b.legalBasis, owners }, actor.name, actor.id);
+  const r = proposeIntegrationApproval(id, { scopes: b.scopes, purposes: b.purposes, institution: b.institution, note: b.note, legalBasis: b.legalBasis, owners }, actor.name, actor.id);
   if ('error' in r) return out(r);
   return NextResponse.json({ integration: r, note: 'Proposed: a different official confirms it before it takes effect.' }, { status: 202 });
 }

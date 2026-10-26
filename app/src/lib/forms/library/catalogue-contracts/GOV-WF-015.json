@@ -1,0 +1,294 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "GOV-WF-015",
+ "record_type": "xi.exception",
+ "form_version": 1,
+ "procedure_package_id": "xi.exception",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-GOV-002: constitutional structure and institution registry (each institution and its relationships, recorded through the institution register; none ship).",
+  "CFG-GOV-011: approved data exchange and interoperability standards (exchange relationships, purposes and contracts; none ship).",
+  "CFG-DAT-001: retention and disclosure of the case and its records."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/PARTS-12-13.md",
+  "id": "GOV-WF-015",
+  "part": 13,
+  "section": "2.2",
+  "line": 683,
+  "batch": 11
+ },
+ "library": {
+  "title": "Request an exception to a cross-institution workflow",
+  "intro": "Ask for a time-limited exception to a step of a cross-institution workflow, with its justification, compensating controls and expiry. Two officials grant it; it never waives a requirement of law.",
+  "owner": "institution",
+  "filled_by": "An official of the requesting institution.",
+  "authority": "Each institution's own: worked by the institution that receives the request, under its own adopted procedure (xi.<template>.<institution>); never a central administrator's.",
+  "procedure": {
+   "key": "xi.exception",
+   "stage": "received",
+   "action": "grant"
+  },
+  "lists": {},
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "institution-owned",
+    "what": "The owner is each institution itself: it adopts the cross-institution templates as its own procedures (xi.<template>.<institution>), drafted by one of its officials and approved by another; the case belongs to the institution that receives the request",
+    "why": "Every institution decides what is asked of it under its own powers; no central administrator works another institution's cases.",
+    "rule": "lib/federation/procedures.ts installCrossInstitutionProcedures(); lib/auth/roles.ts caseActRefusal()"
+   },
+   {
+    "id": "not-an-order",
+    "what": "What one institution asks of another is a case of the receiving institution's own procedure; its nature is recorded when it is taken in: an instruction only where an approved instruct relationship from the requester covers it, otherwise a request it may decline with reasons",
+    "why": "Catalogue Part 13 §2.2: cross-institution tasks must not silently become binding orders; specification Part 5 E: federation must not transfer authority by accident.",
+    "rule": "lib/federation/procedures.ts natureOf(); lib/auth/roles.ts directiveTargetRefusal() (plan I9)"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 683,
+    "quotes": [
+     "GOV-WF-015",
+     "Cross-institution workflow exception",
+     "Authorized exception with justification and expiry"
+    ],
+    "met_by": {
+     "fields": [
+      "exception.from_institution",
+      "exception.requesting_case",
+      "exception.step"
+     ],
+     "procedure": "grant"
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "exception.from_institution",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "institution_active",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.institutions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Requesting institution"
+   },
+   "error_text": {
+    "en": {
+     "required": "Choose requesting institution.",
+     "reference_exists": "There is no institution with that reference in the institution register.",
+     "institution_active": "Choose an active institution."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The exception"
+   }
+  },
+  {
+   "id": "exception.requesting_case",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 80
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Its own case (its reference)"
+   },
+   "error_text": {
+    "en": {
+     "length": "Its own case (its reference) is too long."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The exception"
+   }
+  },
+  {
+   "id": "exception.step",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 200
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The workflow step it concerns"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the workflow step it concerns.",
+     "length": "The workflow step it concerns is too long."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The exception"
+   }
+  },
+  {
+   "id": "exception.justification",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Justification"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter justification.",
+     "length": "Justification is too long."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The exception"
+   }
+  },
+  {
+   "id": "exception.controls",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 2000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Compensating controls"
+   },
+   "error_text": {
+    "en": {
+     "length": "Compensating controls is too long."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The exception"
+   }
+  },
+  {
+   "id": "exception.expires_on",
+   "type": "date",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Expires on"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter expires on."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The exception"
+   }
+  },
+  {
+   "id": "exception.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

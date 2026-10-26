@@ -1,0 +1,276 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "GOV-WF-003",
+ "record_type": "xi.handover",
+ "form_version": 1,
+ "procedure_package_id": "xi.handover",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-GOV-002: constitutional structure and institution registry (each institution and its relationships, recorded through the institution register; none ship).",
+  "CFG-GOV-011: approved data exchange and interoperability standards (exchange relationships, purposes and contracts; none ship).",
+  "CFG-DAT-001: retention and disclosure of the case and its records."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/PARTS-12-13.md",
+  "id": "GOV-WF-003",
+  "part": 13,
+  "section": "2.2",
+  "line": 671,
+  "batch": 11
+ },
+ "library": {
+  "title": "Propose handing over a service to another institution",
+  "intro": "Propose that another institution takes over responsibility for a service, with the records, open cases and obligations transferred. It accepts by two officials; who is responsible changes only through its own change process.",
+  "owner": "institution",
+  "filled_by": "An official of the institution handing over.",
+  "authority": "Each institution's own: worked by the institution that receives the request, under its own adopted procedure (xi.<template>.<institution>); never a central administrator's.",
+  "procedure": {
+   "key": "xi.handover",
+   "stage": "proposed",
+   "action": "assess",
+   "document": "handover-plan"
+  },
+  "lists": {},
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "institution-owned",
+    "what": "The owner is each institution itself: it adopts the cross-institution templates as its own procedures (xi.<template>.<institution>), drafted by one of its officials and approved by another; the case belongs to the institution that receives the request",
+    "why": "Every institution decides what is asked of it under its own powers; no central administrator works another institution's cases.",
+    "rule": "lib/federation/procedures.ts installCrossInstitutionProcedures(); lib/auth/roles.ts caseActRefusal()"
+   },
+   {
+    "id": "not-an-order",
+    "what": "What one institution asks of another is a case of the receiving institution's own procedure; its nature is recorded when it is taken in: an instruction only where an approved instruct relationship from the requester covers it, otherwise a request it may decline with reasons",
+    "why": "Catalogue Part 13 §2.2: cross-institution tasks must not silently become binding orders; specification Part 5 E: federation must not transfer authority by accident.",
+    "rule": "lib/federation/procedures.ts natureOf(); lib/auth/roles.ts directiveTargetRefusal() (plan I9)"
+   },
+   {
+    "id": "no-power-granted",
+    "what": "Recording an agreement, accepting a handover or approving access grants no power: an exchange needs an approved exchange relationship, a read an audit or request-information relationship, a change of who is responsible its own change process",
+    "why": "Specification Part 5 E: federation must not silently grant access or transfer authority; relationships are the nation's law, recorded through policy-change.ts.",
+    "rule": "lib/data/store/relationships.ts; lib/federation/binding.ts (plan I9)"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 671,
+    "quotes": [
+     "GOV-WF-003",
+     "Cross-institution service handover",
+     "Accepted transfer of responsibility"
+    ],
+    "met_by": {
+     "fields": [
+      "handover.from_institution",
+      "handover.service",
+      "handover.effective_from"
+     ],
+     "procedure": "assess"
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "handover.from_institution",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "institution_active",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.institutions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Institution handing over"
+   },
+   "error_text": {
+    "en": {
+     "required": "Choose institution handing over.",
+     "reference_exists": "There is no institution with that reference in the institution register.",
+     "institution_active": "Choose an active institution."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The handover"
+   }
+  },
+  {
+   "id": "handover.service",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 200
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The service handed over"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the service handed over.",
+     "length": "The service handed over is too long."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The handover"
+   }
+  },
+  {
+   "id": "handover.effective_from",
+   "type": "date",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Proposed effective date"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter proposed effective date."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The handover"
+   }
+  },
+  {
+   "id": "handover.obligations",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Records, open cases and obligations transferred"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter records, open cases and obligations transferred.",
+     "length": "Records, open cases and obligations transferred is too long."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The handover"
+   }
+  },
+  {
+   "id": "handover.plan",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [
+    {
+     "kind": "handover-plan",
+     "when": "when_the_form_asks_for_it"
+    }
+   ],
+   "label": {
+    "en": "The handover plan"
+   },
+   "error_text": {
+    "en": {
+     "required": "Attach the handover plan."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The handover"
+   }
+  },
+  {
+   "id": "handover.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

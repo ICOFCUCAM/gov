@@ -51,6 +51,11 @@ BLDEV = "lib/building/procedures.ts (building.planning: validation on a publishe
 HOUEV = "lib/housing/procedures.ts (housing.programme with terms approved by two officials citing the law; housing.application: criteria met or not with evidence, points from the terms in force, allocation by two officials with reasons, an out-of-order allocation recorded), lib/housing/register.ts; test lib/building/building.test.ts"
 LGEV = "lib/localgov/procedures.ts (lg.resolution, lg.budget, lg.service, lg.complaint templates adopted by each local government as its own, standing subnational), lib/localgov/register.ts (council rules through policy-change.ts, quorum and majority checked on the version in force; budgets in whole minor units; requests with places from the map); whole government reaches only under an approved relationship (roles.ts Boundaries.subnational); test lib/localgov/localgov.test.ts"
 TRNEV = "lib/transport/procedures.ts (transport.vehicle-registration, transport.vehicle-transfer, transport.driving-licence, transport.road-works, transport.operator-licence; checks, decisions by two officials), lib/transport/register.ts (vehicles and keepers with history, licences with medical fitness only as a sealed document reference, road works with place and period, operators of the organisations register); test lib/transport/transport.test.ts"
+# Plan I9 (forms batch 11): the cross-institution workflow procedures each institution adopts, and the exchange services bound to relationships.
+FED = "lib/federation/procedures.ts (xi.<template>.<institution> templates each institution adopts as its own: the case is the receiving institution's, two officials for each decision, natureOf() records a request or, only under an approved instruct relationship, an instruction; nothing grants a power), decisions classified to the institution's own procedure (lib/permits/decisions.ts); test lib/federation/procedures.test.ts"
+FEDX = "lib/federation/binding.ts (exchange services between institutions only under an approved exchange relationship in force); tests lib/federation/binding.test.ts"
+B11 = "; library contract of batch 11 (app/src/lib/forms/library/catalogue-contracts/; docs/FORMS_CONFORMANCE.md §19)"
+B11MISS = "Adoption by each institution: its cross-institution procedures approved by a second official of its own"
 B10 = "; library contract of batch 10 (app/src/lib/forms/library/catalogue-contracts/; docs/FORMS_CONFORMANCE.md §18)"
 B10MISS = "Adoption by the nation: the body named for its slot, its procedure approved by a second official, its decision mapping approved"
 DELEG = "lib/records/delegations.ts (who may act for whom, for which procedures, until when; granted by the verifying official, revocable, expiring, audited without names); test lib/records/delegations.test.ts"
@@ -69,7 +74,16 @@ LEGALREV = "Directions §15 and plan §4: built only after the judiciary's and t
 POLRULE = "CLAUDE.md Police: 'intake and referral only: classification cites the law, no field records a suspect or a finding' (" + POLICE + ")"
 CLINRULE = "CLAUDE.md Health: 'no patient or clinical field anywhere, no national patient record'; returns are aggregates (lib/health/register.ts; tests apps/ministry-health/health-fields.test.ts, health-surfaces.test.ts)"
 STUDRULE = "CLAUDE.md Education: 'Returns carry aggregate counts only; there is no student record system'; qualifications recorded, corrected and revoked only through education cases, checked through qualification.verify (" + EDUEV + ")"
-CLASSRULE = "Catalogue Part 11 §3.3 (binding): an installation not accredited for a classification level must not store that class; CivicOS holds no classification scheme, no accreditation level and no intelligence content"
+CLASSRULE = "Catalogue Part 11 §3.3 (binding): an installation not accredited for a classification level must not store that class; the nation's scheme and the installation's accreditation are a country rule set that ships empty (lib/security/classification.ts), so nothing is held above the platform default until two officials adopt them; CivicOS holds no intelligence content"
+# Security governance and resilience (plan I12, forms batch 13): metadata only; no intelligence register, source, target, attribution or score.
+CLASSEV = "lib/security/classification.ts (the nation's classification scheme and the installation's declared accreditation as one country rule set through policy-change.ts, shipped empty; markingRefusal() refuses any record or upload marked above the accreditation, also in addDocument(); classificationStatus() says so in production; a part of the constitutional profile once adopted); test lib/security/security.test.ts"
+SECACC = "lib/auth/roles.ts securityAccessRefusal() (need to know, a stated purpose, the action and, for a marked record, a clearance at its level valid today, each checked on its own; a clearance alone grants nothing; administrators and the whole government have no access by role) through lib/security/access.ts (every attempt in the access log; recipients see coordination terms only; the public only a published vulnerability summary); tests lib/security/security.test.ts, app/api/security/route.test.ts"
+SECEV = "lib/security/procedures.ts (cyber.incident, cyber.vulnerability, cyber.supplier, cyber.exception, cyber.exercise, ci.designation, ci.dependency, ci.risk, ci.resilience-plan, security.clearance: reference drafts of the cyberAuthority, criticalInfrastructure and securityAccreditation slots, shipped empty; every decision by two officials under a proposed, unapproved mapping), lib/security/register.ts (metadata records by version, restricted recipients, need to know, validity read as expired after its date); " + SECACC
+SECDIREV = "lib/security/directives.ts (national security directives of the nationalSecurity slot: kind and force, cited authority, scope, recipients, marking, effective period, compliance asked, challenge route; drafted by one official and issued by a different one who can sign; instructionRefusal(): an independent institution receives a request, never an instruction; amendments as versions; acknowledgement apart from compliance; never current once expired or ended; shown to the issuer and recipients only); test lib/security/security.test.ts"
+XDEV = "lib/security/transfers.ts (cross-domain transfer records: domains, class moved, purpose, policy and version, permitted fields, redaction, validation, release by a different official who can sign, receipt, rejection or quarantine; metadata only); test lib/security/security.test.ts"
+B13 = "; library contract of batch 13 (app/src/lib/forms/library/catalogue-contracts/; docs/FORMS_CONFORMANCE.md §21)"
+B13MISS = "Adoption by the nation: the body named for its slot, its procedure approved by a second official, its decision mapping approved, its classification scheme and the installation's accreditation adopted"
+B13WAIT = "Field contract in the form library (forms batch 13; docs/FORMS_CONFORMANCE.md §21), waiting for its procedure; test lib/forms/catalogue-contracts.test.ts"
 NOTHOLD = "CivicOS will hold only approved metadata or a reference to the record in an accredited external system"
 
 FINEV = "lib/finance/register.ts and procedures.ts (budget.circular, budget.ceiling, budget.bid, budget.appropriation, budget.revision, finance.commitment, treasury.payee-account, treasury.payment separated by person at every stage and approved by two officials with the tier from the approved rule, treasury.cash-forecast; appropriation balances computed, never stored); tests lib/finance/finance.test.ts"
@@ -147,10 +161,10 @@ D = {
     'fire': ('Fire safety', 'I7', False, KB.ABSENT, 'Not yet'),
     'defence': ('Defence administration', 'I11', False, "Plan §4: defence beyond civilian administration lower priority; anything operational out of scope", 'Lower priority'),
     'intelligence': ('Intelligence governance', 'I12', False, "Plan §4 (national security lower priority); " + CLASSRULE, 'Lower priority'),
-    'classified': ('Classified information', 'I12', False, CLASSRULE, 'Not yet'),
-    'cyber': ('Cybersecurity incident management', 'I12', False, "CivicOS's own: security advisories (lib/data/advisories.ts), key compromise procedure, access watch (lib/records/access-watch.ts); no national cyber incident register", 'Not yet'),
-    'critical-infra': ('Critical infrastructure resilience', 'I12', False, KB.ABSENT, 'Not yet'),
-    'natsec-directives': ('National security directives', 'I12', False, KB.DIRECT, 'Not yet'),
+    'classified': ('Classified information', 'I12', True, CLASSEV + '; ' + SECACC, 'Not yet'),
+    'cyber': ('Cybersecurity incident management', 'I12', True, SECEV + "; CivicOS's own security advisories stay in the Update Center (lib/data/advisories.ts)", 'Not yet'),
+    'critical-infra': ('Critical infrastructure resilience', 'I12', True, SECEV, 'Not yet'),
+    'natsec-directives': ('National security directives', 'I12', True, SECDIREV, 'Not yet'),
     'legislature': ('Legislature', 'I8', True, LEGEV, 'Not yet'),
     'elections': ('Elections', 'I11', False, "Plan §4: electoral results lower priority; legal review first", 'Lower priority'),
     'parties': ('Political parties and campaign finance', 'I11', False, "Plan §4 (electoral); a party register could be an organisations register type (lib/organisations/register.ts)", 'Lower priority'),
@@ -179,6 +193,23 @@ D['land'] = ('Land and cadastre', 'I7', True, PARCEL + '; ' + LANDEV, 'Not yet')
 D['housing'] = ('Housing, planning and building control', 'I7', True, BLDEV + '; ' + HOUEV, 'Not yet')
 D['local-gov'] = ('Local and regional government', 'I7', True, LGEV, 'Not yet')
 D['transport'] = ('Transport', 'I7', True, TRNEV, 'Not yet')
+
+# Digital front door and records (plan I13, forms batch 12): the public service catalogue, the citizen journey, representation granted by the
+# person, records management and service management, each institution's own; nothing a law decides shipped.
+CATEV = "lib/frontdoor/catalogue.ts (service versions proposed by an official of the owning institution, published by a different one who can sign there; owner from the deployment profile or the registry, law cited from the laws register, forms by identity, fee only as an approved rule, status computed each read: active, pilot, information only, not available yet with reasons, retired; samples only where samplesAllowed()), /services, /gov/services; tests lib/frontdoor/frontdoor.test.ts, app/api/public/services/route.test.ts"
+JOUREV = "lib/frontdoor/journey.ts (discover, authenticate through the nation's identity provider or assisted at an office, apply through the service's own procedure, routed to authorityFor() with a receipt, track, decision, reconsideration by the deciding institution; lib/frontdoor/register.ts routing), /wallet/applications; test lib/frontdoor/frontdoor.test.ts"
+REPEV = "lib/frontdoor/representation.ts (granted and revoked by the represented person, scoped by service and act, every act recording both; kept in lib/records/delegations.ts), /wallet/representation; tests lib/frontdoor/frontdoor.test.ts, app/api/public/services/route.test.ts"
+FDPEV = "lib/frontdoor/procedures.ts (svc.appointment, svc.complaint, svc.reconsideration decided by two officials who took no part in the original, svc.refund only of a receipt the payments system holds, adopted by each institution as its own); test lib/frontdoor/frontdoor.test.ts"
+RKEV = "lib/recordkeeping/procedures.ts and register.ts (rec.incoming registration, rec.schedule record classes with schedules cited and approved by two officials, rec.hold, rec.disposal listing only what an approved schedule makes due and two other officials authorise, never deleting a record, certificate kept; rec.transfer to the archives slot acknowledged by the archive; rec.migration reconciled by count and SHA-256 manifest), /gov/records; test lib/recordkeeping/recordkeeping.test.ts"
+SMEV = "lib/frontdoor/service-management.ts (dashboard registry, objectives with targets only as the nation approves them, performance computed from cases with signal markers, reports frozen with SHA-256 and validated, disruptions, changes, retirement, architecture exceptions with expiry), /gov/services/management; test lib/frontdoor/service-management.test.ts"
+B12 = "; library contract of batch 12 (app/src/lib/forms/library/catalogue-contracts/; docs/FORMS_CONFORMANCE.md §20)"
+B12MISS = "Adoption by each institution: its front-door and records procedures approved by a second official of its own; the nation's identity provider, periods, schedules and targets"
+
+# Plan I13: the front door, records and service management records exist.
+D['portal'] = ('Public portal and workspaces', 'I13', True, JOUREV + '; ' + CATEV, 'Not yet')
+D['digital-services'] = ('Citizen and business digital services', 'I13', True, JOUREV + '; ' + REPEV + '; ' + FDPEV, 'Not yet')
+D['records'] = ('Records, documents and digital trust', 'I13', True, RKEV + '; ' + KB.DOCS + '; ' + KB.CERT + '; ' + RET + '; ' + SEAL, 'Not yet')
+D['service-gov'] = ('Service governance and performance', 'I13', True, SMEV + '; ' + CATEV + '; ' + UPD, 'Not yet')
 
 # (tag, part) -> [(section regex on the top section or 'sub', domain)] first match; tag = file tag
 def _m(*pairs):
@@ -327,6 +358,16 @@ def I(rx, status, ev, miss='', step=None, also='', lr=False, tag=None):
     ID.append((re.compile(rx), status, ev, miss, step, also, lr, tag))
 
 
+# Plan I13: the forms the front-door, records and service-management systems carry (batch 12), before the earlier rules.
+I(r'^GOV-SVC-00[14]$|^GOV-SVC-006$', 'Partial', JOUREV + '; ' + CATEV + B12, B12MISS + '; the identity provider connected (integration register 26)', 'I13')
+I(r'^GOV-SVC-00[78]$|^GOV-SVC-01[13]$', 'Partial', FDPEV + B12, B12MISS, 'I13')
+I(r'^GOV-SVC-012$', 'Partial', FDPEV + '; ' + JOUREV + B12, B12MISS + '; the reconsideration period the nation sets on its procedure', 'I13')
+I(r'^GOV-SVC-014$', 'Partial', REPEV + '; ' + DELEG + B12, 'A supporting instrument checked where the law requires one; representation for businesses through the organisations register', 'I13')
+I(r'^GOV-SVC-018$', 'Partial', FDPEV + '; ' + KB.PAY + ' (instructRefund() from a receipt)' + B12, B12MISS + '; a payment provider that executes refunds (integration register 26)', 'I13')
+I(r'^GOV-SVC-009$|^GOV-REC-00[178]$|^GOV-REC-01[0128]$|^GOV-REC-017$', 'Partial', RKEV + B12, B12MISS + '; the national archive named for the archives slot', 'I13')
+I(r'^GOV-GOV-00[1-6]$|^GOV-GOV-01[04]$', 'Partial', SMEV + '; ' + CATEV + B12, B12MISS, 'I13')
+I(r'^DGV-SVC-001$', 'Partial', JOUREV + B12, B12MISS, 'I13', tag='SUP')
+I(r'^DGV-REP-003$', 'Partial', REPEV + B12, 'A supporting instrument checked where the law requires one', 'I13', tag='SUP')
 # Land (catalogue Part 8 §3)
 # Plan I7: the forms the land and transport procedures carry (batch 10), before the earlier land rules.
 I(r'^LND-REG-0(05|07|08|09|10|11|12|16|17|20|21|22)$', 'Partial', LANDEV + B10, B10MISS + '; the nation\'s tenure types and instrument kinds (CFG-LND-001, CFG-LND-003)', 'I7')
@@ -364,6 +405,23 @@ I(r'^SAFE-DIS-00[67]$|^SAFE-DIS-018$', 'Partial', TRANSEV, 'Declaration scope, m
 I(r'^REG-SAFE-008$', 'Partial', TRANSEV, 'Geographic scope and review events per measure')
 I(r'^SAFE-EMS-009$', 'Not yet', 'Referral pattern exists (' + KB.REFERRAL + '); ' + CLINRULE, 'Emergency medical referral without any clinical field')
 # Defence / intelligence
+# Plan I12 (forms batch 13): the security forms the procedures carry or wait for, the registers and the country configuration.
+I(r'^SEC-CYB-0(0[1-4]|0[89]|1[0-7])$', 'Partial', SECEV + B13, B13MISS + '; the nation\'s incident taxonomy and severity scale (CFG-SEC-009)', 'I12')
+I(r'^SEC-INF-00[1-6]$|^SEC-INF-01[45]$', 'Partial', SECEV + B13, B13MISS + '; the nation\'s designation criteria and sectors (CFG-SEC-011)', 'I12')
+I(r'^SEC-INF-00[79]$|^SEC-INF-01[36]$', 'Not yet', SECEV + '; ' + B13WAIT, 'A critical infrastructure incident, disruption, resilience exception and information release procedure of the criticalInfrastructure slot', 'I12')
+I(r'^SEC-INT-00[78]$', 'Partial', SECEV + ' (security.clearance: metadata only, vetting by reference)' + B13, B13MISS + '; the nation\'s clearance requirements and vetting body (CFG-SEC-004)', 'I12')
+I(r'^SEC-INT-00[125]$|^SEC-INT-01[01345]$|^SEC-INT-00[69]$', 'Lower priority', CLASSRULE + '; ' + NOTHOLD, 'Intelligence mandates, sensitive authorisations, sharing agreements, record corrections, retention and declassification: not built until the nation\'s legal review (integration register 25)', 'I12', lr=True)
+I(r'^SEC-CYB-00[56]$|^SEC-CYB-018$', 'Not yet', SECEV, 'Security assessment request and report, compliance declaration: procedures of the cyberAuthority slot', 'I12')
+I(r'^REG-SEC-00[789]$|^REG-SEC-01[0123]$', 'Partial', SECEV, 'The register as the catalogue defines it once the nation adopts its procedures and mappings; retention rules (CFG-SEC-016)', 'I12')
+I(r'^REG-SEC-005$', 'Partial', SECEV + ' (clearance metadata: person reference as an account id, level, scope, validity; clearanceOf())', 'Vetting stays with the competent authority by reference; adoption by the nation', 'I12')
+I(r'^REG-SEC-006$', 'Partial', CLASSEV + '; markings on every security record and upload', 'A general register of marked records across institutions (only security records and documents carry a marking)', 'I12')
+I(r'^REG-SEC-016$', 'Partial', SECDIREV, 'Adoption by the nation: the body named for national security directives and its instruct relationships', 'I12')
+I(r'^REG-SEC-00[34]$', 'Lower priority', CLASSRULE, 'Intelligence mandate and sensitive authorisation registers: not built until the nation\'s legal review (integration register 25)', 'I12', lr=True)
+I(r'^CFG-SEC-003$|^CFG-SEC-013$', 'Country decision', CLASSEV, '', '—')
+I(r'^CFG-SEC-00[49]$|^CFG-SEC-01[0128]$', 'Country decision', SECEV + ' (configured lists and slots ship empty)', '', '—')
+I(r'^CFG-SEC-014$', 'Country decision', XDEV, '', '—')
+I(r'^CIP-(REG-008|RSK-009)$', 'Partial', SECEV + B13 + ' (the supplement\'s contract answered field by field)', B13MISS, 'I12', tag='SUP')
+I(r'^CIP-INC-010$', 'Not yet', SECEV + '; ' + B13WAIT, 'A critical infrastructure incident procedure of the criticalInfrastructure slot', 'I12', tag='SUP')
 I(r'^SEC-INT-00[34]$', 'Legal review', CLASSRULE + '; ' + NOTHOLD + '; owner\'s direction 2026-10-21 §1 (intelligence products and oversight records: legal review)', 'Intelligence assessments and products: never their content in CivicOS; approved metadata or a reference only, after legal review', 'I12', lr=True)
 I(r'^SEC-INT-01[26]$', 'Legal review', CLASSRULE + "; owner's direction 2026-10-21 §1 (intelligence oversight records: legal review)", 'Oversight inspection and access-audit records of intelligence bodies: metadata only, after legal review', 'I12', lr=True)
 I(r'^DEM-ELC-00[3-6]$', 'Legal review', "Plan §4 and the owner's direction 2026-10-21 §1 (voter registration: legal review first; held under the electoral body alone)", 'Voter registration, correction, transfer and review hold personal data under the electoral body alone; legal review before any build', 'I11', lr=True)
@@ -395,6 +453,10 @@ I(r'^GOV-SVC-016$', 'Partial', KB.CERT, 'A certificate request case with entitle
 I(r'^GOV-SVC-014$', 'Partial', DELEG, 'Granted by the represented person or business themselves; scope per service')
 I(r'^GOV-SVC-00[46]$', 'Partial', 'Citizen wallet applies for a permit routed by type to the institution keeping that register (lib/data/store/permits.ts permitHolders()); demo and training only', 'Routing for every service through the service catalogue; production citizen accounts through the identity provider')
 I(r'^GOV-SVC-010$', 'Partial', KB.DOCS + ' (documents added to a case)', 'Applicant-side submission of further information')
+# Plan I9: the forms the cross-institution procedures carry (batch 11), before the earlier workflow rules.
+I(r'^GOV-WF-0(0[2-6]|09|1[0-35])$', 'Partial', FED + B11, B11MISS, 'I9')
+I(r'^GOV-WF-001$', 'Met', KB.REFERRAL + B11, '', '—')
+I(r'^GOV-WF-014$', 'Met', INTAPP + '; ' + KB.EXCH + '; ' + FED + B11, '', '—')
 I(r'^GOV-WF-001$', 'Met', KB.REFERRAL, '', '—')
 I(r'^GOV-WF-00[235]$', 'Partial', KB.REFERRAL + '; ' + KB.RELS + ' (request_information relationships, readRelationship())', 'Scoped request, consultation and handover records with acceptance')
 I(r'^GOV-WF-00[78]$', 'Partial', KB.DIRECT, 'Required responses and outstanding actions (plan I5)', 'I5')
@@ -444,6 +506,9 @@ I(r'^tax\.debt\.(payment_plan\.(request|evidence|decision|change_request|default
 I(r'^tax\.debt\.(statement\.request|recovery\.[a-z_]+)$', 'Not yet', TAX6WAIT, 'A debt statement drawn from account(); a recovery procedure only for the powers the nation\'s law gives (none inferred from a balance)')
 # Field series Part 3 (customs)
 I(r'^customs\.(import\.declaration\.submit|declaration\.(completeness|inspection|release_decision|release_notice|receipt))$', 'Partial', CUSEV, 'The catalogue\'s declaration contract (WCO data model mapping) and stages')
+# Plan I9 (batch 11): the tax and business status checks answered by their exchange services; the referral forms.
+I(r'^exchange\.(tax_status|business_status)\.(verify|response)$', 'Partial', KB.EXCH + '; ' + FEDX + ' (taxpayer.status, organisation.standing)' + B11, 'The nation\'s exchange relationships and each integration\'s purposes (none ship)', 'I9')
+I(r'^exchange\.referral\.(create|accept|update|close)$', 'Partial', KB.REFERRAL + '; the referral.status.changed federation event (lib/federation/envelope.ts)' + B11, 'The referral procedure carrying this contract (lib/casework/referral.ts referralTemplate() has no form contract yet)', 'I9')
 I(r'^exchange\.', 'Partial', KB.EXCH, 'This exchange service is not defined', None, 'I9')
 # Field series Part 4 (civil, immigration)
 I(r'^CIV-(BTH-00[24]|DEA-00[24]|MAR-001|REC-001|REC-01[034])$', 'Met', CIVEV, '', '—')
@@ -558,6 +623,30 @@ def T(scope, rx, status, ev, miss='', step=None, also='', built=False, lr=False,
     TX.append((re.compile(scope) if scope else None, re.compile(rx, re.I), status, ev, miss, step, also, built, lr, forms, doms))
 
 
+# Plan I12 (security governance and resilience): what the security registers, the access rule, the classification rule set,
+# the directive register and the transfer records meet in catalogue Part 11. Before the older Part 11 rules, so they win.
+S11 = r'CAT-08-11:11'
+T(S11, r'^(Deny access by default|Do not assume that a government employee|Record both successful and denied|Is the user (authenticated|acting for|.s clearance valid)|Does the user have a legitimate need|Is the intended purpose permitted|Is the proposed action|If any required condition fails|The clearance decision and the actual authori[sz]ation|A valid clearance alone|Classification must not be used as a substitute|Explicit clearance and need-to-know|Prompt access revocation|Access control: Clearance|A clearance and authori[sz]ation to access)', 'Met', SECACC + '; ' + SECEV.split(';')[0], '', '—')
+T(S11, r'^(CivicOS must support a configurable classification|It must not assume that security labels|Important architecture decision|It may hold approved metadata or a reference|Classification: Records cannot be stored|Classification scheme —|Classification level —|Administrative metadata and classified operational content)', 'Met', CLASSEV, '', '—')
+T(S11, r'^(Avoid creating a single unrestricted database|Store only the metadata required|Use references to external accredited systems|Preserve stable identifiers and versioned events|Ensure an audit log does not itself)', 'Met', SECEV + '; ' + CLASSEV, '', '—')
+T(S11, r'^(A vulnerability report must be restricted|The public or broadly accessible government portal|Limit the visibility of exploitable|Support confidential vulnerability disclosure|Prevent a public dashboard|This should be a controlled resilience model|Access to detailed dependency maps|Critical infrastructure protection: Public interfaces)', 'Met', SECEV + ' (publicSecurityView(): nothing but a published summary on its disclosure date; recipient views without exploitable detail)', '', '—')
+T(S11, r'^(The designation of an asset as critical infrastructure|A label in a national digital twin)', 'Met', SECEV + ' (ci.designation: two officials, citing the law and the criteria version; nothing else designates)', '', '—')
+T(S11, r'^(Do not automatically attribute an attack|A cyber incident report and verified attribution|Attribute a cyberattack to a specific actor)', 'Met', SECEV + ' (no attribution field; no model in the flow)', '', '—')
+T(S11, r'^(Separate technical indicators from confirmed incident facts|Attribution —)', 'Platform rule stricter', 'Plan I12 boundary: no attribution assessment is recorded at all (integration register 25); technical findings are recorded with their source (' + SECEV.split(';')[0] + ')', '', '—')
+T(S11, r'^(Ensure containment actions cannot be initiated by an untrusted reporter|Record exceptions to standard security controls)', 'Met', SECEV + ' (approve-containment by an official who can sign; cyber.exception until a date, two officials)', '', '—')
+T(S11, r'^(?:\d+\. )?(Receive and register|Contain|Investigate|Recover|Review and improve)(: |$)', 'Met', SECEV + ' (cyber.incident: register, approve-containment, preserve-evidence, recover, review, close by two officials)', '', '—')
+T(S11, r'^(Incident ID —|Reporting organization —|Affected services —|Impact —|Closure —|Actions —)', 'Met', SECEV + ' (the incident record by version; SEC-CYB-001 contract)', '', '—')
+T(S11, r'^(Service or asset identifier|Responsible institution or operator|Upstream dependencies and downstream|Failure scenarios and potential|Existing safeguards and recovery|Data source, last verification time|Access classification and disclosure|Recovery objectives where formally)', 'Met', SECEV + ' (ci.dependency record; SEC-INF-002 contract)', '', '—')
+T(S11, r'^(A hazard or threat hypothesis|An identified vulnerability|An observed incident|An estimated likelihood or impact|A verified consequence|An accepted residual risk|A corrective action and its completion|A score is an analytical aid)', 'Met', SECEV + ' (ci.risk keeps each apart; acceptance only by two named officials; no computed score)', '', '—')
+T(S11, r'^(?:\d+\. )?(Essential services and responsible operators|Dependencies and single points of failure|Prevention and detection measures|Continuity arrangements and fallback|Recovery priorities and responsible|Required resources, supplier arrangements|Exercise schedule and evaluation criteria|Residual risks and the official authori[sz]ed|Review triggers, such as|Corrective actions, deadlines and verification)', 'Met', SECEV + ' (ci.resilience-plan; SEC-INF-004 contract)', '', '—')
+T(S11, r'^(?:\d+\. )?(Application or authori[sz]ed sponsorship|Assessment by the competent security authority|Decision, scope, restrictions and validity|Renewal, variation, suspension or withdrawal)', 'Met', SECEV + ' (security.clearance: two officials of the competent authority; metadata only)', '', '—')
+T(S11, r'^(?:\d+\. )?(Legally permitted vetting checks|Security vetting is legally sensitive|CivicOS should not invent universal vetting|Separate raw checks from an assessor|Record the source, date and permitted use of each check|Prevent protected characteristics)', 'Platform rule stricter', 'Vetting stays with the competent security authority in its own system; CivicOS records only its reference and the decision as metadata (' + SECEV.split(';')[0] + '); plan I12 boundary', '', '—')
+T(S11, r'^(Only authori[sz]ed personnel may access vetting|Do not allow a general HR administrator)', 'Met', SECACC, '', '—')
+T(S11, r'^(Directive ID —|Issuing institution —|Authority —|Scope —|Classification —|Approval —|Effective period —|Recipients —|Compliance —|Audit —|Distinguish a policy directive|Do not assume that a directive from one institution|Preserve the original version when issuing|Record acknowledgement separately|Prevent expired or superseded|Require a defined legal basis before creating|A national security policy and a binding)', 'Met', SECDIREV, '', '—', doms=('natsec-directives',))
+T(S11, r'^(Source and destination security domains|Approved transfer purpose and policy|Permitted fields and data classes|Required redaction or sanitization|Validation results and release authority|Transfer timestamp and receipt|Rejection or quarantine outcome|Audit reference and applicable policy version|Do not treat ordinary API authentication)', 'Met', XDEV, '', '—')
+T(S11, r'^(Where information must move between differently classified|Use approved transfer gateways|Cross-domain security: Transfers use approved)', 'Partial', XDEV, 'The transfer itself is made by the nation\'s accredited cross-domain solution; CivicOS records it and its release decision only', 'I12')
+T(S11, r'^(Make the accreditation level and permitted data classes)', 'Partial', CLASSEV, 'One accreditation for the installation; a level per service is not recorded', 'I12')
+
 # never held / legal review
 T(r'CAT-08-11:10', r'arrest|detention|use-of-force|use of force|warrant|chain of custody|Evidence ID|police\.(evidence|custody|force)', 'Legal review',
   POLRULE + '; ' + LEGALREV, 'CivicOS records none of it: no arrest, detention, custody, use-of-force, warrant or evidence record; each needs legal review and independent safeguards before a draft', 'I11', lr=True, forms=True)
@@ -575,7 +664,7 @@ T(r'FLD-05-07:7', r'student record|enrol|attendance|transcript|learner record|in
 T(r'FLD-03-04:4', r'biometric', 'Legal review', 'No biometric field exists anywhere in lib/; directions §15 (safeguards and independent legal review before any biometric or risk-scoring capability)', 'CivicOS holds no biometric template or match; any biometric step needs the country\'s law, a reviewed security design and legal review', 'I11', lr=True, forms=True)
 T(r'FLD-03-04:3', r'supervis(ory|ed entit)|confidential supervisory', 'Lower priority', "Plan §4 (central bank operations); the central bank is an independent institution (" + KB.INST + "): whole-government scope stops at it (roles.ts reaches())", 'Supervisory records stay in the bank\'s own systems unless separately authorised; legal review of what CivicOS may hold', 'I5', lr=True, forms=True)
 T(r'CAT-08-11:11', r'intelligence (content|source|collection)|raw intelligence|source identities|collection methods|not accredited|accredit|classified (operational|content|production data)|cross-classification|cross-domain', 'Platform rule stricter',
-  CLASSRULE + '; ' + NOTHOLD, 'The installation\'s accreditation level and permitted data classes are not declared; until they are, CivicOS holds no classified content (plan I12)', 'I12', lr=True, forms=True)
+  CLASSRULE + '; ' + NOTHOLD, 'Intelligence content, sources and collection methods are never held; the accreditation is the nation\'s to declare (lib/security/classification.ts, shipped empty), and nothing above it is held', 'I12', lr=True, forms=True)
 T(r'CAT-08-11:11', r'military (action|operations|targeting)|weapons|covert|operational command', 'Platform rule stricter', "Plan §4: anything operational is out of scope; CivicOS has no operational defence function", '', '—', forms=True)
 T(r'CAT-08-11:10', r'surveillance|interception|location tracking|facial recognition|biometric', 'Platform rule stricter', 'No surveillance, interception, location tracking or biometric function exists in lib/ (police is intake and referral only, CLAUDE.md); directions §15', '', '—', forms=True)
 T(r'CAT-12-13:12', r'^(Protect whistleblower and complainant identities|Keep independent review cases inaccessible|independent_body\.case\.manage|Privacy: Voter, donor, whistleblower|Independent oversight: Findings cannot)', 'Met', OVSEV, '', '—')

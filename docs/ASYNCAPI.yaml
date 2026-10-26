@@ -159,13 +159,13 @@ components:
         restoreepoch: { type: integer, description: Extension attribute — how many data restores the platform had had when the event was written; when it grows (the backup.restore event), re-read the registers you hold. }
         data:
           type: object
-          required: [action, resource, actor, outcome, audit]
+          description: 'Plan I9: no actor name and no free text reach a subscriber (lib/events/outbox.ts subscriberEvent()); the full entry stays in the audit chain, read under its own rules.'
+          required: [action, resource, outcome, audit]
+          additionalProperties: false
           properties:
             action: { type: string }
             resource: { type: string }
-            actor: { type: string, description: The official (name and office) or system that acted. }
             outcome: { const: ok }
-            detail: { type: string }
             audit:
               type: object
               required: [seq, hash]

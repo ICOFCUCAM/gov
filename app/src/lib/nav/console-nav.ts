@@ -69,7 +69,9 @@ export const CONSOLE_NAV: NavSection[] = [
         tab('Emergency screen', '/wall', 'NCCC Wall'), tab('Status history', '/gov/posture', 'Posture Board')] },
     { key: 'reg', icon: '◉', label: 'Regions', href: '/gov/regional', purpose: 'How each region is doing, side by side.', tabs: [tab('Regions', '/gov/regional', 'Regional Command')] },
     { key: 'fin', icon: '§', label: 'Public finances', href: '/gov/treasury', purpose: 'Revenue, spending, reserves and fiscal pressure.', tabs: [tab('Public finances', '/gov/treasury', 'Treasury Command'), tab('Tax', '/gov/tax'), tab('Tax services', '/gov/tax/services'), tab('Customs', '/gov/customs'), tab('Budget and treasury', '/gov/treasury/budget'), tab('Procurement', '/gov/treasury/procurement')] },
-    { key: 'sec', icon: '◈', label: 'Security & public order', href: '/gov/security', purpose: 'Threats, incidents and the readiness of security services.', tabs: [tab('Security & public order', '/gov/security', 'Security & Interior')] },
+    { key: 'sec', icon: '◈', label: 'Security & public order', href: '/gov/security', purpose: 'Threats, incidents and the readiness of security services.', tabs: [tab('Security & public order', '/gov/security', 'Security & Interior'),
+        // I12: cyber incidents, vulnerabilities, critical infrastructure, clearances (metadata), security directives and transfers.
+        tab('Cyber and resilience', '/gov/security/resilience')] },
     { key: 'geo', icon: '◷', label: 'Foreign relations', href: '/gov/geopolitical', purpose: 'Pressure from outside the borders: partners, markets and frontiers.', tabs: [tab('Foreign relations', '/gov/geopolitical', 'Geopolitical Monitor')] },
     { key: 'sim', icon: '⟁', label: 'What-if scenarios', href: '/gov/simulation', purpose: 'Try a scenario and see its likely effect before deciding. Results are modelled, never facts.', tabs: [tab('What-if scenarios', '/gov/simulation', 'National Simulation')] },
   ]},
@@ -84,7 +86,9 @@ export const CONSOLE_NAV: NavSection[] = [
   ]},
   { label: 'Services', items: [
     { key: 'ops', icon: '⊞', label: 'Operations', href: '/ops', purpose: 'Day-to-day running of public services across institutions.',
-      tabs: [tab('Operations', '/ops', 'Operations Centre'), tab('Operations record', '/gov/ledger', 'Operations Ledger')] },
+      tabs: [tab('Operations', '/ops', 'Operations Centre'), tab('Operations record', '/gov/ledger', 'Operations Ledger'),
+        // I13: the public service catalogue and service management (plan step I13).
+        tab('Service catalogue', '/gov/services'), tab('Service management', '/gov/services/management')] },
     { key: 'sites', icon: '▤', label: 'Public websites', href: '/admin/sites', purpose: 'The ministries\' public websites: propose, review and publish changes.', tabs: [tab('Public websites', '/admin/sites', 'Site editor')] },
     { key: 'wal', icon: '◊', label: 'Citizen app preview', href: '/wallet', purpose: 'See the services as a citizen sees them.', tabs: [tab('Citizen app preview', '/wallet', 'Civic Wallet')] },
   ]},
@@ -99,14 +103,19 @@ export const CONSOLE_NAV: NavSection[] = [
       purpose: 'Which outside systems may exchange data with the platform, and on what terms.',
       tabs: [tab('Connected systems', '/integrations', 'Interoperability'), tab('Links between institutions', '/gov/fabric', 'Interoperability Fabric'),
         tab('Data-sharing services', '/gov/exchange'), tab('Events sent out', '/gov/exchange/events'),
-        tab('Automatic notifications', '/gov/webhooks', 'Federation Webhooks'), tab('Email and text messages', '/admin/messaging')] },
+        tab('Automatic notifications', '/gov/webhooks', 'Federation Webhooks'), tab('Email and text messages', '/admin/messaging'),
+        // I9 (federation and portability): envelopes between institutions, requests between institutions, declared degraded states, the endpoint contract.
+        tab('Events between institutions', '/gov/exchange/federation'), tab('Requests between institutions', '/gov/exchange/workflows'),
+        tab('When a service is unavailable', '/gov/exchange/states'), tab('Endpoints and their rules', '/gov/exchange/contract')] },
   ]},
   { label: 'Records & audit', items: [
     { key: 'aud', icon: '⛓', label: 'Audit record', href: '/audit',
       purpose: 'The tamper-evident record of every action, and the means to check it.',
       tabs: [tab('Audit record', '/audit', 'Oversight'), tab('Search the record', '/gov/audit', 'Audit Explorer'), tab('Activity', '/gov/activity', 'Activity Log'),
         tab('Signatures', '/gov/signatures', 'Signature Audit'), tab('Independent confirmations', '/gov/witnesses', 'Audit Witnesses'),
-        tab('Check an exported record', '/gov/audit-replay', 'Audit Replay'), tab('Who read what', '/gov/access-log'), tab('Independent oversight', '/gov/oversight')] },
+        tab('Check an exported record', '/gov/audit-replay', 'Audit Replay'), tab('Who read what', '/gov/access-log'), tab('Independent oversight', '/gov/oversight'),
+        // I13: records management (plan step I13).
+        tab('Records management', '/gov/records')] },
   ]},
   { label: 'People', items: [
     { key: 'staff', icon: '⚿', label: 'Staff', href: '/gov/officers', purpose: 'Officials, their roles and their accounts.',

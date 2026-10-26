@@ -1,0 +1,399 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "SEC-CYB-012",
+ "record_type": "security.cyber",
+ "form_version": 1,
+ "procedure_package_id": "cyber.exception",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-SEC-003: classification levels and handling restrictions (the nation's scheme, adopted by two officials; ships empty).",
+  "CFG-SEC-009: cyber incident reporting thresholds and notification deadlines (none ship).",
+  "CFG-SEC-010: vulnerability disclosure and coordination procedures.",
+  "CFG-SEC-013: national cryptographic and hosting accreditation requirements (the installation's declared accreditation).",
+  "CFG-SEC-016: data retention, archival, disclosure and destruction rules.",
+  "CFG-SEC-018: national security incident response and recovery responsibilities (the cyberAuthority slot; none ships)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/PARTS-08-11.md",
+  "id": "SEC-CYB-012",
+  "part": 11,
+  "section": "2.3",
+  "line": 1711,
+  "batch": 13
+ },
+ "library": {
+  "title": "Ask for a security exception",
+  "intro": "Ask for a time-limited exception to a security control: what control, why it cannot be met now, the compensating controls and until when. Two officials decide, and an approved exception reads as expired after its date.",
+  "owner": "cyberAuthority",
+  "filled_by": "An authorised official of the requesting institution.",
+  "authority": "The national cybersecurity authority the nation names (cyberAuthority slot, shipped empty).",
+  "procedure": {
+   "key": "cyber.exception",
+   "stage": "received",
+   "action": "register",
+   "document": "exception-request"
+  },
+  "lists": {},
+  "nation_values": [
+   {
+    "key": "security.cyber.notification-deadlines",
+    "kind": "days",
+    "source": "rule",
+    "decision": "CFG-SEC-009: when a notification or escalation is due, as the nation's law sets it; none ships"
+   }
+  ],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "metadata-only",
+    "what": "Metadata only: the form's marking is checked against the installation's declared accreditation, and anything marked above it is refused, never stored; the content stays in an accredited system and only its reference is recorded",
+    "why": "Catalogue Part 11 §3.3: an installation not accredited for a classification level must not store that class of information.",
+    "rule": "lib/security/classification.ts markingRefusal(), also on every upload (lib/records/documents.ts addDocument())"
+   },
+   {
+    "id": "slot-owner",
+    "what": "The competent body is the institution the nation names for its slot of the deployment profile (cyberAuthority, criticalInfrastructure, securityAccreditation), shipped empty; who holds each power over a decision comes from the permit authority registry, proposed and unapproved",
+    "why": "Authority comes from the deployment profile and the approved mappings, never a ministry by name; a production installation refuses a power no approved mapping covers.",
+    "rule": "CLAUDE.md Government operating model: authorityFor(); lib/permits/decisions.ts SECURITY_PERMITS (plan I12)"
+   },
+   {
+    "id": "need-to-know",
+    "what": "A record is read only by an official named for it (need to know), for a stated purpose, for the action asked and, when marked, with a clearance at its level valid today; a clearance, a role or a seniority alone gives nothing; recipients see coordination terms only",
+    "why": "Catalogue Part 11 §4.1 and §4.2: the clearance decision and the authorisation to access a specific record are separate controls.",
+    "rule": "lib/auth/roles.ts securityAccessRefusal(); lib/security/access.ts readSecurityRecord() (every attempt in the access log)"
+   },
+   {
+    "id": "no-attribution-no-score",
+    "what": "No field records a source, a collection method, a target, an attacker or an attribution, and nothing computes a score: severity is the officials' choice on the nation's scale, with reasons; a risk estimate is the assessor's under a named methodology version",
+    "why": "Catalogue Part 11 §5.3 and §6.2; plan I12 boundary: intelligence, attribution and scores about people are not built.",
+    "rule": "lib/security/procedures.ts (no such field); integration register 25"
+   },
+   {
+    "id": "no-ai-decision",
+    "what": "No step is decided by a model or a score: officials decide with reasons; AI never attributes an attack, accepts a risk, grants or withdraws a clearance or issues a directive",
+    "why": "Catalogue Part 11 §11 prohibited default behaviour; AI never makes a legally material decision.",
+    "rule": "CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   },
+   {
+    "id": "two-officials",
+    "what": "Every decision is proposed by one official and confirmed by a different person; the platform's minimum adds suspensions, renewals and revocations whatever the procedure says",
+    "why": "Catalogue Part 11 §10.1: separation of duties for sensitive approvals and protected changes.",
+    "rule": "lib/casework/engine.ts act() (fourEyes); lib/data/dual-control.ts dualControlRefusal()"
+   },
+   {
+    "id": "nation-lists",
+    "what": "Classification levels, incident categories, severity scales, sectors and criteria are the nation's configured lists or rules; none ship (a proposed list is marked proposed)",
+    "why": "Catalogue Part 11 §3 and §12: CivicOS must not assume that security labels, clearance levels or handling rules are identical across jurisdictions.",
+    "rule": "lib/forms/contract.ts configured lists; lib/security/classification.ts (ships empty)"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/PARTS-08-11.md",
+    "line": 1711,
+    "quotes": [
+     "SEC-CYB-012",
+     "Security exception request",
+     "Time-limited exception and compensating controls"
+    ],
+    "met_by": {
+     "procedure": "register"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-08-11.md",
+    "line": 1943,
+    "quotes": [
+     "REG-SEC-007",
+     "Security exception register",
+     "Exception, rationale, compensating controls and expiry"
+    ],
+    "met_by": {
+     "fields": [
+      "exception.justification",
+      "exception.compensating_controls",
+      "exception.requested_until"
+     ]
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "exception.summary",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 1000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Summary that carries no exploitable detail (what a recipient and a list may see)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter summary that carries no exploitable detail (what a recipient and a list may see).",
+     "length": "Summary that carries no exploitable detail (what a recipient and a list may see) is too long."
+    }
+   },
+   "hint": {
+    "en": "Do not put technical detail, configurations, names of people or anything marked here."
+   },
+   "country_decision": null
+  },
+  {
+   "id": "exception.marking",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "security.country.classification_levels",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Security marking (a level of the nation's scheme; leave empty when not classified)"
+   },
+   "error_text": {
+    "en": {
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": "CFG-SEC-003: classification levels and handling restrictions; none ship. A level above the installation's declared accreditation (CFG-SEC-013) is refused, never stored"
+  },
+  {
+   "id": "exception.institution",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.institutions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Requesting institution (its id in the institution register)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter requesting institution (its id in the institution register).",
+     "reference_exists": "There is no record with that reference in the register."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "exception.control",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 8000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "The security control excepted"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the security control excepted.",
+     "length": "The security control excepted is too long."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "exception.justification",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 8000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Why the control cannot be met now"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter why the control cannot be met now.",
+     "length": "Why the control cannot be met now is too long."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "exception.compensating_controls",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 8000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Compensating controls"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter compensating controls.",
+     "length": "Compensating controls is too long."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "exception.requested_until",
+   "type": "date",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Asked for until"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter asked for until."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "exception.request",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "exception-request",
+     "when": "when_the_form_asks_for_it"
+    }
+   ],
+   "label": {
+    "en": "The request as signed by the institution"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the request as signed by the institution."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "use_group": "core.declaration_signature",
+   "version": 1,
+   "only": [
+    "declaration.text_version",
+    "declaration.confirmed",
+    "declaration.signed_at"
+   ],
+   "section": {
+    "en": "Declaration"
+   }
+  },
+  {
+   "id": "exception.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

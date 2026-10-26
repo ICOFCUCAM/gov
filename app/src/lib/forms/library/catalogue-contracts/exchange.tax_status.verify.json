@@ -1,0 +1,240 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "exchange.tax_status.verify",
+ "record_type": "exchange.request",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-INT-001: authorized cross-institution exchanges and contract versions (exchange relationships and the integration's purposes, approved by two officials; none ship).",
+  "CFG-DAT-001: retention and disclosure of the exchange log and receipts."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+  "id": "exchange.tax_status.verify",
+  "part": 3,
+  "section": "3.6",
+  "line": 1227,
+  "batch": 11
+ },
+ "library": {
+  "title": "Request verification of a tax-registration status",
+  "intro": "Ask the tax authority whether a person or organisation is registered for tax, for an approved purpose. Only the status is answered; never returns, assessments or balances.",
+  "owner": "tax",
+  "filled_by": "An official of the requesting institution, or its connected system.",
+  "authority": "The tax authority named for the tax slot answers through the taxpayer.status exchange service; never a ministry by name.",
+  "procedure": null,
+  "lists": {},
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "no-case",
+    "what": "A status response, not a case: the exchange service answers at once and logs the request with a signed receipt",
+    "why": "A verification decides nothing; the owning institution's register is the authoritative record.",
+    "rule": "CLAUDE.md Government operating model: the twin and checks never create authoritative facts; lib/exchange/services.ts callService()"
+   },
+   {
+    "id": "relationship-bound",
+    "what": "Between two institutions the service answers only while an approved exchange relationship in force covers it and the purpose stated; a suspended, ended or expired relationship stops the next call at once",
+    "why": "Specification Part 5 E and L test 5: a revoked relationship stops new exchanges while preserving prior records.",
+    "rule": "lib/federation/binding.ts exchangeBinding() in lib/exchange/services.ts callService() (plan I9)"
+   },
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+    "line": 1227,
+    "quotes": [
+     "exchange.tax_status.verify",
+     "Request verification of a legally relevant tax-registration status",
+     "Authorized requesting institution",
+     "Verification",
+     "Verification result"
+    ],
+    "met_by": {
+     "fields": [
+      "exchange.requesting_institution",
+      "exchange.purpose",
+      "exchange.target"
+     ],
+     "exchange": "taxpayer.status"
+    }
+   }
+  ],
+  "exchange": "taxpayer.status",
+  "intended": "Answered by the taxpayer.status exchange service under an approved exchange relationship; no case is opened."
+ },
+ "fields": [
+  {
+   "id": "exchange.requesting_institution",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    },
+    {
+     "rule": "institution_active",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.institutions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Requesting institution"
+   },
+   "error_text": {
+    "en": {
+     "required": "Choose requesting institution.",
+     "reference_exists": "There is no institution with that reference in the institution register.",
+     "institution_active": "Choose an active institution."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The request"
+   }
+  },
+  {
+   "id": "exchange.purpose",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 300
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Purpose of the request"
+   },
+   "hint": {
+    "en": "One of the purposes approved for your institution and this service."
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter purpose of the request.",
+     "length": "Purpose of the request is too long."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The request"
+   }
+  },
+  {
+   "id": "exchange.target",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 80
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Taxpayer identification number"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter taxpayer identification number.",
+     "length": "Taxpayer identification number is too long."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The request"
+   }
+  },
+  {
+   "id": "exchange.case_ref",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 80
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Related case (its reference)"
+   },
+   "error_text": {
+    "en": {
+     "length": "Related case (its reference) is too long."
+    }
+   },
+   "country_decision": null,
+   "section": {
+    "en": "The request"
+   }
+  },
+  {
+   "id": "exchange.received_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Received at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

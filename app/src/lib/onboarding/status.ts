@@ -9,6 +9,9 @@
 import { AUTHORITIES, REQUIRED_AUTHORITIES, HEALTH_SLOTS, provisionalOwner } from '@/lib/nation/deployment';
 import { authorityFor, getSetup, getSovereign, authorityChanges, classificationChanges, editionChanges } from '@/lib/data/store/sovereign';
 import { currentEdition } from '@/lib/nation/edition';
+// I9: federation and cross-institution workflow.
+import { listPeers } from '@/lib/federation/events';
+import { adoptionOf } from '@/lib/federation/procedures';
 import { pilotExitGate } from '@/lib/pilot/exit-gate';
 import { listExports } from '@/lib/portability/export';
 import { listImports } from '@/lib/portability/import';
@@ -45,6 +48,10 @@ import { taxServicesView } from '@/lib/tax/services-view';
 import { economicServicesView } from '@/lib/finance/services-view';
 import { cabinetRuleChanges } from '@/lib/cabinet/register';
 import { smallCellRule, smallCellChanges } from '@/lib/health/small-cells';
+// I12: security governance and resilience.
+import { SECURITY_PROCEDURES, SECURITY_PERMITS, SECURITY_SLOT_OF } from '@/lib/security/procedures';
+import { classificationStatus, securityClassificationChanges } from '@/lib/security/classification';
+import { securityCounts } from '@/lib/security/register';
 import { indicatorSmallCells } from '@/lib/indicators/disclosure';
 import { listDefinitions as listIndicators, approvedAt as indicatorApprovedAt } from '@/lib/indicators/register';
 import { SITE_IDS } from '@/lib/public-sites';
@@ -85,6 +92,13 @@ import { identityCounts } from '@/lib/identity/register';
 import { passportCounts, FEE_RULE } from '@/lib/passports/register';
 import { labourCounts } from '@/lib/labour/register';
 import { socialCounts } from '@/lib/social/register';
+// I13: the digital front door and records (plan step I13).
+import { catalogueCounts, waitingServices } from '@/lib/frontdoor/catalogue';
+import { waitingServiceManagement } from '@/lib/frontdoor/service-management';
+import { identityRoute } from '@/lib/frontdoor/journey';
+import { FRONTDOOR_PROCEDURES, frontdoorKey } from '@/lib/frontdoor/procedures';
+import { RECORDKEEPING_PROCEDURES, recordkeepingKey } from '@/lib/recordkeeping/procedures';
+import { recordkeepingCounts } from '@/lib/recordkeeping/register';
 
 export type TrackState = 'done' | 'in-progress' | 'not-started' | 'blocked';
 /**
@@ -135,6 +149,8 @@ const TRACK_OWNER: Record<string, string> = {
   indicators: 'Officials who can sign at each institution whose figures an indicator defines', tax: 'The tax administration the nation names (officials who can sign there)',
   oversight: 'Each independent oversight body the nation names (its own officials)',
   territory: 'The land registry, building control, housing and transport bodies the nation names, and each local government for its own records',
+  // I13: each institution owns its services and its records; the archive the nation names receives transfers.
+  frontdoor: 'Each institution for its own services and records (an official proposes, a different one who can sign there publishes or approves)',
 };
 
 /** One track, read defensively: a store that cannot be read shows as a check not done, never breaks the page. */
@@ -481,9 +497,16 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
     track({ key: 'exchange', title: 'Data sharing', why: 'Other systems and institutions reach records only through approved services, for an approved purpose, agreed by the data\'s owners.', href: '/integrations', seeded: true }, () => {
       const ints = listIntegrations();
       for (const i of ints) if (i.pendingApproval) wait({ what: `Data sharing: ${i.name}`, proposedBy: i.pendingApproval.by, at: i.pendingApproval.at, href: '/integrations' });
+      // I9: federation keys of other installations' institutions waiting for a second official, and the exchange relationships in force.
+      const peers = listPeers();
+      for (const p of peers) if (p.state === 'proposed') wait({ what: `Federation: trusting ${getMinistry(p.institution)?.name ?? p.institution}'s key ${p.keyId}`, proposedBy: p.proposed.by, at: p.proposed.at, href: '/gov/exchange/federation' });
+      const exchangeRels = relationshipGrants().filter(g => g.type === 'exchange');
+      const adoptedXi = active().filter(m => adoptionOf(m.id).every(a => a.state === 'approved'));
       return { checks: [
         { label: 'Integrations registered', done: ints.length > 0, href: '/integrations', detail: n(ints.length, 'integration') },
         { label: 'Integrations approved by two officials', done: ints.some(i => i.status === 'approved'), href: '/integrations' },
+        { label: 'Exchange relationships between institutions approved (citing the law)', done: exchangeRels.length > 0, href: '/gov/configuration/relationships', detail: exchangeRels.length ? n(exchangeRels.length, 'relationship') : 'None ships: services between institutions answer only under one (a demonstration notes their absence)' },
+        { label: 'Cross-institution workflow procedures adopted by each institution', done: active().length > 0 && adoptedXi.length === active().length, href: '/gov/exchange/workflows', detail: `${adoptedXi.length} of ${active().length} institution(s)` },
       ] };
     }),
 
@@ -648,6 +671,48 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
     }));
   }
 
+  // I12: security governance and resilience: only where the nation names one of its bodies (all optional, none named by default).
+  const SECURITY_SLOTS: AuthorityKey[] = ['cyberAuthority', 'criticalInfrastructure', 'securityAccreditation', 'nationalSecurity'];
+  const secBodies = SECURITY_SLOTS.filter(k => !!authorityFor(k));
+  if (secBodies.length) {
+    tracks.push(track({ key: 'security', title: 'Security governance and resilience', why: 'National cyber incidents, vulnerability coordination, supplier security, exceptions and exercises; critical infrastructure designations, dependencies, risk and resilience plans; clearance decisions; national security directives. Metadata only: nothing above the installation\'s accreditation is held. Only where the nation names its bodies.', href: '/gov/security/resilience', seeded: true }, () => {
+      const mine = SECURITY_PROCEDURES.filter(p => secBodies.includes(SECURITY_SLOT_OF[p.key]!));
+      const approved = mine.filter(p => listPackages({ key: p.key, state: 'approved' }).length);
+      const types = [...new Set(mine.map(p => SECURITY_PERMITS[p.key]).filter((t): t is string => !!t))];
+      const mapped = types.filter(t => listMappings(t).some(m => m.state === 'approved'));
+      const signers = secBodies.map(k => ({ k, n: listAccounts().filter(a => !a.disabled && a.institution === authorityFor(k) && a.role === 'signatory').length }));
+      const cls = classificationStatus();
+      const c = securityCounts();
+      return { checks: [
+        { label: 'Security bodies named (Who is responsible)', done: true, href: '/gov/configuration/responsible#who-is-responsible', detail: secBodies.join(', ') },
+        { label: 'Two officials who can sign at each body', done: signers.every(x => x.n >= 2), href: '/admin/officials', detail: signers.map(x => `${x.k}: ${x.n}`).join(' · ') },
+        { label: 'Classification scheme and the installation\'s accreditation adopted by two officials citing the law', done: !!cls.scheme && !!cls.accreditation, href: '/gov/security/resilience', detail: cls.statement },
+        { label: 'Their procedures approved', done: mine.length > 0 && approved.length === mine.length, href: '/gov/law/procedures', detail: `${approved.length} of ${mine.length} approved` },
+        { label: 'Who decides each kind of decision approved (permit authorities)', done: types.length > 0 && mapped.length === types.length, href: '/gov/law/permit-authorities', detail: `${mapped.length} of ${types.length}: ${types.join(', ')}` },
+        { label: 'Records through decided cases', done: c.incident + c.designation + c.clearance > 0, href: '/gov/security/resilience', detail: `${c.incident} incident(s), ${c.vulnerability} vulnerability case(s), ${c.designation} designation(s), ${c.clearance} clearance decision(s)${c.samples ? ` (${c.samples} samples)` : ''}` },
+      ] };
+    }));
+  }
+  // I13 (plan step I13): the digital front door and records management. Every installation has services and records.
+  tracks.push(track({ key: 'frontdoor', title: 'Public services and records', why: 'The public service catalogue (each service with its owner, legal basis, procedure, forms, fee rule and channels, published by a second official), how citizens prove who they are, each institution\'s own reconsideration, complaint, appointment and refund procedures, and its records classes with the retention schedules its law sets.', href: '/gov/services', seeded: true }, () => {
+    for (const w of waitingServices()) wait({ what: w.what, proposedBy: w.by, at: w.at, href: '/gov/services' });
+    for (const w of waitingServiceManagement()) wait({ what: w.what, proposedBy: w.by, at: w.at, href: '/gov/services/management' });
+    const c = catalogueCounts();
+    const ident = identityRoute();
+    const inst = active().map(m => m.id);
+    const fdApproved = inst.filter(id => FRONTDOOR_PROCEDURES.every(t => listPackages({ key: frontdoorKey(t.key, id), state: 'approved' }).length));
+    const recApproved = inst.filter(id => RECORDKEEPING_PROCEDURES.every(t => listPackages({ key: recordkeepingKey(t.key, id), state: 'approved' }).length));
+    const r = recordkeepingCounts();
+    return { checks: [
+      { label: 'Services published in the catalogue (each by a second official)', done: c.published > 0, href: '/gov/services', detail: `${c.published} published, ${c.byStatus.active ?? 0} active, ${c.byStatus.unavailable ?? 0} not available yet${c.samples ? ` (${c.samples} samples)` : ''}` },
+      { label: 'Citizens sign in through the nation\'s identity provider (or the lawful alternatives are stated)', done: !!ident.provider, href: '/gov/configuration', detail: ident.statement },
+      { label: 'Each institution\'s own appointment, complaint, reconsideration and refund procedures approved', done: inst.length > 0 && fdApproved.length === inst.length, href: '/gov/services', detail: `${fdApproved.length} of ${inst.length} institutions` },
+      { label: 'Each institution\'s records procedures approved', done: inst.length > 0 && recApproved.length === inst.length, href: '/gov/records', detail: `${recApproved.length} of ${inst.length} institutions` },
+      { label: 'Record classes with retention schedules the law sets (none ships; nothing is disposed of without one)', done: r.scheduled > 0, href: '/gov/records', detail: `${r.scheduled} class(es) scheduled · ${r.holdsInForce} hold(s) in force` },
+      { label: 'The archive named (Who is responsible), if records are transferred', done: !!authorityFor('archives'), href: '/gov/configuration#who-is-responsible', detail: authorityFor('archives') ? getMinistry(authorityFor('archives')!)?.name ?? '' : 'Not named: records whose schedule ends in transfer stay with their institution' },
+    ] };
+  }));
+
   if (samplesAllowed(env)) {
     tracks.push(track({ key: 'demo', title: 'Demonstration', why: 'Sample officials and records to try every feature. Only in demo and training installations; never in production.', href: '/admin/onboarding#demo', samplesOnly: true }, () => ({
       checks: [
@@ -671,6 +736,8 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
   safe(() => { for (const x of listExports()) if (x.state === 'proposed') wait({ what: `Export of ${listMinistries().find(m => m.id === x.institution)?.name ?? x.institution}: waiting for an official who can sign there`, proposedBy: x.by, at: x.at, href: `/gov/configuration/edition?institution=${encodeURIComponent(x.institution)}#export` }); });
   safe(() => { for (const x of listImports()) if (x.state === 'proposed') wait({ what: `Import of ${x.institutionName}'s export ${x.exportId}: waiting for a second administrator`, proposedBy: x.by, at: x.at, href: '/gov/configuration/edition#export' }); });
   safe(() => { const p = classificationChanges().pending; if (p) wait({ what: 'Classification of the state: a change waiting for a second official', proposedBy: p.by, at: p.at, href: '/gov/configuration/offices' }); });
+  // I12: the security classification scheme and the installation's accreditation.
+  safe(() => { const p = securityClassificationChanges().pending; if (p) wait({ what: 'Security classification scheme and accreditation: a change waiting for a second official', proposedBy: p.by, at: p.at, href: '/gov/security/resilience' }); });
   safe(() => { for (const w of waitingLegislative()) wait({ what: w.what, proposedBy: w.by, at: w.at, href: w.href }); });
   safe(() => {
     for (const i of listInstruments({ state: 'any' })) for (const v of i.versions) {

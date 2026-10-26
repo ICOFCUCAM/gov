@@ -69,6 +69,10 @@ const NOUN: Record<AuthorityKey, string> = {
   citizenship: 'citizenship officer',
   labour: 'labour officer',
   socialProtection: 'benefits officer',
+  // I12
+  cyberAuthority: 'cyber incident officer', criticalInfrastructure: 'resilience officer', securityAccreditation: 'clearance officer', nationalSecurity: 'security directives officer',
+  // I13: records management (plan step I13).
+  archives: 'archivist',
 };
 
 const slug = (v: string) => v.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'institution';

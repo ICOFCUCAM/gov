@@ -16,7 +16,9 @@
 // kept as evidence (lib/portability/evidence.ts) so the decisions still
 // verify, and travel on with a later export. Who is responsible, the
 // institution's standing and the authority mappings are not taken from the
-// export: this installation decides them through its own change process.
+// export: this installation decides them through its own change process
+// (since plan I9 the export carries them in configuration.json, kept here as
+// evidence only). Certificates of its decisions come with their codes.
 //
 // The only file allowed to call the register modules' restore functions
 // (lib/casework/register-writes.test.ts lists it with this reason).
@@ -32,6 +34,7 @@ import { getCase, restoreCases } from '@/lib/casework/engine';
 import { restorePackages } from '@/lib/casework/packages';
 import { getDecision, restoreDecisions, type SignedDecision } from '@/lib/records/decisions';
 import { restoreDocuments, type PortableDocument } from '@/lib/records/documents';
+import { restoreCertificates, getCertificate, type Certificate } from '@/lib/records/certificates';
 import { getOrganisation, organisationsDb, type Organisation, type RegisterType } from '@/lib/organisations/register';
 import { getProfessional, restoreProfessionals, type Professional, type Profession } from '@/lib/professions/register';
 import { getProduct, restoreProducts, type ProductEntry } from '@/lib/health/products/register';
@@ -41,7 +44,7 @@ import { restoreCapacity, type CapacityReturn } from '@/lib/health/register';
 import { raiseCounter } from '@/lib/data/numbering';
 import { verifyExportParts, type ExportReport } from './verify';
 import { keepEvidence, type EvidenceSegment, type TrustListCopy } from './evidence';
-import { portabilityDb, portabilityActorRefusal, lapsePortability, newPortabilityId, type ExportManifest, type ImportProposal, type PortabilityActor } from './export';
+import { portabilityDb, portabilityActorRefusal, lapsePortability, newPortabilityId, type ExportManifest, type ImportProposal, type PortabilityActor, type PortableConfiguration } from './export';
 import type { Case, CasePackage } from '@/lib/casework/types';
 import type { ArchetypeKey } from '@/lib/api/types';
 
@@ -60,6 +63,7 @@ function clashes(parts: Parts): string[] {
   for (const p of read<ProductEntry[]>(parts, 'registers/products.json')) if (getProduct(p.number) || getProduct(p.id)) out.push(`product ${p.number}`);
   for (const a of read<ImportAuthorisation[]>(parts, 'registers/medicine-imports.json')) if (getImportAuthorisation(a.number)) out.push(`import authorisation ${a.number}`);
   for (const a of read<ControlledAuthorisation[]>(parts, 'registers/controlled-medicines.json')) if (getControlledAuthorisation(a.number)) out.push(`controlled-medicine authorisation ${a.number}`);
+  if (parts.has('verification.json')) for (const c of read<{ certificates: Certificate[] }>(parts, 'verification.json').certificates) if (getCertificate(c.id)) out.push(`certificate ${c.id}`);
   return out;
 }
 
@@ -167,6 +171,8 @@ function apply(manifest: ExportManifest, parts: Parts, by: string): { counts: Re
     step('cases', restoreCases(read<Case[]>(parts, 'cases.json'))),
     step('decisions', restoreDecisions(read<SignedDecision[]>(parts, 'decisions.json'))),
     step('documents', restoreDocuments(read<PortableDocument[]>(parts, 'documents.json'))),
+    // Plan I9: certificates of its decisions, with their codes, so they verify here (exports taken before I9 carry none).
+    parts.has('verification.json') ? step('certificates', restoreCertificates(read<{ certificates: Certificate[] }>(parts, 'verification.json').certificates)) : null,
   ].filter((e): e is string => !!e);
   if (errs.length) return fail(errs.join('; '));
 
@@ -177,6 +183,8 @@ function apply(manifest: ExportManifest, parts: Parts, by: string): { counts: Re
   keepEvidence([...carried, {
     export: manifest.id, digest: manifest.digest, institution: manifest.institution.id, createdAt: manifest.createdAt,
     audit: { head: audit.head, items: audit.items }, accessLog: { base: access.base, items: access.items }, trustList: read<TrustListCopy>(parts, 'trust-list.json'),
+    // Plan I9: the configuration it rested on, kept as evidence and never adopted here.
+    ...(parts.has('configuration.json') ? { configuration: read<PortableConfiguration>(parts, 'configuration.json') } : {}),
   }]);
   out.evidenceSegments = carried.length + 1;
   return { counts: out };

@@ -52,8 +52,8 @@ Derived from the files and the scope list; nothing in the catalogue is approved 
 | Status | Forms |
 |---|---|
 | catalogued | 0 |
-| contract_missing | 1350 |
-| contract_draft | 502 |
+| contract_missing | 1274 |
+| contract_draft | 578 |
 | under_review | 91 |
 | blocked | 1 |
 | excluded | 128 |
@@ -69,7 +69,7 @@ Derived from the files and the scope list; nothing in the catalogue is approved 
 
 ## Contracts CivicOS wrote (form library, controlled batches)
 
-408 contracts in `app/src/lib/forms/library/catalogue-contracts/`, 408 matched to exactly one registered form (by source file and catalogue ID, and by line where the catalogue repeats an ID in one file), 0 unmatched or ambiguous. Each is a contract draft: nothing in it is approved, and its publication gates (`lib/forms/publication.ts`) decide everything after that.
+487 contracts in `app/src/lib/forms/library/catalogue-contracts/`, 487 matched to exactly one registered form (by source file and catalogue ID, and by line where the catalogue repeats an ID in one file), 0 unmatched or ambiguous. Each is a contract draft: nothing in it is approved, and its publication gates (`lib/forms/publication.ts`) decide everything after that.
 
 
 **Batch 1** (health regulation, owner approved 21 October 2026): 25 contracts added; form status contract_draft 25.
@@ -532,28 +532,122 @@ HLT-MED-024: its public answer is bound to a rule. Built only through publicProd
 | TRN-VEH-001 | `PARTS-08-11:TRN-VEH-001@1` | TRN-VEH-001 | 11 | contract_draft | allowed |
 | TRN-VEH-002 | `PARTS-08-11:TRN-VEH-002@1` | TRN-VEH-002 | 7 | contract_draft | allowed |
 
+**Batch 11** (federation and portability: cross-institution workflow and exchanges, owner approved 21 October 2026): 21 contracts added; form status contract_draft 21.
+
+| Form | Identity | Register row | Fields | Form status | Scope |
+|---|---|---|---|---|---|
+| GOV-WF-001 | `PARTS-12-13:GOV-WF-001@1` | GOV-WF-001 | 7 | contract_draft | allowed |
+| GOV-WF-002 | `PARTS-12-13:GOV-WF-002@1` | GOV-WF-002 | 8 | contract_draft | allowed |
+| GOV-WF-003 | `PARTS-12-13:GOV-WF-003@1` | GOV-WF-003 | 6 | contract_draft | allowed |
+| GOV-WF-004 | `PARTS-12-13:GOV-WF-004@1` | GOV-WF-004 | 8 | contract_draft | allowed |
+| GOV-WF-005 | `PARTS-12-13:GOV-WF-005@1` | GOV-WF-005 | 7 | contract_draft | allowed |
+| GOV-WF-006 | `PARTS-12-13:GOV-WF-006@1` | GOV-WF-006 | 8 | contract_draft | allowed |
+| GOV-WF-009 | `PARTS-12-13:GOV-WF-009@1` | GOV-WF-009 | 6 | contract_draft | allowed |
+| GOV-WF-010 | `PARTS-12-13:GOV-WF-010@1` | GOV-WF-010 | 7 | contract_draft | allowed |
+| GOV-WF-011 | `PARTS-12-13:GOV-WF-011@1` | GOV-WF-011 | 8 | contract_draft | allowed |
+| GOV-WF-012 | `PARTS-12-13:GOV-WF-012@1` | GOV-WF-012 | 4 | contract_draft | allowed |
+| GOV-WF-013 | `PARTS-12-13:GOV-WF-013@1` | GOV-WF-013 | 6 | contract_draft | allowed |
+| GOV-WF-014 | `PARTS-12-13:GOV-WF-014@1` | GOV-WF-014 | 6 | contract_draft | allowed |
+| GOV-WF-015 | `PARTS-12-13:GOV-WF-015@1` | GOV-WF-015 | 7 | contract_draft | allowed |
+| exchange.business_status.response | `FIELD-SERIES-PARTS-03-04:exchange.business_status.response@1` | exchange.business_status.response | 4 | contract_draft | allowed |
+| exchange.business_status.verify | `FIELD-SERIES-PARTS-03-04:exchange.business_status.verify@1` | exchange.business_status.verify | 5 | contract_draft | allowed |
+| exchange.referral.accept | `FIELD-SERIES-PARTS-03-04:exchange.referral.accept@1` | exchange.referral.accept | 4 | contract_draft | allowed |
+| exchange.referral.close | `FIELD-SERIES-PARTS-03-04:exchange.referral.close@1` | exchange.referral.close | 3 | contract_draft | allowed |
+| exchange.referral.create | `FIELD-SERIES-PARTS-03-04:exchange.referral.create@1` | exchange.referral.create | 5 | contract_draft | allowed |
+| exchange.referral.update | `FIELD-SERIES-PARTS-03-04:exchange.referral.update@1` | exchange.referral.update | 3 | contract_draft | allowed |
+| exchange.tax_status.response | `FIELD-SERIES-PARTS-03-04:exchange.tax_status.response@1` | exchange.tax_status.response | 4 | contract_draft | allowed |
+| exchange.tax_status.verify | `FIELD-SERIES-PARTS-03-04:exchange.tax_status.verify@1` | exchange.tax_status.verify | 5 | contract_draft | allowed |
+
+**Batch 12** (digital front door and records, owner approved 21 October 2026): 27 contracts added; form status contract_draft 27.
+
+| Form | Identity | Register row | Fields | Form status | Scope |
+|---|---|---|---|---|---|
+| GOV-GOV-001 | `PARTS-12-13:GOV-GOV-001@1` | GOV-GOV-001 | 19 | contract_draft | allowed |
+| GOV-GOV-002 | `PARTS-12-13:GOV-GOV-002@1` | GOV-GOV-002 | 5 | contract_draft | allowed |
+| GOV-GOV-003 | `PARTS-12-13:GOV-GOV-003@1` | GOV-GOV-003 | 6 | contract_draft | allowed |
+| GOV-GOV-004 | `PARTS-12-13:GOV-GOV-004@1` | GOV-GOV-004 | 4 | contract_draft | allowed |
+| GOV-GOV-005 | `PARTS-12-13:GOV-GOV-005@1` | GOV-GOV-005 | 5 | contract_draft | allowed |
+| GOV-GOV-006 | `PARTS-12-13:GOV-GOV-006@1` | GOV-GOV-006 | 4 | contract_draft | allowed |
+| GOV-GOV-010 | `PARTS-12-13:GOV-GOV-010@1` | GOV-GOV-010 | 3 | contract_draft | allowed |
+| GOV-GOV-014 | `PARTS-12-13:GOV-GOV-014@1` | GOV-GOV-014 | 5 | contract_draft | allowed |
+| GOV-REC-001 | `PARTS-12-13:GOV-REC-001@1` | GOV-REC-001 | 8 | contract_draft | allowed |
+| GOV-REC-007 | `PARTS-12-13:GOV-REC-007@1` | GOV-REC-007 | 5 | contract_draft | allowed |
+| GOV-REC-008 | `PARTS-12-13:GOV-REC-008@1` | GOV-REC-008 | 7 | contract_draft | allowed |
+| GOV-REC-010 | `PARTS-12-13:GOV-REC-010@1` | GOV-REC-010 | 5 | contract_draft | allowed |
+| GOV-REC-011 | `PARTS-12-13:GOV-REC-011@1` | GOV-REC-011 | 3 | contract_draft | allowed |
+| GOV-REC-012 | `PARTS-12-13:GOV-REC-012@1` | GOV-REC-012 | 6 | contract_draft | allowed |
+| GOV-REC-017 | `PARTS-12-13:GOV-REC-017@1` | GOV-REC-017 | 8 | contract_draft | allowed |
+| GOV-REC-018 | `PARTS-12-13:GOV-REC-018@1` | GOV-REC-018 | 5 | contract_draft | allowed |
+| GOV-SVC-001 | `PARTS-12-13:GOV-SVC-001@1` | GOV-SVC-001 | 5 | contract_draft | allowed |
+| GOV-SVC-004 | `PARTS-12-13:GOV-SVC-004@1` | GOV-SVC-004 | 9 | contract_draft | allowed |
+| GOV-SVC-006 | `PARTS-12-13:GOV-SVC-006@1` | GOV-SVC-006 | 2 | contract_draft | allowed |
+| GOV-SVC-007 | `PARTS-12-13:GOV-SVC-007@1` | GOV-SVC-007 | 9 | contract_draft | allowed |
+| GOV-SVC-008 | `PARTS-12-13:GOV-SVC-008@1` | GOV-SVC-008 | 8 | contract_draft | allowed |
+| GOV-SVC-009 | `PARTS-12-13:GOV-SVC-009@1` | GOV-SVC-009 | 9 | contract_draft | allowed |
+| GOV-SVC-011 | `PARTS-12-13:GOV-SVC-011@1` | GOV-SVC-011 | 10 | contract_draft | allowed |
+| GOV-SVC-012 | `PARTS-12-13:GOV-SVC-012@1` | GOV-SVC-012 | 9 | contract_draft | allowed |
+| GOV-SVC-013 | `PARTS-12-13:GOV-SVC-013@1` | GOV-SVC-013 | 8 | contract_draft | allowed |
+| GOV-SVC-014 | `PARTS-12-13:GOV-SVC-014@1` | GOV-SVC-014 | 13 | contract_draft | allowed |
+| GOV-SVC-018 | `PARTS-12-13:GOV-SVC-018@1` | GOV-SVC-018 | 8 | contract_draft | allowed |
+
+**Batch 13** (security governance and resilience, owner approved 21 October 2026): 31 contracts added; form status contract_draft 31.
+
+| Form | Identity | Register row | Fields | Form status | Scope |
+|---|---|---|---|---|---|
+| CIP-INC-010 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:CIP-INC-010@1` | CIP-INC-010 | 13 | contract_draft | allowed |
+| CIP-REG-008 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:CIP-REG-008@1` | CIP-REG-008 | 8 | contract_draft | allowed |
+| CIP-RSK-009 | `SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13:CIP-RSK-009@1` | CIP-RSK-009 | 10 | contract_draft | allowed |
+| SEC-CYB-001 | `PARTS-08-11:SEC-CYB-001@1` | SEC-CYB-001 | 15 | contract_draft | allowed |
+| SEC-CYB-002 | `PARTS-08-11:SEC-CYB-002@1` | SEC-CYB-002 | 5 | contract_draft | allowed |
+| SEC-CYB-003 | `PARTS-08-11:SEC-CYB-003@1` | SEC-CYB-003 | 11 | contract_draft | allowed |
+| SEC-CYB-004 | `PARTS-08-11:SEC-CYB-004@1` | SEC-CYB-004 | 4 | contract_draft | allowed |
+| SEC-CYB-008 | `PARTS-08-11:SEC-CYB-008@1` | SEC-CYB-008 | 5 | contract_draft | allowed |
+| SEC-CYB-009 | `PARTS-08-11:SEC-CYB-009@1` | SEC-CYB-009 | 5 | contract_draft | allowed |
+| SEC-CYB-010 | `PARTS-08-11:SEC-CYB-010@1` | SEC-CYB-010 | 5 | contract_draft | allowed |
+| SEC-CYB-011 | `PARTS-08-11:SEC-CYB-011@1` | SEC-CYB-011 | 9 | contract_draft | allowed |
+| SEC-CYB-012 | `PARTS-08-11:SEC-CYB-012@1` | SEC-CYB-012 | 12 | contract_draft | allowed |
+| SEC-CYB-013 | `PARTS-08-11:SEC-CYB-013@1` | SEC-CYB-013 | 5 | contract_draft | allowed |
+| SEC-CYB-014 | `PARTS-08-11:SEC-CYB-014@1` | SEC-CYB-014 | 5 | contract_draft | allowed |
+| SEC-CYB-015 | `PARTS-08-11:SEC-CYB-015@1` | SEC-CYB-015 | 8 | contract_draft | allowed |
+| SEC-CYB-016 | `PARTS-08-11:SEC-CYB-016@1` | SEC-CYB-016 | 4 | contract_draft | allowed |
+| SEC-CYB-017 | `PARTS-08-11:SEC-CYB-017@1` | SEC-CYB-017 | 4 | contract_draft | allowed |
+| SEC-INF-001 | `PARTS-08-11:SEC-INF-001@1` | SEC-INF-001 | 11 | contract_draft | allowed |
+| SEC-INF-002 | `PARTS-08-11:SEC-INF-002@1` | SEC-INF-002 | 17 | contract_draft | allowed |
+| SEC-INF-003 | `PARTS-08-11:SEC-INF-003@1` | SEC-INF-003 | 13 | contract_draft | allowed |
+| SEC-INF-004 | `PARTS-08-11:SEC-INF-004@1` | SEC-INF-004 | 18 | contract_draft | allowed |
+| SEC-INF-005 | `PARTS-08-11:SEC-INF-005@1` | SEC-INF-005 | 4 | contract_draft | allowed |
+| SEC-INF-006 | `PARTS-08-11:SEC-INF-006@1` | SEC-INF-006 | 4 | contract_draft | allowed |
+| SEC-INF-007 | `PARTS-08-11:SEC-INF-007@1` | SEC-INF-007 | 10 | contract_draft | allowed |
+| SEC-INF-009 | `PARTS-08-11:SEC-INF-009@1` | SEC-INF-009 | 10 | contract_draft | allowed |
+| SEC-INF-013 | `PARTS-08-11:SEC-INF-013@1` | SEC-INF-013 | 11 | contract_draft | allowed |
+| SEC-INF-014 | `PARTS-08-11:SEC-INF-014@1` | SEC-INF-014 | 5 | contract_draft | allowed |
+| SEC-INF-015 | `PARTS-08-11:SEC-INF-015@1` | SEC-INF-015 | 4 | contract_draft | allowed |
+| SEC-INF-016 | `PARTS-08-11:SEC-INF-016@1` | SEC-INF-016 | 7 | contract_draft | allowed |
+| SEC-INT-007 | `PARTS-08-11:SEC-INT-007@1` | SEC-INT-007 | 12 | contract_draft | allowed |
+| SEC-INT-008 | `PARTS-08-11:SEC-INT-008@1` | SEC-INT-008 | 6 | contract_draft | allowed |
+
 **Totals beside the earlier ones** (the register without the library's contracts, after each batch, and now):
 
-| Status | Before (without the library) | After batch 1 | After batch 2 | After batch 3 | After batch 4 | After batch 5 | After batch 6 | After batch 7 | After batch 8 | After batch 9 | After batch 10 | Now |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| catalogued | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| contract_missing | 1723 | 1698 | 1677 | 1648 | 1646 | 1613 | 1518 | 1511 | 1454 | 1377 | 1350 | 1350 |
-| contract_draft | 129 | 154 | 175 | 204 | 206 | 239 | 334 | 341 | 398 | 475 | 502 | 502 |
-| under_review | 91 | 91 | 91 | 91 | 91 | 91 | 91 | 91 | 91 | 91 | 91 | 91 |
-| blocked | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 |
-| excluded | 128 | 128 | 128 | 128 | 128 | 128 | 128 | 128 | 128 | 128 | 128 | 128 |
-| approved | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| production | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| forms without a contract | 1927 | 1902 | 1881 | 1852 | 1850 | 1817 | 1722 | 1715 | 1658 | 1581 | 1554 | 1554 |
+| Status | Before (without the library) | After batch 1 | After batch 2 | After batch 3 | After batch 4 | After batch 5 | After batch 6 | After batch 7 | After batch 8 | After batch 9 | After batch 10 | After batch 11 | After batch 12 | After batch 13 | Now |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| catalogued | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| contract_missing | 1723 | 1698 | 1677 | 1648 | 1646 | 1613 | 1518 | 1511 | 1454 | 1377 | 1350 | 1329 | 1302 | 1274 | 1274 |
+| contract_draft | 129 | 154 | 175 | 204 | 206 | 239 | 334 | 341 | 398 | 475 | 502 | 523 | 550 | 578 | 578 |
+| under_review | 91 | 91 | 91 | 91 | 91 | 91 | 91 | 91 | 91 | 91 | 91 | 91 | 91 | 91 | 91 |
+| blocked | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 |
+| excluded | 128 | 128 | 128 | 128 | 128 | 128 | 128 | 128 | 128 | 128 | 128 | 128 | 128 | 128 | 128 |
+| approved | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| production | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| forms without a contract | 1927 | 1902 | 1881 | 1852 | 1850 | 1817 | 1722 | 1715 | 1658 | 1581 | 1554 | 1533 | 1506 | 1478 | 1478 |
 
 ## Forms with no contract
 
-1554 forms have no field contract (`contract: not yet given` in the register). By part:
+1478 forms have no field contract (`contract: not yet given` in the register). By part:
 
 | Part | Forms without a contract |
 |---|---|
 | Part 2 | 82 |
-| Part 3 | 361 |
+| Part 3 | 353 |
 | Part 4 | 64 |
 | Part 5 | 136 |
 | Part 6 | 93 |
@@ -561,9 +655,9 @@ HLT-MED-024: its public answer is bound to a rule. Built only through publicProd
 | Part 8 | 190 |
 | Part 9 | 72 |
 | Part 10 | 76 |
-| Part 11 | 66 |
+| Part 11 | 38 |
 | Part 12 | 87 |
-| Part 13 | 83 |
+| Part 13 | 43 |
 | Part 16 | 17 |
 | Part 17 | 18 |
 | Part 18 | 15 |

@@ -73,6 +73,22 @@ describe('the CloudEvents outbox', () => {
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 
+  it('delivers no actor name and no free text to subscribers (plan I9): the action, resource, outcome and audit link only', async () => {
+    const sub = subscribeWebhook({ topic: 'permit', url: 'https://hooks.example.gov/no-names' });
+    recordAudit('Registrar Amina Okafor', 'permit.issue', 'Permit:P-77', 'ok', 'Issued to Kofi Mensah, 12 Harbour Road, after inspection');
+    const calls: { init: RequestInit }[] = [];
+    const fetch = vi.fn(async (_url: string, init: RequestInit) => { calls.push({ init }); return new Response('ok', { status: 200 }); });
+    const runs = await deliverOutbox(Date.now(), { fetch: fetch as never, resolve: resolvePublic });
+    expect(runs.find(r => r.webhookId === sub.id)).toMatchObject({ delivered: 1, failed: false });
+    const body = String(calls[0]!.init.body);
+    const ev = JSON.parse(body) as { data: Record<string, unknown>; subject: string };
+    expect(Object.keys(ev.data).sort()).toEqual(['action', 'audit', 'outcome', 'resource']);
+    expect(ev).toMatchObject({ subject: 'Permit:P-77', data: { action: 'permit.issue', resource: 'Permit:P-77', outcome: 'ok' } });
+    for (const s of ['Amina', 'Okafor', 'Kofi', 'Mensah', 'Harbour', 'inspection']) expect(body).not.toContain(s);
+    // The stored event keeps the audit entry as written (read by officials under the audit rules), and the chain still links.
+    expect(recentEvents()[0]!.data).toMatchObject({ actor: 'Registrar Amina Okafor' });
+  });
+
   it('holds the cursor on failure and retries; refuses private addresses', async () => {
     const sub = subscribeWebhook({ topic: 'directive', url: 'https://hooks.example.gov/x' });
     recordAudit('Signer', 'directive.sign', 'Directive:D-1', 'ok');

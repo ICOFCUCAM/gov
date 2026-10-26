@@ -188,6 +188,37 @@ export interface Messages {
     professionalsQuery: string;
     professionalsNoMatch: string;
     professionalsNumber: string;
+    // I13: the public service catalogue (/services).
+    servicesTitle: string;
+    servicesIntro: string;
+    servicesNone: string;
+    servicesQuery: string;
+    servicesFind: string;
+    servicesAll: string;
+    servicesOwner: string;
+    servicesWhy: string;
+    servicesLegal: string;
+    servicesEligibility: string;
+    servicesEvidence: string;
+    servicesFee: string;
+    servicesFeeNone: string;
+    servicesFeeRule: string;
+    servicesFeeUnset: string;
+    servicesChannels: string;
+    servicesSteps: string;
+    servicesOutcome: string;
+    servicesReview: string;
+    servicesLanguages: string;
+    servicesAccess: string;
+    servicesContact: string;
+    servicesVerified: string;
+    servicesApply: string;
+    servicesDisrupted: string;
+    servicesJourney: string;
+    servicesReady: string;
+    servicesNotConnected: string;
+    servicesSample: string;
+    servicesStates: Record<string, string>;
     lawsInForceFrom: string;
     lawsCeased: string;
     billsTitle: string;
@@ -938,6 +969,36 @@ export const en: Messages = {
     professionalsIntro: 'Check whether a doctor, nurse, midwife, pharmacist or other regulated professional is registered, and in what standing.',
     professionalsQuery: 'Full name',
     professionalsNumber: 'Registration number (optional)',
+    servicesTitle: "Public services",
+    servicesIntro: "Every service the government offers, who is responsible for it, the law it rests on and how to use it. A service shows as active only when it can really take an application.",
+    servicesNone: "No service is published yet.",
+    servicesQuery: "Search the services",
+    servicesFind: "Find",
+    servicesAll: "All services",
+    servicesOwner: "Responsible: {owner}",
+    servicesWhy: "Why: {reasons}",
+    servicesLegal: "Legal basis",
+    servicesEligibility: "Who can use it",
+    servicesEvidence: "What you need",
+    servicesFee: "Fee",
+    servicesFeeNone: "No fee",
+    servicesFeeRule: "Set by the approved rule {rule}",
+    servicesFeeUnset: "Not set yet: its fee rule {rule} is not approved",
+    servicesChannels: "How to apply",
+    servicesSteps: "What happens",
+    servicesOutcome: "Outcome",
+    servicesReview: "If you disagree",
+    servicesLanguages: "Languages",
+    servicesAccess: "Accessibility and other ways to apply",
+    servicesContact: "Contact",
+    servicesVerified: "Last checked {date}",
+    servicesApply: "Apply online",
+    servicesDisrupted: "Service disruption",
+    servicesJourney: "Step by step",
+    servicesReady: "Ready",
+    servicesNotConnected: "Not available yet",
+    servicesSample: "Sample: a demonstration entry, not a real service",
+    servicesStates: { 'active': "Active", 'pilot': "Pilot", 'informational': "Information only", 'unavailable': "Not available yet", 'retired': "Retired" },
     professionalsNoMatch: 'Nobody on these registers matches.',
     lawsInForceFrom: 'In force from {date}',
     lawsCeased: 'Ceased {date}',

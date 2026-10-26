@@ -1,0 +1,245 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "GOV-SVC-001",
+ "record_type": "frontdoor.discovery",
+ "form_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-GOV-016: the public service catalogue and institutional service ownership (no service ships).",
+  "CFG-GOV-013: accessibility and alternative service channels.",
+  "CFG-GOV-009: personal-data protection and lawful disclosure (retention and disclosure of what the form collects)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/PARTS-12-13.md",
+  "id": "GOV-SVC-001",
+  "part": 13,
+  "section": "2.1",
+  "line": 646,
+  "batch": 12
+ },
+ "library": {
+  "title": "Find a government service",
+  "intro": "Find a service by what is happening in your life, what you need, or the institution responsible. Each service shows who decides it, the law it rests on, who can use it, what you need, the fee as its approved rule sets it, and the other ways to apply.",
+  "owner": "institution",
+  "filled_by": "Anyone, without signing in.",
+  "authority": "The institution that owns the service or the records (an institution of the registry, or the one the deployment profile names for its slot); never a ministry by name.",
+  "procedure": null,
+  "intended": "no case is opened: the public catalogue answers it (lib/frontdoor/catalogue.ts publicCatalogue(), /services and /services/[id], the journey of each service in lib/frontdoor/journey.ts)",
+  "lists": {},
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "institution-owned",
+    "what": "The owner is each institution itself for its own services and records: it adopts the front-door and records procedures as its own (svc.<template>.<institution>, rec.<template>.<institution>), drafted by one of its officials and approved by another; a service names its owner as a slot of the deployment profile or an institution of the registry, never a ministry by name",
+    "why": "Part 13 §12.3: each institution keeps its own records, service ownership and decisions; the shared platform is no authority over them.",
+    "rule": "lib/frontdoor/procedures.ts installFrontdoorProcedures(); lib/recordkeeping/procedures.ts installRecordkeepingProcedures(); lib/frontdoor/catalogue.ts ownerOf()"
+   },
+   {
+    "id": "two-officials",
+    "what": "Every publication, approval and decision is proposed by one official and confirmed by a different person, compared as persons and never only as accounts",
+    "why": "Part 13 §7.3 and §15 Gate 3: required dual control prevents self-approval.",
+    "rule": "lib/casework/engine.ts act() (fourEyes, distinctFrom); lib/data/dual-control.ts dualControlRefusal()"
+   },
+   {
+    "id": "no-ai-decision",
+    "what": "No step is decided by a model or a score: officials decide with reasons",
+    "why": "Part 13 §11.3: AI must not issue legally consequential decisions.",
+    "rule": "CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   },
+   {
+    "id": "no-case-of-its-own",
+    "what": "This form opens no case of its own: what it records is kept by the platform system named in its intended stage, under that system's own two-official rules",
+    "why": "The catalogue item is a record of the front door or of service management, not a decision procedure.",
+    "rule": "lib/frontdoor/catalogue.ts, lib/frontdoor/service-management.ts, lib/frontdoor/representation.ts, lib/frontdoor/journey.ts"
+   },
+   {
+    "id": "status-computed",
+    "what": "A service's status (active, pilot, information only, not available yet, retired) is computed from the records each time it is read, never stored: it is not active while its procedure is unapproved, its owner unnamed or its fee rule unapproved",
+    "why": "Part 13 §3.2: the directory must not imply that a backend integration is operational when it has not been verified.",
+    "rule": "lib/frontdoor/catalogue.ts serviceStatus()"
+   },
+   {
+    "id": "fee-by-rule",
+    "what": "A fee is named only as a rule of Rates and tariffs, never as an amount; until the rule is approved the service says its fee is not set",
+    "why": "CLAUDE.md: rates, bands and tariffs come only from lib/law/rules.ts; never type a statutory rate.",
+    "rule": "lib/frontdoor/catalogue.ts checkTerms(); lib/law/rules.ts ruleInForce()"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 646,
+    "quotes": [
+     "GOV-SVC-001",
+     "Government service discovery",
+     "Service information and eligibility guidance"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/frontdoor/catalogue.ts",
+      "how": "the form's register row, carried by the platform system its intended stage names"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 745,
+    "quotes": [
+     "Browse services by life event, business need, institution or service category.",
+     "Show eligibility, evidence requirements, fees, deadlines and available alternatives."
+    ],
+    "met_by": {
+     "fields": [
+      "discovery.query",
+      "discovery.life_event",
+      "discovery.institution"
+     ],
+     "platform": {
+      "file": "app/src/lib/frontdoor/catalogue.ts",
+      "how": "publicCatalogue(): each published service with its owner, eligibility, evidence, fee rule, channels and status; the alternatives each lists"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/PARTS-12-13.md",
+    "line": 743,
+    "quotes": [
+     "Discover"
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/frontdoor/journey.ts",
+      "how": "serviceJourney(): the discover step"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "discovery.query",
+   "type": "text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 200
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "What you are looking for"
+   },
+   "error_text": {
+    "en": {
+     "length": "What you are looking for must be 200 characters or fewer."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "discovery.life_event",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "frontdoor.life_events",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "What is happening in your life"
+   },
+   "error_text": {
+    "en": {
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "discovery.institution",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.institutions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Institution (if you know it)"
+   },
+   "error_text": {
+    "en": {
+     "reference_exists": "There is no record with that reference in the register."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "discovery.language",
+   "type": "choice",
+   "required": false,
+   "validation": [
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.languages",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Language"
+   },
+   "error_text": {
+    "en": {
+     "value_in_source": "Select an answer from the list."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "discovery.assistance",
+   "type": "boolean",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "I need help to use a service"
+   },
+   "country_decision": null
+  }
+ ]
+}

@@ -75,7 +75,7 @@ describe('procedure-link states', () => {
     installAll('Administrator');
     expect(listPackages({ key: 'health.facility' }).length).toBeGreaterThan(0);
     // Internal-administration templates are adopted per institution (the next test); local-government templates by each local government (below).
-    for (const f of CATALOGUE_CONTRACTS.filter(x => x.procedure && x.batch !== 5 && !x.procedure.key.startsWith('lg.'))) {
+    for (const f of CATALOGUE_CONTRACTS.filter(x => x.procedure && x.batch !== 5 && x.batch !== 12 && !x.procedure.key.startsWith('lg.') && !x.procedure.key.startsWith('xi.'))) {
       const l = procedureLink({ identity: f.identity, procedure: f.procedure });
       expect(l.state, f.identity).toBe('draft');
       expect(l.detail).toMatch(/no version of it carries this contract yet/);
@@ -98,6 +98,17 @@ describe('procedure-link states', () => {
     }
   });
 
+  // I13: the front-door and records templates are each institution's own, like the internal-administration ones.
+  it('is draft for each batch-12 form once an institution has adopted its front-door or records template, never before (plan I13)', async () => {
+    const own = CATALOGUE_CONTRACTS.filter(f => f.batch === 12 && f.procedure);
+    expect(own.length).toBe(15);
+    for (const f of own) expect(procedureLink({ identity: f.identity, procedure: f.procedure }).state, f.identity).toBe('missing');
+    const { installFrontdoorProcedures } = await import('@/lib/frontdoor/procedures');
+    const { installRecordkeepingProcedures } = await import('@/lib/recordkeeping/procedures');
+    for (const r of [installFrontdoorProcedures(CIVIL, 'Administrator', 'admin'), installRecordkeepingProcedures(CIVIL, 'Administrator', 'admin')]) if ('error' in r) throw new Error(r.error);
+    for (const f of own) expect(procedureLink({ identity: f.identity, procedure: f.procedure }), f.identity).toMatchObject({ state: 'draft', linked: { key: f.procedure!.key, inRegister: true } });
+  });
+
   it('is draft for each batch-10 local-government form once a local government has adopted its template, never before (plan I7)', async () => {
     const lg = CATALOGUE_CONTRACTS.filter(f => f.batch === 10 && f.procedure?.key.startsWith('lg.'));
     expect(lg.map(f => f.specId).sort()).toEqual(['LRG-FIN-008', 'LRG-ORG-004', 'LRG-ORG-005', 'LRG-SVC-013', 'LRG-SVC-014']);
@@ -112,6 +123,16 @@ describe('procedure-link states', () => {
     const r = installLocalGovernmentProcedures(m.id, 'District clerk', 'local:clerk');
     if ('error' in r) throw new Error(r.error);
     for (const f of lg) expect(procedureLink({ identity: f.identity, procedure: f.procedure }), f.identity).toMatchObject({ state: 'draft', linked: { key: f.procedure!.key, inRegister: true } });
+  });
+
+  it('is draft for each batch-11 form once an institution has adopted the cross-institution templates, never before (plan I9)', async () => {
+    const xi = CATALOGUE_CONTRACTS.filter(f => f.batch === 11 && f.procedure);
+    expect(xi).toHaveLength(12);
+    for (const f of xi) expect(procedureLink({ identity: f.identity, procedure: f.procedure }).state, f.identity).toBe('missing');
+    const { installCrossInstitutionProcedures } = await import('@/lib/federation/procedures');
+    const r = installCrossInstitutionProcedures(CIVIL, 'Administrator', 'admin');
+    if ('error' in r) throw new Error(r.error);
+    for (const f of xi) expect(procedureLink({ identity: f.identity, procedure: f.procedure }), f.identity).toMatchObject({ state: 'draft', linked: { key: f.procedure!.key, inRegister: true } });
   });
 
   it('is draft for each batch-2 form the product procedures carry once they are in the register, never approved by it', () => {

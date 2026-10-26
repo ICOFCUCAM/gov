@@ -45,6 +45,8 @@ import { PASSPORT_PERMITS } from '@/lib/passports/procedures';
 import { CITIZENSHIP_PERMITS } from '@/lib/citizenship/procedures';
 import { LABOUR_PERMITS } from '@/lib/labour/procedures';
 import { SOCIAL_PERMITS } from '@/lib/social/procedures';
+// I12: security governance and resilience.
+import { SECURITY_PERMITS } from '@/lib/security/procedures';
 import { mappingInForce, powerRefusal, type Power } from './authority';
 import type { ActionSpec, Case, CasePackage } from '@/lib/casework/types';
 
@@ -69,6 +71,14 @@ const DEPLOYMENT_DOMAINS: [prefix: string, authority: string][] = [
   // Local and regional government (plan I7): each local government's own procedure (lg.<template>.<institution>): its council's
   // resolutions, its budget, its service requests and complaints, decided by its own officials under its own powers.
   ['lg', 'the local government whose own procedure it is'],
+  // I9: cross-institution workflow (xi.<template>.<institution>): the receiving institution's own procedure, decided by its own officials;
+  // a request never becomes an order (lib/federation/procedures.ts natureOf()).
+  ['xi', 'the institution whose own cross-institution procedure it is'],
+  // I13 (plan step I13): each institution's own front-door procedures (svc.<template>.<institution>: appointments, service
+  // complaints, reconsideration of its own decisions, refunds of its own fees) and records management (rec.<template>.<institution>:
+  // retention schedules, legal holds, disposal, transfer to the archive, migrations), decided by its own officials.
+  ['svc', 'the institution whose own service procedure it is'],
+  ['rec', 'the institution whose own records procedure it is'],
 ];
 
 /** Classify a decision step; null when the platform cannot say which authority it rests on. */
@@ -130,6 +140,9 @@ export function classifyDecision(c: Case, a: ActionSpec, pkg: Pick<CasePackage, 
   // Human services (plan step I6): identity, passports and travel documents, citizenship, labour and social protection, each
   // family under its own permit type (lead: the slot the nation names). Proposed, unapproved: refused in production until approved.
   for (const permits of [IDENTITY_PERMITS, PASSPORT_PERMITS, CITIZENSHIP_PERMITS, LABOUR_PERMITS, SOCIAL_PERMITS]) for (const [k, permitType] of Object.entries(permits)) if (is(key, k)) return mapped(permitType);
+  // I12: security governance and resilience (lib/security): each family under its own permit type (lead: the slot the nation names).
+  // Proposed, unapproved: refused in production until approved.
+  for (const [k, permitType] of Object.entries(SECURITY_PERMITS)) if (is(key, k)) return mapped(permitType);
   for (const [prefix, authority] of DEPLOYMENT_DOMAINS) if (key.startsWith(`${prefix}.`)) return { kind: 'deployment', authority };
   return mapped(pkg.authority?.permitType);
 }
