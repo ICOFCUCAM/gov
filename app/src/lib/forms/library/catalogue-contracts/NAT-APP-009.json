@@ -1,0 +1,187 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "NAT-APP-009",
+ "record_type": "nat.nat-app-009",
+ "form_version": 1,
+ "procedure_package_id": "nat.not-built",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-NAT-001: the citizenship procedures that exist and the competent determination authority (the citizenship slot, shipped empty)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+  "id": "NAT-APP-009",
+  "part": 4,
+  "section": "6.1",
+  "line": 1682,
+  "batch": 9
+ },
+ "library": {
+  "title": "Ask for a citizenship decision to be reviewed or appealed",
+  "intro": "Waits for its procedure: the competent authority's correction, review and status verification are not on the platform yet.",
+  "owner": "citizenship",
+  "filled_by": "The applicant or an authorised representative: online, at an office or on paper.",
+  "authority": "The competent authority the nation names for the citizenship slot (authorityFor('citizenship'), shipped empty). Never a ministry by name; no stand-in acts for it.",
+  "procedure": null,
+  "intended": "Citizenship correction, review and status verification: not built; the form waits in the library (plan step I6)",
+  "lists": {},
+  "policies": {
+   "access.read_rule": "caseReadRefusal() in lib/auth/roles.ts: a restricted case of the competent authority, read by its assignee and supervisors; every read in the access log",
+   "access.others": "No other institution reads the file; a certificate carries no name and is checked at /verify"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "no-score",
+    "what": "No field scores a person, a household, a credential, an employer or an application: no risk, credibility, propensity or match score exists in the contract or its procedure",
+    "why": "Directions §15.6 and §15.7; supplement Part 15: a risk score alone cannot determine loss of essential support; field series Part 4 §4.4: no opaque risk scores.",
+    "rule": "CLAUDE.md Immigration and Customs (\"never a score\"); lib/social/procedures.ts refuses a suspension whose grounds rest on a score"
+   },
+   {
+    "id": "authority-slot",
+    "what": "The competent citizenship authority is the institution the nation names for the citizenship slot, shipped empty; no stand-in acts for it",
+    "why": "Field series Part 4 §6: optional entries until the country confirms which procedures exist and which institution has jurisdiction (CFG-NAT-001).",
+    "rule": "lib/nation/deployment.ts AUTHORITIES (citizenship, optional; no provisional fallback)"
+   },
+   {
+    "id": "procedure-not-built",
+    "what": "No procedure carries this form yet: it waits in the library as a contract draft, matched to its register row",
+    "why": "Plan step I6 built the procedures the brief named first (identity, passports, labour, social protection); this form's workflow is a later slice.",
+    "rule": "Owner's direction 2026-10-21 (register first): a missing procedure is never an empty or complete form; lib/forms/procedure-link.ts computes the link"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+    "line": 1682,
+    "quotes": [
+     "NAT-APP-009",
+     "Citizenship decision review or appeal",
+     "Review workflow"
+    ],
+    "met_by": {
+     "fields": [
+      "request.what"
+     ],
+     "deviation": "procedure-not-built"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+    "line": 1671,
+    "quotes": [
+     "Citizenship determination can have constitutional and legal consequences.",
+     "CivicOS should support the records and procedures of the competent authority without assuming that civil registration or possession of an identity document establishes citizenship."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/citizenship/procedures.ts",
+      "how": "citizenship.application records the grounds claimed and the competent authority's assessment; nothing reads another register to infer citizenship"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+    "line": 1686,
+    "quotes": [
+     "These are optional catalogue entries until the country confirms which citizenship procedures exist and which institution has jurisdiction."
+    ],
+    "met_by": {
+     "deviation": "authority-slot"
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+    "line": 1688,
+    "quotes": [
+     "Critical boundary: A national identity number, birthplace, passport, parent's record, or immigration status must not independently be treated as conclusive proof of citizenship unless the applicable law expressly gives it that effect."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/citizenship/procedures.ts",
+      "how": "citizenship.checkDetermination refuses a determination without the assessment of each criterion; the hint states that an identity number, passport or birthplace is not conclusive unless the law says so"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "request.reference",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 300
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "The record or decision concerned"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the record or decision concerned."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "request.what",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "What is asked"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter what is asked."
+    }
+   },
+   "country_decision": null
+  }
+ ]
+}

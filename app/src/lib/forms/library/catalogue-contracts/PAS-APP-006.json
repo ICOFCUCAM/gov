@@ -1,0 +1,264 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "PAS-APP-006",
+ "record_type": "pas.pas-app-006",
+ "form_version": 1,
+ "procedure_package_id": "passport.status",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-PAS-001: passport and travel document types and eligibility (none ship).",
+  "CFG-PAS-002: validity, replacement, cancellation and custody rules (none ship); fees only from the approved schedule passports.fees."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+  "id": "PAS-APP-006",
+  "part": 4,
+  "section": "5.1",
+  "line": 1644,
+  "batch": 9
+ },
+ "library": {
+  "title": "Report a lost or stolen passport",
+  "intro": "Report that your passport was lost or stolen. The report is recorded and the document stops answering as valid; it is not proof of fraud. The authority decides what happens to it.",
+  "owner": "travelDocuments",
+  "filled_by": "The applicant, a parent or guardian for a child, or an authorised representative: online, at an office or on paper.",
+  "authority": "The travel document authority the nation names for the travelDocuments slot (authorityFor('travelDocuments'), shipped empty; it may be the immigration authority). Never a ministry by name.",
+  "procedure": {
+   "key": "passport.status",
+   "stage": "received",
+   "action": "record-report",
+   "document": "report"
+  },
+  "lists": {},
+  "policies": {
+   "access.read_rule": "canReadTravelDocuments() in lib/auth/roles.ts: the travel document authority's officials with a stated purpose; every read in the access log",
+   "access.others": "Other institutions learn only whether a document is valid through travel-document.status, never the file"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "no-score",
+    "what": "No field scores a person, a household, a credential, an employer or an application: no risk, credibility, propensity or match score exists in the contract or its procedure",
+    "why": "Directions §15.6 and §15.7; supplement Part 15: a risk score alone cannot determine loss of essential support; field series Part 4 §4.4: no opaque risk scores.",
+    "rule": "CLAUDE.md Immigration and Customs (\"never a score\"); lib/social/procedures.ts refuses a suspension whose grounds rest on a score"
+   },
+   {
+    "id": "authority-slot",
+    "what": "The travel document authority is the institution the nation names for the travelDocuments slot (it may be the immigration authority), shipped empty; until it is named no case opens",
+    "why": "CFG-PAS-001 and specification Part 2 §C.4: a country may assign these functions to different institutions.",
+    "rule": "lib/nation/deployment.ts AUTHORITIES (travelDocuments, optional)"
+   },
+   {
+    "id": "no-biometric",
+    "what": "No biometric field, template, match or score: a photograph is a document of the case (an image), and no biometric template is made or stored",
+    "why": "Field series Part 4 §3.4: biometric collection is not a default; CFG-IDN-004 (biometric authorisation) needs the nation's law and an independent legal review first (plan I11).",
+    "rule": "lib/identity/register.ts and lib/passports/register.ts hold no biometric data; app/scripts/requirements/catalogue.py PROHIBITED_FIELD"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+    "line": 1644,
+    "quotes": [
+     "PAS-APP-006",
+     "Lost or stolen passport report",
+     "Report and document-status review"
+    ],
+    "met_by": {
+     "fields": [
+      "report.kind",
+      "report.circumstances"
+     ],
+     "procedure": "record-report"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1491,
+    "quotes": [
+     "ICAO Doc 9303 provides international specifications for machine-readable travel documents.",
+     "Use its applicable parts for document formats and validation, while keeping national issuance law, eligibility and decision-making rules separately configurable."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/passports/register.ts",
+      "how": "ICAO_ELEMENTS: the ICAO Doc 9303 data elements of each document; issuance law, eligibility and decisions stay the nation's (procedures drafted, mappings unapproved)"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+    "line": 1636,
+    "quotes": [
+     "Passports and other travel documents require their own issuance, security, validity, and replacement workflows.",
+     "The exact documents and eligibility rules must be configured by country."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/passports/procedures.ts",
+      "how": "passport.application, passport.status and passport.review: issuance, security (production, quality, custody), validity and replacement; document types are the nation's list"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+    "line": 1665,
+    "quotes": [
+     "Passport numbers and security-sensitive production data must not be broadly searchable by staff without a specific authorized purpose."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/app/api/passports/route.ts",
+      "how": "A document number is searched only with a stated purpose, by the travel document authority; every search and refusal in the access log"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+    "line": 1667,
+    "quotes": [
+     "Lost-document reporting must not be treated as conclusive proof of fraud.",
+     "The authorized process determines the status of the old document and whether a replacement is permitted."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/passports/register.ts",
+      "how": "A lost or stolen report sets the document reported, not cancelled; cancellation and replacement are decided in a case with reasons"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md",
+    "line": 1669,
+    "quotes": [
+     "A refusal or revocation must follow the applicable legal procedure and authorized human decision.",
+     "The platform should support reasons, notice, review, and appeal where required; it must not invent those rights or remove them through generic workflow defaults."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/passports/procedures.ts",
+      "how": "Refusal and revocation are four-eyes decisions with reasons and the review route; revocation follows notice and representations; a review is by officials who took no part"
+     }
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "report.document",
+   "type": "registry_reference",
+   "required": false,
+   "validation": [
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "passports.registry.documents",
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Passport (its number), if you know it"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "report.kind",
+   "type": "choice",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "value_in_source",
+     "params": {}
+    }
+   ],
+   "values_source": "passports.report_kinds",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Lost or stolen"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter lost or stolen."
+    }
+   },
+   "country_decision": "lost, stolen (lib/passports/procedures.ts)."
+  },
+  {
+   "id": "report.circumstances",
+   "type": "long_text",
+   "required": false,
+   "validation": [
+    {
+     "rule": "length",
+     "params": {
+      "max": 4000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "What happened (a report, never a finding)"
+   },
+   "country_decision": null
+  },
+  {
+   "id": "report.document_received",
+   "type": "document",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "evidence_requirement_in_approved_package",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.documents.secure_store",
+   "personal_data_class": "restricted",
+   "evidence": [
+    {
+     "kind": "report",
+     "when": "always"
+    }
+   ],
+   "label": {
+    "en": "The report as received"
+   },
+   "error_text": {
+    "en": {
+     "required": "Attach the document."
+    }
+   },
+   "country_decision": null
+  }
+ ]
+}

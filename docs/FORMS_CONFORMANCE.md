@@ -1297,3 +1297,83 @@ DPIA records are not built (`processor-register`, integration register 20.88).
 | The person kept apart and restricted; no suspect; no voter registration form | `catalogue-contracts.test.ts` "keeps the person who raised a matter restricted and apart from the case…" |
 | Audit finding and the response beside it | `catalogue-contracts.test.ts` "records an audit finding by criteria, condition, cause, effect, evidence and recommendation…" |
 | The procedures behind them | `lib/oversight/oversight.test.ts`, `app/api/oversight/route.test.ts` |
+
+## 17. Catalogue contracts, batch 9: human services (26 October 2026)
+
+Plan step I6 (human services) gave the forms of its first areas a CivicOS
+contract: 96 forms that were `contract_missing` are now `contract: given
+(CivicOS library)`, `form_status: contract_draft`, with `batch: 9` in their
+`catalogue` block. They are the field series Part 4 identity (IDN-*, §3.1, 22
+forms), passport and travel document (PAS-APP-*, §5.1, 18) and citizenship
+(NAT-APP-*, §6.1, 12) forms of `docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md`,
+and the supplement's Part 14 labour (LAB-EMP-*, 20) and Part 15 social
+protection (SOC-BEN-*, 24) forms. None is excluded or held for legal review by
+the scope (`docs/requirements/form-scope.json`). The format, loader, gates and
+test are batch 1's (§8).
+
+The conformance test holds the lines each form answers:
+
+- Part 1's shared rules and the supplement's conventions and gates, as for
+  every batch.
+- The shared group `human`: the specification's separate institutional
+  records and the rule that a workflow confers no legal power (lines 1106,
+  1197), and the field series' rules that a submission is not a decision, that
+  a failed check or missing document is no ground for refusal, and that no
+  plausible default is activated (lines 1406, 1771, 1817).
+- Each family's lines:
+  - IDN: the specification's identity authority (1128) and Part 4 §3's credential, civil link, access, verification and biometric rules (1498, 1536, 1543, 1545, 1555).
+  - PAS: the specification's passport line (1491) and §5's issuance, access, loss and refusal rules (1636, 1665, 1667, 1669).
+  - NAT: §6's competent authority and evidence rules (1671, 1686, 1688).
+  - LAB: the specification's labour mandate and complaint rules (1152, 1593).
+  - SOC: the specification's social protection mandate and benefit rules (1158, 1652, 1656–1662) and the supplement's mandatory safeguards (500).
+- Its own row.
+- For the forms whose JSON contract the supplement gives (§14.2: LAB-EMP-001, 003, 004, 005, 008, 009, 010, 011, 016, 020; §15.2: SOC-BEN-001, 002, 003, 004, 010, 015, 018, 019, 020): the envelope line and every line of that contract, field by field.
+- For the other labour forms: the supplement's line that their contracts must be added before production (340).
+
+| Family | Forms | Linked to | Waiting |
+|---|---|---|---|
+| IDN | 22 | `identity.enrolment` (REG-001 … 005), `identity.credential` (CARD-001, 002, 004, 005), `identity.credential-status` (CARD-003, 006, 007), `identity.resolution` (VER-003, SEC-001 … 003) | VER-001 and 002 are answered by the `identity.verify` exchange (no case is opened). ACC-001 … 004 (data access, correction, disclosure, access review) wait for their procedures. |
+| PAS | 18 | `passport.application` (001 … 005, 008 … 013, 018), `passport.status` (006, 007, 014, 017), `passport.review` (016) | 015 is answered by the `travel-document.status` exchange. |
+| NAT | 12 | `citizenship.application` (001 … 007, 010, 012) | 008, 009 and 011 (correction, review, status verification) |
+| LAB | 20 | employer and employment registration, vacancy, jobseeker, inspection, complaint, injury, mediation, notice (001 … 015, 020) | 016 … 019 (apprenticeships, training, programmes, labour-market returns) |
+| SOC | 24 | registration, household, benefit (002, 004, 009, 010, 011, 012, 014), reassessment (005, 006, 017), suspension (007), payment (018), overpayment (019), appeal (020) | 008, 013, 015, 016, 021 … 024 (emergency assistance, referrals, social-work records, safeguarding, providers, programme reporting) |
+
+Every contract shares seven deviations:
+
+- `minimisation`, `evidence-requirement` and `scanning`, as every batch.
+- `no-score`: no field scores a person, household, credential, employer or application.
+- `authority-slot`: the owner is the institution the nation names for the `identity`, `travelDocuments`, `citizenship`, `labour` or `socialProtection` slot, shipped empty, with no stand-in.
+- `procedure-not-built`, on a form waiting for its procedure.
+- `no-biometric`, on every identity and passport form: a photograph is an image document, and no template, match or biometric field exists. CFG-IDN-004 needs the nation's law and an independent legal review first.
+
+Others belong to particular forms:
+
+- `stated-amount`: a remuneration, a claimed wage or a salary range is the person's figure in minor units, never calculated money.
+- `signed-by-session`: the inspector's signature is the signed-in official's act.
+- `medical-sealed`: an injury's medical evidence is a sealed document reference only.
+- `maker-checker`: a payment instruction's maker and approver are the officials on the `prepare` and `approve` steps, a different person approving (`distinctFrom`).
+
+**Money only by an approved rule.** A passport fee is a `money` field of the
+platform's own (`derived_from_approved_rule`), calculated by the approved
+schedule `passports.fees` (the new `fixed-amounts` rule kind) and named as a
+nation value of kind `fee`. A benefit's means, amount and overpayment are
+numbers the programme's approved rule (`social.<programme>`, kind
+`means-tested`) calculates; the rule version is an officer field
+(`approved_rule_active_at_calculation`) and the assessment can be re-run
+(acceptance P2-07). Validity periods, renewal windows, notice, reporting and
+appeal periods are named and unset (`certificate_validity_from_rule`,
+`renewal_window_from_rule` are binding).
+
+**No refusal from a failed check.** The identity, passport, labour and social
+protection procedures hold a case whose identity or status check cannot be
+made; refusal is not open from the held stage (acceptance P2-08). A lost or
+stolen report is a report, never proof of fraud; a complaint stays an
+allegation until findings support it; a possible duplicate identity is a flag
+an official determines with reasons.
+
+| Check | Where |
+|---|---|
+| Each contract quotes and meets every piece of its lines; typed, classed, registered rules only; nothing a law decides set; three channels; contract draft | `catalogue-contracts.test.ts` (per form) |
+| No biometric, score or clinical field; medical evidence a sealed document | `catalogue-contracts.test.ts` "keeps human services free of biometrics, scores and clinical fields…" |
+| Links, exchanges, fee and rule version, maker and checker | `catalogue-contracts.test.ts` "links the human services forms to their procedures, the verification exchanges and the approved rules" |
+| The procedures behind them | `lib/identity/identity.test.ts`, `lib/passports/passports.test.ts`, `lib/citizenship/citizenship.test.ts`, `lib/labour/labour.test.ts`, `lib/social/social.test.ts` |

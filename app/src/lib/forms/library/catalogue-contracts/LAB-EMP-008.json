@@ -1,0 +1,647 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "LAB-EMP-008",
+ "record_type": "lab.lab-emp-008",
+ "form_version": 1,
+ "procedure_package_id": "labour.inspection",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "The labour law's employer and employment registration duties, occupational and industry classifications, inspection powers and severity scale, complaint categories, injury reporting categories and periods, notice periods (none ship)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+  "id": "LAB-EMP-008",
+  "part": 14,
+  "section": "14.1",
+  "line": 170,
+  "batch": 9
+ },
+ "library": {
+  "title": "Record a workplace inspection and findings",
+  "intro": "Record a workplace inspection: the legal basis, the findings with their evidence and severity, and the corrective actions. A finding is corrected only by a new version; an allegation is never a finding.",
+  "owner": "labour",
+  "filled_by": "A labour inspector with inspection authority, signed in.",
+  "authority": "The labour authority the nation names for the labour slot (authorityFor('labour'), shipped empty). Never a ministry by name.",
+  "procedure": {
+   "key": "labour.inspection",
+   "stage": "visited",
+   "action": "record-finding",
+   "document": "evidence"
+  },
+  "lists": {},
+  "policies": {
+   "access.read_rule": "canReadLabour() in lib/auth/roles.ts: the labour authority's officials; auditors with a purpose; every read in the access log",
+   "access.others": "Other institutions learn only an employer's standing through employer.standing"
+  },
+  "nation_values": [],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "no-score",
+    "what": "No field scores a person, a household, a credential, an employer or an application: no risk, credibility, propensity or match score exists in the contract or its procedure",
+    "why": "Directions §15.6 and §15.7; supplement Part 15: a risk score alone cannot determine loss of essential support; field series Part 4 §4.4: no opaque risk scores.",
+    "rule": "CLAUDE.md Immigration and Customs (\"never a score\"); lib/social/procedures.ts refuses a suspension whose grounds rest on a score"
+   },
+   {
+    "id": "authority-slot",
+    "what": "The labour authority is the institution the nation names for the labour slot, shipped empty; until it is named no case opens",
+    "why": "Specification Part 2 §A.6: the government assigns these functions.",
+    "rule": "lib/nation/deployment.ts AUTHORITIES (labour, optional)"
+   },
+   {
+    "id": "signed-by-session",
+    "what": "The inspector's or signatory's signature is the signed-in official's act on the case step (verified session; four-eyes where the procedure asks), sealed with the decision, not a signature field",
+    "why": "Who acted is the verified official, never a name or image in the form.",
+    "rule": "CLAUDE.md Who acted: withOfficial(); lib/records/decisions.ts seals the decision"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 170,
+    "quotes": [
+     "LAB-EMP-008",
+     "Workplace inspection",
+     "Record an inspection and findings"
+    ],
+    "met_by": {
+     "fields": [
+      "lab.findings",
+      "lab.inspection_basis"
+     ],
+     "procedure": "record-finding"
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1152,
+    "quotes": [
+     "Owns: employer registrations where assigned, inspection cases, findings, corrective orders and employment-service referrals.",
+     "It must not see private medical information without specific authority."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/labour/register.ts",
+      "how": "Employers, inspections with findings and corrective orders, employment-service referrals; injury medical content only as a sealed document"
+     }
+    }
+   },
+   {
+    "source": "docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md",
+    "line": 1593,
+    "quotes": [
+     "Indicators: inspections completed, outstanding corrective actions, complaint age bands, resolution time, repeat findings and employment-service outcomes.",
+     "Do not publish identifying complainant details or imply that an allegation is a proven violation."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/labour/register.ts",
+      "how": "labourCounts() carries no complainant or employer; a complaint is upheld only on findings (labour.checkOutcome)"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 184,
+    "quotes": [
+     "The following contracts specify the domain-specific fields.",
+     "The shared standard above supplies the common metadata, legal basis, workflow, privacy and audit fields."
+    ],
+    "met_by": {
+     "platform": {
+      "file": "app/src/lib/forms/library/catalogue-contracts/shared/common-items.json",
+      "how": "The shared envelope (metadata, legal basis, workflow, privacy, audit) is answered by the shared items; this contract adds the domain fields line by line"
+     }
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 251,
+    "quotes": [
+     "\"form_id\": \"LAB-EMP-008\""
+    ],
+    "met_by": {
+     "fields": [
+      "lab.inspection_id"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 252,
+    "quotes": [
+     "\"title\": \"Workplace Inspection\""
+    ],
+    "met_by": {
+     "fields": [
+      "lab.employer_id"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 254,
+    "quotes": [
+     "{\"key\": \"inspection_id\", \"type\": \"string\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "lab.inspection_id"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 255,
+    "quotes": [
+     "{\"key\": \"employer_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "lab.employer_id"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 256,
+    "quotes": [
+     "{\"key\": \"workplace_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "lab.workplace_id"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 257,
+    "quotes": [
+     "{\"key\": \"inspection_authority_id\", \"type\": \"entity_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "lab.inspection_authority_id"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 258,
+    "quotes": [
+     "{\"key\": \"inspection_date\", \"type\": \"date\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "lab.inspection_date"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 259,
+    "quotes": [
+     "{\"key\": \"inspection_basis\", \"type\": \"legal_rule_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "fields": [
+      "lab.inspection_basis"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 260,
+    "quotes": [
+     "{\"key\": \"findings\", \"type\": \"array\", \"required\": true, \"items_type\": \"inspection_finding\"}"
+    ],
+    "met_by": {
+     "fields": [
+      "lab.findings"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 261,
+    "quotes": [
+     "{\"key\": \"corrective_actions\", \"type\": \"array\", \"required\": false, \"items_type\": \"corrective_action\"}"
+    ],
+    "met_by": {
+     "fields": [
+      "lab.corrective_actions"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 262,
+    "quotes": [
+     "{\"key\": \"evidence\", \"type\": \"array\", \"required\": false, \"items_type\": \"document_or_media_reference\"}"
+    ],
+    "met_by": {
+     "fields": [
+      "lab.evidence"
+     ]
+    }
+   },
+   {
+    "source": "docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md",
+    "line": 263,
+    "quotes": [
+     "{\"key\": \"inspector_signature\", \"type\": \"signature_reference\", \"required\": true}"
+    ],
+    "met_by": {
+     "deviation": "signed-by-session"
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "lab.inspection_id",
+   "type": "text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 300
+     }
+    },
+    {
+     "rule": "officer_or_service_only",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Inspection reference (given by the platform)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter inspection reference (given by the platform)."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "lab.employer_id",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "labour.registry.employers",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Employer id"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter employer id."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "lab.workplace_id",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.sites",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Workplace (registered site or the employer's workplace)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter workplace (registered site or the employer's workplace)."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "lab.inspection_authority_id",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.institutions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Inspecting authority"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter inspecting authority."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "lab.inspection_date",
+   "type": "date",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Inspection date"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter inspection date."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "lab.inspection_basis",
+   "type": "registry_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "reference_exists",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.registry.law_provisions",
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Inspection basis"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter inspection basis."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "lab.findings",
+   "type": "group",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Findings"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter findings."
+    }
+   },
+   "country_decision": null,
+   "items": [
+    {
+     "id": "requirement",
+     "type": "text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 300
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Requirement (provision or standard)"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter requirement (provision or standard)."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "observation",
+     "type": "long_text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 4000
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "What was observed"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter what was observed."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "severity",
+     "type": "choice",
+     "required": false,
+     "validation": [
+      {
+       "rule": "value_in_source",
+       "params": {}
+      }
+     ],
+     "values_source": "labour.country.severity",
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Severity (the nation's scale)"
+     },
+     "country_decision": "The nation's severity scale; none ships."
+    }
+   ]
+  },
+  {
+   "id": "lab.corrective_actions",
+   "type": "group",
+   "required": false,
+   "validation": [],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Corrective actions"
+   },
+   "country_decision": null,
+   "items": [
+    {
+     "id": "finding",
+     "type": "number",
+     "required": false,
+     "validation": [
+      {
+       "rule": "integer_range",
+       "params": {
+        "min": 0
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Finding"
+     },
+     "country_decision": null
+    },
+    {
+     "id": "action",
+     "type": "long_text",
+     "required": true,
+     "validation": [
+      {
+       "rule": "required",
+       "params": {}
+      },
+      {
+       "rule": "length",
+       "params": {
+        "max": 4000
+       }
+      }
+     ],
+     "values_source": null,
+     "personal_data_class": "restricted",
+     "evidence": [],
+     "label": {
+      "en": "What is required"
+     },
+     "error_text": {
+      "en": {
+       "required": "Enter what is required."
+      }
+     },
+     "country_decision": null
+    },
+    {
+     "id": "due",
+     "type": "date",
+     "required": false,
+     "validation": [],
+     "values_source": null,
+     "personal_data_class": "administrative",
+     "evidence": [],
+     "label": {
+      "en": "Due (as the order sets it)"
+     },
+     "country_decision": null
+    }
+   ]
+  },
+  {
+   "id": "lab.evidence",
+   "type": "document",
+   "required": false,
+   "validation": [
+    {
+     "rule": "evidence_requirement_in_approved_package",
+     "params": {}
+    }
+   ],
+   "values_source": "civicos.documents.secure_store",
+   "personal_data_class": "administrative",
+   "evidence": [
+    {
+     "kind": "evidence",
+     "when": "always"
+    }
+   ],
+   "label": {
+    "en": "Evidence"
+   },
+   "country_decision": null,
+   "multiple": true
+  }
+ ]
+}

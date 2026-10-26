@@ -90,6 +90,22 @@
 // shipped empty. Voter registration (DEM-ELC-003 … 006) and the other forms
 // the scope holds for legal review are not written.
 //
+// Batch 9 (owner's assignment; plan step I6, human services): the field
+// series Part 4 identity (IDN-*), passport and travel document (PAS-APP-*)
+// and citizenship (NAT-APP-*) forms (docs/forms-catalogue/
+// FIELD-SERIES-PARTS-03-04.md) and the supplement's Part 14 labour (LAB-EMP-*)
+// and Part 15 social protection (SOC-BEN-*) forms, 96 in all. Each owner is
+// the institution the nation names for its slot (identity, travelDocuments,
+// citizenship, labour, socialProtection), shipped empty. The forms whose own
+// JSON contract the supplement gives (§14.2, §15.2) answer every line of it,
+// field by field. No biometric field or template, no score of any kind, no
+// clinical field (an injury's medical evidence is a sealed document only); a
+// passport fee is calculated only by the approved schedule passports.fees and
+// a benefit only by the programme's approved rule, its version recorded. 74
+// are linked to the procedures of lib/identity, lib/passports,
+// lib/citizenship, lib/labour and lib/social; the others name what they wait
+// for.
+//
 // Each contract is a JSON file in the canonical format
 // (civicos.form-contract.v1, lib/forms/canonical.ts; never a second format),
 // with two blocks of its own beside the fields: `catalogue` names the one
@@ -333,6 +349,102 @@ import con018 from './catalogue-contracts/DEM-CON-018.json';
 import con019 from './catalogue-contracts/DEM-CON-019.json';
 import con020 from './catalogue-contracts/DEM-CON-020.json';
 import pub009 from './catalogue-contracts/DEM-PUB-009.json';
+import b9IDNREG001 from './catalogue-contracts/IDN-REG-001.json';
+import b9IDNREG002 from './catalogue-contracts/IDN-REG-002.json';
+import b9IDNREG003 from './catalogue-contracts/IDN-REG-003.json';
+import b9IDNREG004 from './catalogue-contracts/IDN-REG-004.json';
+import b9IDNREG005 from './catalogue-contracts/IDN-REG-005.json';
+import b9IDNCARD001 from './catalogue-contracts/IDN-CARD-001.json';
+import b9IDNCARD002 from './catalogue-contracts/IDN-CARD-002.json';
+import b9IDNCARD003 from './catalogue-contracts/IDN-CARD-003.json';
+import b9IDNCARD004 from './catalogue-contracts/IDN-CARD-004.json';
+import b9IDNCARD005 from './catalogue-contracts/IDN-CARD-005.json';
+import b9IDNCARD006 from './catalogue-contracts/IDN-CARD-006.json';
+import b9IDNCARD007 from './catalogue-contracts/IDN-CARD-007.json';
+import b9IDNVER001 from './catalogue-contracts/IDN-VER-001.json';
+import b9IDNVER002 from './catalogue-contracts/IDN-VER-002.json';
+import b9IDNVER003 from './catalogue-contracts/IDN-VER-003.json';
+import b9IDNACC001 from './catalogue-contracts/IDN-ACC-001.json';
+import b9IDNACC002 from './catalogue-contracts/IDN-ACC-002.json';
+import b9IDNACC003 from './catalogue-contracts/IDN-ACC-003.json';
+import b9IDNACC004 from './catalogue-contracts/IDN-ACC-004.json';
+import b9IDNSEC001 from './catalogue-contracts/IDN-SEC-001.json';
+import b9IDNSEC002 from './catalogue-contracts/IDN-SEC-002.json';
+import b9IDNSEC003 from './catalogue-contracts/IDN-SEC-003.json';
+import b9PASAPP001 from './catalogue-contracts/PAS-APP-001.json';
+import b9PASAPP002 from './catalogue-contracts/PAS-APP-002.json';
+import b9PASAPP003 from './catalogue-contracts/PAS-APP-003.json';
+import b9PASAPP004 from './catalogue-contracts/PAS-APP-004.json';
+import b9PASAPP005 from './catalogue-contracts/PAS-APP-005.json';
+import b9PASAPP008 from './catalogue-contracts/PAS-APP-008.json';
+import b9PASAPP009 from './catalogue-contracts/PAS-APP-009.json';
+import b9PASAPP010 from './catalogue-contracts/PAS-APP-010.json';
+import b9PASAPP006 from './catalogue-contracts/PAS-APP-006.json';
+import b9PASAPP007 from './catalogue-contracts/PAS-APP-007.json';
+import b9PASAPP011 from './catalogue-contracts/PAS-APP-011.json';
+import b9PASAPP012 from './catalogue-contracts/PAS-APP-012.json';
+import b9PASAPP013 from './catalogue-contracts/PAS-APP-013.json';
+import b9PASAPP014 from './catalogue-contracts/PAS-APP-014.json';
+import b9PASAPP015 from './catalogue-contracts/PAS-APP-015.json';
+import b9PASAPP016 from './catalogue-contracts/PAS-APP-016.json';
+import b9PASAPP017 from './catalogue-contracts/PAS-APP-017.json';
+import b9PASAPP018 from './catalogue-contracts/PAS-APP-018.json';
+import b9NATAPP001 from './catalogue-contracts/NAT-APP-001.json';
+import b9NATAPP002 from './catalogue-contracts/NAT-APP-002.json';
+import b9NATAPP003 from './catalogue-contracts/NAT-APP-003.json';
+import b9NATAPP004 from './catalogue-contracts/NAT-APP-004.json';
+import b9NATAPP005 from './catalogue-contracts/NAT-APP-005.json';
+import b9NATAPP006 from './catalogue-contracts/NAT-APP-006.json';
+import b9NATAPP007 from './catalogue-contracts/NAT-APP-007.json';
+import b9NATAPP010 from './catalogue-contracts/NAT-APP-010.json';
+import b9NATAPP012 from './catalogue-contracts/NAT-APP-012.json';
+import b9NATAPP008 from './catalogue-contracts/NAT-APP-008.json';
+import b9NATAPP009 from './catalogue-contracts/NAT-APP-009.json';
+import b9NATAPP011 from './catalogue-contracts/NAT-APP-011.json';
+import b9LABEMP001 from './catalogue-contracts/LAB-EMP-001.json';
+import b9LABEMP002 from './catalogue-contracts/LAB-EMP-002.json';
+import b9LABEMP003 from './catalogue-contracts/LAB-EMP-003.json';
+import b9LABEMP004 from './catalogue-contracts/LAB-EMP-004.json';
+import b9LABEMP005 from './catalogue-contracts/LAB-EMP-005.json';
+import b9LABEMP006 from './catalogue-contracts/LAB-EMP-006.json';
+import b9LABEMP007 from './catalogue-contracts/LAB-EMP-007.json';
+import b9LABEMP008 from './catalogue-contracts/LAB-EMP-008.json';
+import b9LABEMP009 from './catalogue-contracts/LAB-EMP-009.json';
+import b9LABEMP010 from './catalogue-contracts/LAB-EMP-010.json';
+import b9LABEMP011 from './catalogue-contracts/LAB-EMP-011.json';
+import b9LABEMP012 from './catalogue-contracts/LAB-EMP-012.json';
+import b9LABEMP013 from './catalogue-contracts/LAB-EMP-013.json';
+import b9LABEMP014 from './catalogue-contracts/LAB-EMP-014.json';
+import b9LABEMP015 from './catalogue-contracts/LAB-EMP-015.json';
+import b9LABEMP016 from './catalogue-contracts/LAB-EMP-016.json';
+import b9LABEMP017 from './catalogue-contracts/LAB-EMP-017.json';
+import b9LABEMP018 from './catalogue-contracts/LAB-EMP-018.json';
+import b9LABEMP019 from './catalogue-contracts/LAB-EMP-019.json';
+import b9LABEMP020 from './catalogue-contracts/LAB-EMP-020.json';
+import b9SOCBEN001 from './catalogue-contracts/SOC-BEN-001.json';
+import b9SOCBEN002 from './catalogue-contracts/SOC-BEN-002.json';
+import b9SOCBEN003 from './catalogue-contracts/SOC-BEN-003.json';
+import b9SOCBEN004 from './catalogue-contracts/SOC-BEN-004.json';
+import b9SOCBEN005 from './catalogue-contracts/SOC-BEN-005.json';
+import b9SOCBEN006 from './catalogue-contracts/SOC-BEN-006.json';
+import b9SOCBEN017 from './catalogue-contracts/SOC-BEN-017.json';
+import b9SOCBEN007 from './catalogue-contracts/SOC-BEN-007.json';
+import b9SOCBEN009 from './catalogue-contracts/SOC-BEN-009.json';
+import b9SOCBEN011 from './catalogue-contracts/SOC-BEN-011.json';
+import b9SOCBEN012 from './catalogue-contracts/SOC-BEN-012.json';
+import b9SOCBEN014 from './catalogue-contracts/SOC-BEN-014.json';
+import b9SOCBEN010 from './catalogue-contracts/SOC-BEN-010.json';
+import b9SOCBEN008 from './catalogue-contracts/SOC-BEN-008.json';
+import b9SOCBEN013 from './catalogue-contracts/SOC-BEN-013.json';
+import b9SOCBEN016 from './catalogue-contracts/SOC-BEN-016.json';
+import b9SOCBEN021 from './catalogue-contracts/SOC-BEN-021.json';
+import b9SOCBEN022 from './catalogue-contracts/SOC-BEN-022.json';
+import b9SOCBEN023 from './catalogue-contracts/SOC-BEN-023.json';
+import b9SOCBEN024 from './catalogue-contracts/SOC-BEN-024.json';
+import b9SOCBEN015 from './catalogue-contracts/SOC-BEN-015.json';
+import b9SOCBEN018 from './catalogue-contracts/SOC-BEN-018.json';
+import b9SOCBEN019 from './catalogue-contracts/SOC-BEN-019.json';
+import b9SOCBEN020 from './catalogue-contracts/SOC-BEN-020.json';
 
 /** What meets a catalogue passage: fields of the contract, a documented deviation, a platform rule (with the file that enforces it), a country decision, a step of the linked procedure, an exchange service or a policy of the form. */
 export interface MetBy {
@@ -427,6 +539,21 @@ export const BATCH_6 = [
 ] as unknown as CatalogueContractJson[];
 /** Batch 7: independent oversight and accountability forms, catalogue Part 12 (owner approved, 21 October 2026; plan I8). */
 export const BATCH_7 = [con012, con013, con014, con018, con019, con020, pub009] as unknown as CatalogueContractJson[];
+/** Batch 9: human services, field series Part 4 (identity, passports, citizenship) and supplement Parts 14 (labour) and 15 (social protection) (owner's assignment; plan I6). */
+export const BATCH_9 = [
+  b9IDNREG001, b9IDNREG002, b9IDNREG003, b9IDNREG004, b9IDNREG005, b9IDNCARD001, b9IDNCARD002, b9IDNCARD003,
+  b9IDNCARD004, b9IDNCARD005, b9IDNCARD006, b9IDNCARD007, b9IDNVER001, b9IDNVER002, b9IDNVER003, b9IDNACC001,
+  b9IDNACC002, b9IDNACC003, b9IDNACC004, b9IDNSEC001, b9IDNSEC002, b9IDNSEC003, b9PASAPP001, b9PASAPP002,
+  b9PASAPP003, b9PASAPP004, b9PASAPP005, b9PASAPP008, b9PASAPP009, b9PASAPP010, b9PASAPP006, b9PASAPP007,
+  b9PASAPP011, b9PASAPP012, b9PASAPP013, b9PASAPP014, b9PASAPP015, b9PASAPP016, b9PASAPP017, b9PASAPP018,
+  b9NATAPP001, b9NATAPP002, b9NATAPP003, b9NATAPP004, b9NATAPP005, b9NATAPP006, b9NATAPP007, b9NATAPP010,
+  b9NATAPP012, b9NATAPP008, b9NATAPP009, b9NATAPP011, b9LABEMP001, b9LABEMP002, b9LABEMP003, b9LABEMP004,
+  b9LABEMP005, b9LABEMP006, b9LABEMP007, b9LABEMP008, b9LABEMP009, b9LABEMP010, b9LABEMP011, b9LABEMP012,
+  b9LABEMP013, b9LABEMP014, b9LABEMP015, b9LABEMP016, b9LABEMP017, b9LABEMP018, b9LABEMP019, b9LABEMP020,
+  b9SOCBEN001, b9SOCBEN002, b9SOCBEN003, b9SOCBEN004, b9SOCBEN005, b9SOCBEN006, b9SOCBEN017, b9SOCBEN007,
+  b9SOCBEN009, b9SOCBEN011, b9SOCBEN012, b9SOCBEN014, b9SOCBEN010, b9SOCBEN008, b9SOCBEN013, b9SOCBEN016,
+  b9SOCBEN021, b9SOCBEN022, b9SOCBEN023, b9SOCBEN024, b9SOCBEN015, b9SOCBEN018, b9SOCBEN019, b9SOCBEN020,
+] as unknown as CatalogueContractJson[];
 /** The passages contracts answer the same way: every item applies to the forms in applies_to, an item with `for` only to that group (health: batches 1 and 2; tax: batch 3; adm: batch 5; oversight: batch 7). */
 export const COMMON_ITEMS = (common as unknown as { applies_to: string[]; groups: Record<string, string[]>; items: (CatalogueItem & { for?: string })[] });
 /** The shared items that apply to one contract. */
@@ -434,6 +561,7 @@ export const commonItemsFor = (formId: string): CatalogueItem[] => (COMMON_ITEMS
 /** Who the standard notices name, by the deployment-profile slot that owns the form. */
 const INSTITUTION: Record<string, string> = {
   professionalRegulation: 'The professional regulator', tax: 'The tax authority', publicHealth: 'The public-health authority', institution: 'This institution',
+  identity: 'The identity authority', travelDocuments: 'The travel document authority', citizenship: 'The citizenship authority', labour: 'The labour authority', socialProtection: 'The social protection authority',
   ombudsman: 'The ombudsman', humanRights: 'The human rights institution', anticorruption: 'The anti-corruption commission', supremeAudit: 'The public audit office', dataProtection: 'The data-protection authority',
 };
 
@@ -465,7 +593,7 @@ function load(c: CatalogueContractJson, batch: number): CatalogueLibraryForm {
 }
 
 /** Every catalogue contract CivicOS has written, as library drafts. */
-export const CATALOGUE_CONTRACTS: CatalogueLibraryForm[] = [...BATCH_1.map(c => load(c, 1)), ...BATCH_2.map(c => load(c, 2)), ...BATCH_3.map(c => load(c, 3)), ...BATCH_4.map(c => load(c, 4)), ...BATCH_5.map(c => load(c, 5)), ...BATCH_6.map(c => load(c, 6)), ...BATCH_7.map(c => load(c, 7))];
+export const CATALOGUE_CONTRACTS: CatalogueLibraryForm[] = [...BATCH_1.map(c => load(c, 1)), ...BATCH_2.map(c => load(c, 2)), ...BATCH_3.map(c => load(c, 3)), ...BATCH_4.map(c => load(c, 4)), ...BATCH_5.map(c => load(c, 5)), ...BATCH_6.map(c => load(c, 6)), ...BATCH_7.map(c => load(c, 7)), ...BATCH_9.map(c => load(c, 9))];
 
 /**
  * A catalogue contract by its identity (CATALOGUE:FORM-ID@VERSION; without

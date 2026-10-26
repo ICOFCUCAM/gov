@@ -22,7 +22,7 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import * as React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { CATALOGUE_CONTRACTS, BATCH_1, BATCH_2, BATCH_3, BATCH_4, BATCH_5, BATCH_6, BATCH_7, COMMON_ITEMS, type CatalogueLibraryForm } from './library/catalogue-contracts';
+import { CATALOGUE_CONTRACTS, BATCH_1, BATCH_2, BATCH_3, BATCH_4, BATCH_5, BATCH_6, BATCH_7, BATCH_9, COMMON_ITEMS, type CatalogueLibraryForm } from './library/catalogue-contracts';
 import { CANONICAL_LIBRARY } from './library/catalogue';
 import SPEC_TAXPAYER from './library/spec/taxpayer-registration-v1.json';
 import { SPEC_CLASSES } from './spec-import';
@@ -41,6 +41,11 @@ import { PROGRAMME_PROCEDURES } from '@/lib/health/programmes/procedures';
 import { COMPLAINT_PROCEDURES } from '@/lib/health/complaints/procedures';
 import { INDEPENDENT_OVERSIGHT_PROCEDURES } from '@/lib/oversight/procedures';
 import { ADMINISTRATION_PROCEDURES } from '@/lib/administration/procedures';
+import { IDENTITY_PROCEDURES } from '@/lib/identity/procedures';
+import { PASSPORT_PROCEDURES } from '@/lib/passports/procedures';
+import { CITIZENSHIP_PROCEDURES } from '@/lib/citizenship/procedures';
+import { LABOUR_PROCEDURES } from '@/lib/labour/procedures';
+import { SOCIAL_PROCEDURES } from '@/lib/social/procedures';
 import { dualControlRefusal } from '@/lib/data/dual-control';
 import { serviceDirectory } from '@/lib/exchange/services';
 import { AUTHORITIES } from '@/lib/nation/deployment';
@@ -55,6 +60,7 @@ const SRC = {
   C: 'docs/forms-catalogue/SUPPLEMENT-PARTS-14-22-AND-CONTRACTS-05-13.md',
   D: 'docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md',
   E: 'docs/forms-catalogue/PARTS-12-13.md',
+  F: 'docs/forms-catalogue/FIELD-SERIES-PARTS-03-04.md',
 } as const;
 type Src = keyof typeof SRC;
 const DOC = Object.fromEntries(Object.entries(SRC).map(([k, p]) => [k, readFileSync(join(ROOT, p), 'utf8').split('\n')])) as Record<Src, string[]>;
@@ -113,9 +119,25 @@ const IDS_6 = [
 ];
 // Batch 7: the Part 12 accountability forms the independent oversight procedures carry (plan I8).
 const IDS_7 = ['DEM-CON-012', 'DEM-CON-013', 'DEM-CON-014', 'DEM-CON-018', 'DEM-CON-019', 'DEM-CON-020', 'DEM-PUB-009'];
-const IDS = [...IDS_1, ...IDS_2, ...IDS_3, ...IDS_4, ...IDS_5, ...IDS_6, ...IDS_7];
-const batchOf = (id: string) => (id.startsWith('ADM-') ? 5 : id.startsWith('tax.') ? 6 : id.startsWith('taxpayer.') ? 3 : id.startsWith('HLT-MED') ? 2 : IDS_4.includes(id) ? 4 : IDS_7.includes(id) ? 7 : 1);
-const sourceOf = (id: string): Src => (batchOf(id) === 5 ? 'C' : [3, 6].includes(batchOf(id)) ? 'B' : batchOf(id) === 7 ? 'E' : 'A');
+// Batch 9: human services, field series Part 4 (IDN, PAS, NAT) and supplement Parts 14 (LAB) and 15 (SOC) (plan I6).
+const IDS_9 = [
+  'IDN-REG-001', 'IDN-REG-002', 'IDN-REG-003', 'IDN-REG-004', 'IDN-REG-005', 'IDN-CARD-001', 'IDN-CARD-002', 'IDN-CARD-003',
+  'IDN-CARD-004', 'IDN-CARD-005', 'IDN-CARD-006', 'IDN-CARD-007', 'IDN-VER-001', 'IDN-VER-002', 'IDN-VER-003', 'IDN-ACC-001',
+  'IDN-ACC-002', 'IDN-ACC-003', 'IDN-ACC-004', 'IDN-SEC-001', 'IDN-SEC-002', 'IDN-SEC-003', 'PAS-APP-001', 'PAS-APP-002',
+  'PAS-APP-003', 'PAS-APP-004', 'PAS-APP-005', 'PAS-APP-008', 'PAS-APP-009', 'PAS-APP-010', 'PAS-APP-006', 'PAS-APP-007',
+  'PAS-APP-011', 'PAS-APP-012', 'PAS-APP-013', 'PAS-APP-014', 'PAS-APP-015', 'PAS-APP-016', 'PAS-APP-017', 'PAS-APP-018',
+  'NAT-APP-001', 'NAT-APP-002', 'NAT-APP-003', 'NAT-APP-004', 'NAT-APP-005', 'NAT-APP-006', 'NAT-APP-007', 'NAT-APP-010',
+  'NAT-APP-012', 'NAT-APP-008', 'NAT-APP-009', 'NAT-APP-011', 'LAB-EMP-001', 'LAB-EMP-002', 'LAB-EMP-003', 'LAB-EMP-004',
+  'LAB-EMP-005', 'LAB-EMP-006', 'LAB-EMP-007', 'LAB-EMP-008', 'LAB-EMP-009', 'LAB-EMP-010', 'LAB-EMP-011', 'LAB-EMP-012',
+  'LAB-EMP-013', 'LAB-EMP-014', 'LAB-EMP-015', 'LAB-EMP-016', 'LAB-EMP-017', 'LAB-EMP-018', 'LAB-EMP-019', 'LAB-EMP-020',
+  'SOC-BEN-001', 'SOC-BEN-002', 'SOC-BEN-003', 'SOC-BEN-004', 'SOC-BEN-005', 'SOC-BEN-006', 'SOC-BEN-017', 'SOC-BEN-007',
+  'SOC-BEN-009', 'SOC-BEN-011', 'SOC-BEN-012', 'SOC-BEN-014', 'SOC-BEN-010', 'SOC-BEN-008', 'SOC-BEN-013', 'SOC-BEN-016',
+  'SOC-BEN-021', 'SOC-BEN-022', 'SOC-BEN-023', 'SOC-BEN-024', 'SOC-BEN-015', 'SOC-BEN-018', 'SOC-BEN-019', 'SOC-BEN-020',
+];
+const IDS = [...IDS_1, ...IDS_2, ...IDS_3, ...IDS_4, ...IDS_5, ...IDS_6, ...IDS_7, ...IDS_9];
+const batchOf = (id: string) => (IDS_9.includes(id) ? 9 : id.startsWith('ADM-') ? 5 : id.startsWith('tax.') ? 6 : id.startsWith('taxpayer.') ? 3 : id.startsWith('HLT-MED') ? 2 : IDS_4.includes(id) ? 4 : IDS_7.includes(id) ? 7 : 1);
+const sourceOf = (id: string): Src => (batchOf(id) === 9 ? (/^(LAB|SOC)-/.test(id) ? 'C' : 'F') : batchOf(id) === 5 ? 'C' : [3, 6].includes(batchOf(id)) ? 'B' : batchOf(id) === 7 ? 'E' : 'A');
+const HUMAN_SLOTS = ['identity', 'travelDocuments', 'citizenship', 'labour', 'socialProtection'];
 const OVERSIGHT_SLOTS = ['ombudsman', 'humanRights', 'anticorruption', 'supremeAudit', 'dataProtection'];
 
 // ── The catalogue text each form answers (held here, apart from the contracts) ──
@@ -368,6 +390,52 @@ function pieces(line: string): string[] {
   return out;
 }
 
+// Every batch-9 form: the specification's separate records and lawful authority (Part 1), the field series' rule that a submission is not
+// a decision, that a failed check is no ground for refusal and that no plausible default is activated (Part 4).
+const HUMAN: Partial<Record<Src, number[]>> = { D: [1106, 1197], F: [1406, 1771, 1817] };
+// Each family's lines (the specification's archetype and operating rules; the field series' and supplement's domain rules) and, per form,
+// its own: the JSON contract the supplement gives, line by line (§14.2, §15.2), the envelope line, or a specific rule.
+const HUMAN_FAMILY: Record<string, Partial<Record<Src, number[]>>> = {
+  IDN: { D: [1128], F: [1498, 1536, 1543, 1545, 1555] },
+  PAS: { D: [1491], F: [1636, 1665, 1667, 1669] },
+  NAT: { F: [1671, 1686, 1688] },
+  LAB: { D: [1152, 1593] },
+  SOC: { C: [500], D: [1158, 1652, 1656, 1657, 1658, 1659, 1660, 1661, 1662] },
+};
+const HUMAN_FORM: Record<string, Partial<Record<Src, number[]>>> = {
+  'IDN-REG-004': { F: [1489] },
+  'PAS-APP-018': { F: [1662] },
+  'LAB-EMP-001': { C: [184, 189, 190, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201] },
+  'LAB-EMP-002': { C: [340] },
+  'LAB-EMP-003': { C: [184, 205, 206, 208, 209, 210, 211, 212, 213, 214, 215, 216] },
+  'LAB-EMP-004': { C: [184, 220, 221, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232] },
+  'LAB-EMP-005': { C: [184, 236, 237, 239, 240, 241, 242, 243, 244, 245, 246, 247] },
+  'LAB-EMP-006': { C: [340] },
+  'LAB-EMP-007': { C: [340] },
+  'LAB-EMP-008': { C: [184, 251, 252, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263] },
+  'LAB-EMP-009': { C: [184, 267, 268, 270, 271, 272, 273, 274, 275, 276, 277], D: [1560, 1561] },
+  'LAB-EMP-010': { C: [184, 281, 282, 284, 285, 286, 287, 288, 289, 290, 291, 292] },
+  'LAB-EMP-011': { C: [184, 296, 297, 299, 300, 301, 302, 303, 304, 305, 306] },
+  'LAB-EMP-012': { C: [340] },
+  'LAB-EMP-013': { C: [340] },
+  'LAB-EMP-014': { C: [340] },
+  'LAB-EMP-015': { C: [340] },
+  'LAB-EMP-016': { C: [184, 310, 311, 313, 314, 315, 316, 317, 318, 319, 320, 321] },
+  'LAB-EMP-017': { C: [340] },
+  'LAB-EMP-018': { C: [340] },
+  'LAB-EMP-019': { C: [340] },
+  'LAB-EMP-020': { C: [184, 325, 326, 328, 329, 330, 331, 332, 333] },
+  'SOC-BEN-001': { C: [374, 375, 377, 378, 379, 380, 381, 382, 383] },
+  'SOC-BEN-002': { C: [387, 388, 390, 391, 392, 393, 394, 395, 396, 397, 398] },
+  'SOC-BEN-003': { C: [402, 403, 405, 406, 407, 408, 409, 410] },
+  'SOC-BEN-004': { C: [414, 415, 417, 418, 419, 420, 421, 422, 423, 424], D: [1622] },
+  'SOC-BEN-010': { C: [428, 429, 431, 432, 433, 434, 435, 436, 437] },
+  'SOC-BEN-015': { C: [441, 442, 444, 445, 446, 447, 448, 449, 450, 451] },
+  'SOC-BEN-018': { C: [455, 456, 458, 459, 460, 461, 462, 463, 464, 465, 466] },
+  'SOC-BEN-019': { C: [470, 471, 473, 474, 475, 476, 477, 478, 479, 480] },
+  'SOC-BEN-020': { C: [484, 485, 487, 488, 489, 490, 491, 492, 493] },
+};
+
 /** The register row's line: the first line naming the catalogue ID in its document or, for an ID the catalogue repeats, the line the row records. */
 const ROW_LINE: Record<string, number> = { 'taxpayer.registration.further_information@P2': 2714 };
 const catalogueIdOf = (id: string) => id.split('@')[0]!;
@@ -378,7 +446,9 @@ function rowLine(id: string): number {
 }
 
 function linesFor(id: string): [Src, number][] {
-  const sets = batchOf(id) === 5
+  const sets = batchOf(id) === 9
+    ? [COMMON, HUMAN, HUMAN_FAMILY[id.slice(0, 3)]!, HUMAN_FORM[id] ?? {}, { [sourceOf(id)]: [rowLine(id)] }]
+    : batchOf(id) === 5
     ? [COMMON, ADM, { D: [admFunction(id)] }, { C: ADM_JSON[id] ?? [] }, { C: [rowLine(id)] }]
     : batchOf(id) === 7
     ? [COMMON, OVERSIGHT, EXTRA_7[id] ?? {}, { E: [rowLine(id)] }]
@@ -392,14 +462,14 @@ function linesFor(id: string): [Src, number][] {
 }
 
 const flat = (fs: ContractField[]): ContractField[] => fs.flatMap(f => [f, ...(f.items ? flat(f.items as ContractField[]) : [])]);
-const PROCEDURES = [...HEALTH_PROCEDURES, ...PROFESSION_PROCEDURES, ...TAX_PROCEDURES, ...PRODUCT_PROCEDURES, ...PROGRAMME_PROCEDURES, ...COMPLAINT_PROCEDURES, ...ADMINISTRATION_PROCEDURES, ...INDEPENDENT_OVERSIGHT_PROCEDURES];
+const PROCEDURES = [...HEALTH_PROCEDURES, ...PROFESSION_PROCEDURES, ...TAX_PROCEDURES, ...PRODUCT_PROCEDURES, ...PROGRAMME_PROCEDURES, ...COMPLAINT_PROCEDURES, ...ADMINISTRATION_PROCEDURES, ...INDEPENDENT_OVERSIGHT_PROCEDURES, ...IDENTITY_PROCEDURES, ...PASSPORT_PROCEDURES, ...CITIZENSHIP_PROCEDURES, ...LABOUR_PROCEDURES, ...SOCIAL_PROCEDURES];
 const SERVICES = serviceDirectory().map(s => s.id);
 const applicantKeys = (f: CatalogueLibraryForm) => f.fields.filter(x => (x.audience ?? 'applicant') === 'applicant').map(x => x.key);
 /** No patient, clinical, treatment, diagnosis or individual health field: by key and by label. */
 const CLINICAL = /patient|clinical|clinician|diagnos|prescri|dispens|treatment|medication|symptom|medical record|health condition|care plan/i;
 
-describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and medical devices regulation), 3 (taxpayer registration and account), 4 (public-health programme forms), 5 (internal administration), 6 (tax services) and 7 (independent oversight)', () => {
-  it('holds exactly the 25 + 21 + 29 + 2 + 40 + 95 + 7 approved forms, one contract each, matched to the catalogue row it names', () => {
+describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and medical devices regulation), 3 (taxpayer registration and account), 4 (public-health programme forms), 5 (internal administration), 6 (tax services), 7 (independent oversight) and 9 (human services)', () => {
+  it('holds exactly the 25 + 21 + 29 + 2 + 40 + 95 + 7 + 96 approved forms, one contract each, matched to the catalogue row it names', () => {
     expect(IDS_1.length).toBe(25);
     expect(IDS_2.length).toBe(21);
     expect(IDS_3.length).toBe(29);
@@ -407,6 +477,7 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
     expect(IDS_5.length).toBe(40);
     expect(IDS_6.length).toBe(95);
     expect(IDS_7.length).toBe(7);
+    expect(IDS_9.length).toBe(96);
     expect(CATALOGUE_CONTRACTS.map(f => f.specId).sort()).toEqual([...IDS].sort());
     const files = readdirSync(join(process.cwd(), 'src/lib/forms/library/catalogue-contracts')).filter(f => f.endsWith('.json'));
     expect(files.sort()).toEqual(IDS.map(i => `${i}.json`).sort());
@@ -423,7 +494,7 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
   });
 
   it('carries no status anywhere: the register status is derived, never written', () => {
-    for (const c of [...BATCH_1, ...BATCH_2, ...BATCH_3, ...BATCH_4, ...BATCH_5, ...BATCH_6, ...BATCH_7]) {
+    for (const c of [...BATCH_1, ...BATCH_2, ...BATCH_3, ...BATCH_4, ...BATCH_5, ...BATCH_6, ...BATCH_7, ...BATCH_9]) {
       expect('status' in c, c.form_id).toBe(false);
       expect(JSON.stringify(c)).not.toMatch(/"(status|state|approved|approved_by|production)"\s*:/);
     }
@@ -581,7 +652,7 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
           if (f.exchange) expect(SERVICES).toContain(f.exchange);
         }
         // Authority from the deployment profile, never a ministry by name.
-        expect(batchOf(id) === 5 ? ['institution'] : [3, 6].includes(batchOf(id)) ? ['tax'] : batchOf(id) === 7 ? OVERSIGHT_SLOTS : ['healthRegulation', 'professionalRegulation', 'medicinesRegulation', 'controlledSubstances', 'publicHealth']).toContain(f.owner);
+        expect(batchOf(id) === 5 ? ['institution'] : [3, 6].includes(batchOf(id)) ? ['tax'] : batchOf(id) === 7 ? OVERSIGHT_SLOTS : batchOf(id) === 9 ? HUMAN_SLOTS : ['healthRegulation', 'professionalRegulation', 'medicinesRegulation', 'controlledSubstances', 'publicHealth']).toContain(f.owner);
         expect(JSON.stringify(f.json)).not.toMatch(/Ministry of/);
       });
     });
@@ -1261,5 +1332,38 @@ describe('catalogue contracts, batches 1 (health regulation), 2 (medicines and m
     expect(r.form.lists?.['civicos.oversight.response_positions']?.values.map(v => v.value)).toEqual(['accepted', 'partly-accepted', 'disputed']);
     // The data-protection request: the authority never reads the records itself.
     expect(ov('DEM-CON-018').deviations.map(d => d.id)).toContain('no-direct-read');
+  });
+  // ── Batch 9: human services (plan I6) ──
+  const hs = (id: string) => CATALOGUE_CONTRACTS.find(x => x.specId === id)!;
+  it('keeps human services free of biometrics, scores and clinical fields; medical evidence only as a sealed document', () => {
+    for (const id of IDS_9) {
+      const f = hs(id);
+      expect(f.batch).toBe(9);
+      expect(AUTHORITIES.find(a => a.key === f.owner), id).toBeDefined();
+      for (const x of flat(f.fields)) expect(x.key, `${id} ${x.key}`).not.toMatch(/biometric|fingerprint|iris|face|template|score|risk|propensity/i);
+      expect(f.deviations.map(d => d.id), id).toContain('no-score');
+      if (/^(IDN|PAS)-/.test(id)) expect(f.deviations.map(d => d.id), id).toContain('no-biometric');
+    }
+    // An occupational injury: what happened at work, its category; the medical evidence a sealed document, nothing clinical.
+    const injury = hs('LAB-EMP-010');
+    expect(injury.fields.find(x => x.key === 'lab.medical_evidence_reference')!.type).toBe('document');
+    expect(injury.deviations.map(d => d.id)).toContain('medical-sealed');
+  });
+
+  it('links the human services forms to their procedures, the verification exchanges and the approved rules', () => {
+    const linked = IDS_9.filter(id => hs(id).procedure);
+    expect(linked.length).toBe(74);
+    for (const id of IDS_9.filter(id => !hs(id).procedure)) expect(hs(id).awaits, id).toMatch(/not built|no case is opened/);
+    expect(hs('IDN-VER-001').exchange).toBe('identity.verify');
+    expect(hs('PAS-APP-015').exchange).toBe('travel-document.status');
+    // A passport fee is the approved schedule's, a benefit the programme's rule; the version is recorded, never typed.
+    const fee = hs('PAS-APP-001').fields.find(x => x.key === 'application.fee')!;
+    expect(fee.type).toBe('money');
+    expect(fee.audience).toBe('system');
+    expect(hs('PAS-APP-001').nationValues.find(v => v.kind === 'fee')).toMatchObject({ key: 'passports.fees', source: 'rule' });
+    expect(hs('SOC-BEN-004').fields.find(x => x.key === 'soc.calculation_rule_version')!.audience).toBe('officer');
+    // A payment instruction: maker and approver are the officials on the steps, a different person approving.
+    expect(hs('SOC-BEN-018').deviations.map(d => d.id)).toContain('maker-checker');
+    expect(SOCIAL_PROCEDURES.find(p => p.key === 'social.payment')!.actions.find(a => a.key === 'approve')!.needs?.distinctFrom).toEqual(['prepare']);
   });
 });
