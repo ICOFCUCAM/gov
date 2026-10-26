@@ -30,7 +30,7 @@ export function CivilRegister() {
   const search = async () => { setMsg(null); try { const j = await ask(q); setSize(j.size); setFound(j.persons); } catch (e) { setMsg((e as Error).message); } };
   return (
     <div className="space-y-4 p-4">
-      <h1 className="text-xl font-semibold">Civil registry</h1>
+      <h2 className="text-xl font-semibold">Civil registry</h2>
       <p className="max-w-3xl text-sm text-ink-muted">The people this registry has registered and their births, deaths and marriages. Registrations and corrections are made through <Link className="underline" href="/gov/work/cases/open">cases</Link>, decided by two officials. Every search here is recorded in the access log.</p>
       {size ? <p className="text-sm">{size.persons} persons · {size.births} births · {size.deaths} deaths · {size.marriages} marriages registered</p> : null}
       {msg ? <p role="alert" className="text-sm text-alert">{msg}</p> : null}

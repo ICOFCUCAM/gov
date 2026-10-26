@@ -51,7 +51,7 @@ export function IndicatorRegister() {
 
   return (
     <div className="space-y-4 p-4">
-      <h1 className="text-xl font-semibold">Indicator register</h1>
+      <h2 className="text-xl font-semibold">Indicator register</h2>
       <p className="max-w-3xl text-sm text-ink-muted">
         A definition before a number: each indicator says what it counts, what it is divided by, for which period, how coverage is decided, which computation (and version) produces it and which disclosure rule protects it.
         Values are computed from the platform&apos;s own records when this page is read: cases under approved procedures and the registers. Nothing is typed.

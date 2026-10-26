@@ -58,7 +58,7 @@ export function LawsRegister() {
 
   return (
     <div className="space-y-4 p-4">
-      <h1 className="text-xl font-semibold">Laws</h1>
+      <h2 className="text-xl font-semibold">Laws</h2>
       <p className="max-w-3xl text-sm text-ink-muted">
         The nation&apos;s laws and regulations as versioned texts. Every decision cites the provision that allowed it, as it stood on the day.
         {authority ? '' : ' The law-register authority is not named yet (Configuration, Who is responsible).'}

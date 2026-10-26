@@ -35,7 +35,7 @@ export function ProceduresBoard({ demonstration = false }: { demonstration?: boo
   };
   return (
     <div className="space-y-4 p-4">
-      <h1 className="text-xl font-semibold">Procedures</h1>
+      <h2 className="text-xl font-semibold">Procedures</h2>
       <p className="max-w-3xl text-sm text-ink-muted">How each kind of case is handled: its steps, who may take them, its deadlines and the laws it rests on. A procedure runs only after the responsible institution approves it. Its form is designed, checked and released under <Link className="underline" href="/gov/law/procedures/forms">Forms</Link>.</p>
       {msg ? <p role="status" className="text-sm">{msg}</p> : null}
       <Section title="Reference procedures" meta="shipped with the platform, as drafts">

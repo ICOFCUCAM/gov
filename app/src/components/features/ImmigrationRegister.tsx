@@ -32,7 +32,7 @@ export function ImmigrationRegister() {
   const search = async () => { setMsg(null); try { const j = await ask(q); setCounts(j.counts); setFound(j.grants); } catch (e) { setMsg((e as Error).message); } };
   return (
     <div className="space-y-4 p-4">
-      <h1 className="text-xl font-semibold">Visas and permits</h1>
+      <h2 className="text-xl font-semibold">Visas and permits</h2>
       <p className="max-w-3xl text-sm text-ink-muted">Visas and residence permits granted or refused by the immigration authority. Applications, extensions and revocations are <Link className="underline" href="/gov/work/cases/open">cases</Link> decided by two officials, with reasons and the right of appeal. These records are restricted: only the immigration authority reads them, and every search is recorded in the access log. Other institutions check whether a document holds a valid grant through the exchange, without seeing the file.</p>
       {msg ? <p role="alert" className="text-sm text-alert">{msg}</p> : null}
       {counts ? (

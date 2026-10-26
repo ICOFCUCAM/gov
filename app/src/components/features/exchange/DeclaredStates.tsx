@@ -23,8 +23,9 @@ export function DeclaredStates() {
       .catch(e => setErr(e instanceof Error ? e.message : 'Could not load'));
   }, []);
   const group = (kind: DeclaredCapability['kind']) => (d?.capabilities ?? []).filter(c => c.kind === kind);
-  const table = (list: DeclaredCapability[]) => (
-    <div className="overflow-x-auto">
+  const table = (list: DeclaredCapability[], label: string) => (
+    // Reachable by keyboard when it scrolls sideways (WCAG 2.1.1; plan I10 console audit).
+    <div tabIndex={0} role="region" aria-label={`${label} (table)`} className="focus-ring overflow-x-auto">
       <table className="w-full text-left text-sm">
         <thead><tr><th scope="col">Capability</th><th scope="col">State now</th><th scope="col">While it is not available</th><th scope="col">What keeps working</th></tr></thead>
         <tbody>
@@ -50,8 +51,8 @@ export function DeclaredStates() {
       {err ? <p role="alert" className="text-sm text-alert">{err}</p> : null}
       {d ? (
         <>
-          <Section title="Dependencies" meta={`as of ${d.at.slice(0, 16).replace('T', ' ')} UTC`}>{table(group('dependency'))}</Section>
-          <Section title="Exchange services" meta={`${group('exchange-service').length} services`}>{table(group('exchange-service'))}</Section>
+          <Section title="Dependencies" meta={`as of ${d.at.slice(0, 16).replace('T', ' ')} UTC`}>{table(group('dependency'), 'Dependencies')}</Section>
+          <Section title="Exchange services" meta={`${group('exchange-service').length} services`}>{table(group('exchange-service'), 'Exchange services')}</Section>
         </>
       ) : !err ? <p className="text-sm text-ink-muted">Loading…</p> : null}
     </div>
