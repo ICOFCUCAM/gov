@@ -4,7 +4,9 @@
 // registered incoming items, disposals (the listed items with their hashes,
 // what was destroyed or skipped, the certificate), transfers and migrations;
 // the transfers sent to it when it is the archive the nation names; which
-// records procedures it adopted. Read by the institution's own officials and
+// records procedures it adopted. ?record=<id> (plan I9, acceptance P5-06):
+// where one migrated record came from, its transformations and the status of
+// every reconciliation (provenanceOf()). Read by the institution's own officials and
 // those within reach, and auditors (canReadAdministration()); every read is
 // written to the access log. Schedules, holds, disposals, transfers and
 // migrations move only through decided cases (/api/cases).
@@ -22,7 +24,7 @@ import { authorityFor, getMinistry, listMinistries } from '@/lib/data/store';
 import { listPackages } from '@/lib/casework/packages';
 import { recordAccess } from '@/lib/records/access-log';
 import { accessBy } from '@/lib/records/access-by';
-import { classesOf, holdsOf, incomingOf, disposalsOf, transfersOf, transfersTo, migrationsOf, getTransfer, acknowledgeTransfer, recordkeepingCounts, TRIGGER_LABEL, DISPOSITION_LABEL } from '@/lib/recordkeeping/register';
+import { classesOf, holdsOf, incomingOf, disposalsOf, transfersOf, transfersTo, migrationsOf, getTransfer, acknowledgeTransfer, recordkeepingCounts, provenanceOf, TRIGGER_LABEL, DISPOSITION_LABEL, VERIFICATION_LABEL } from '@/lib/recordkeeping/register';
 import { RECORDKEEPING_PROCEDURES, installRecordkeepingProcedures, recordkeepingKey } from '@/lib/recordkeeping/procedures';
 import { retentionRules } from '@/lib/data/retention';
 import '@/lib/casework/modules';
@@ -48,6 +50,11 @@ export async function GET(req: NextRequest) {
     const why = canReadAdministration(s, institution);
     recordAccess({ ...accessBy(s), record: { register: 'records-management', id: institution }, action: why ? 'refused' : 'view', result: why ? 'refused' : 'allowed', ...(why ? { rule: why } : {}) });
     if (why) return NextResponse.json({ error: why }, { status: 403 });
+  }
+  const record = str(req.nextUrl.searchParams.get('record'), 200);
+  if (record) {
+    const p = provenanceOf(institution, record);
+    return p ? NextResponse.json({ provenance: p, labels: VERIFICATION_LABEL }) : NextResponse.json({ error: 'No migration of this institution lists that record' }, { status: 404 });
   }
   const packages = listPackages();
   return NextResponse.json({

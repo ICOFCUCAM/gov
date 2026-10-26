@@ -30,7 +30,12 @@
 //                    hash, the target's count and hash computed from the
 //                    platform's own records where they are here, the
 //                    reconciliation (matched or the discrepancies with their
-//                    corrective actions) and its closure.
+//                    corrective actions) and its closure. Since plan I9 a plan
+//                    may carry a per-record manifest (acceptance P5-06): each
+//                    record's source id and hash, its transformations (step,
+//                    rule, version) and where it landed; every reconciliation
+//                    verifies each record against the platform's own records
+//                    and keeps its status (provenanceOf()).
 //
 // Everything changes only in the effects of the records procedures
 // (lib/recordkeeping/procedures.ts, decided cases), save the archive's
@@ -128,14 +133,43 @@ export interface Transfer {
   received?: { by: { name: string; id?: string }; at: string; receipt: string };
   sample?: true;
 }
+/** One step a migrated record went through between the source and here (plan I9, acceptance P5-06). */
+export interface Transformation { step: string; rule?: string; version?: string }
+/** What a reconciliation found for one record: computed from the platform's own records, never entered. */
+export type VerificationStatus = 'verified' | 'hash-mismatch' | 'missing' | 'not-verifiable-here';
+export const VERIFICATION_LABEL: Record<VerificationStatus, string> = {
+  verified: 'Verified: the record is here with the hash the manifest names',
+  'hash-mismatch': 'Hash differs: the record is here but its content is not what the manifest names',
+  missing: 'Missing: no such record of the institution under the target',
+  'not-verifiable-here': 'Not verifiable here: the record landed in an external system',
+};
+/**
+ * A record of a migration's per-record manifest (plan I9; acceptance P5-06 "A
+ * migrated record retains its source, transformation history and
+ * verification status"): where it came from (the source system's id and the
+ * SHA-256 of the record as extracted), every transformation it went through
+ * (named step, the mapping rule and its version), where it landed here, and
+ * the status every reconciliation found for it, oldest first. Kept with the
+ * migration; never changed after the plan, only verified again.
+ */
+export interface MigratedRecord {
+  source: { id: string; sha256: string };
+  transformations: Transformation[];
+  target: { kind: 'document' | 'case' | 'external'; id: string; sha256?: string };
+  verification: { status: VerificationStatus; at: string; reconciliation: number; detail?: string }[];
+}
+export interface ManifestCounts { verified: number; mismatched: number; missing: number; notVerifiable: number; unexpected: number }
 export interface Migration {
   id: string;
   institution: string;
   case: string;
   source: { system: string; count: number; manifest: string };
   target: { system: string; kind: 'documents' | 'cases' | 'external'; ref?: string };
+  /** The per-record manifest, when the plan carries one: its source digest is the plan's source manifest, its length the source count. */
+  manifest?: { count: number; sourceDigest: string; targetDigest: string; digest: string };
+  records?: MigratedRecord[];
   approved?: { by: { name: string; id?: string }[]; at: string };
-  reconciliation?: { count: number; manifest: string; computed: boolean; matched: boolean; discrepancies: string; corrective: string; by: string; at: string }[];
+  reconciliation?: { count: number; manifest: string; computed: boolean; matched: boolean; discrepancies: string; corrective: string; by: string; at: string; records?: ManifestCounts }[];
   closed?: { by: { name: string; id?: string }[]; at: string; outcome: 'reconciled' | 'accepted-with-corrections' };
   sample?: true;
 }
@@ -240,23 +274,57 @@ export function acknowledgeTransfer(id: string, input: { manifest: string; recei
   return clone(t);
 }
 
-export function planMigration(input: Omit<Migration, 'id' | 'reconciliation' | 'closed'>, by: string): Migration | { error: string } {
+export function planMigration(input: Omit<Migration, 'id' | 'reconciliation' | 'closed' | 'manifest' | 'records'> & { records?: Omit<MigratedRecord, 'verification'>[] }, by: string): Migration | { error: string } {
   if (!Number.isInteger(input.source.count) || input.source.count < 0) return { error: 'The source count is a whole number' };
   if (!/^[0-9a-f]{64}$/.test(input.source.manifest)) return { error: 'The source manifest is a SHA-256 (64 hexadecimal characters)' };
-  const m: Migration = { ...clone(input), id: `MIG-${uuid7().slice(-12)}` };
+  const { records, ...rest } = input;
+  let manifest: Migration['manifest'];
+  if (records) {
+    // A per-record manifest is the plan's own evidence: its length is the source count, its source digest the source manifest.
+    if (records.length !== input.source.count) return { error: `The per-record manifest lists ${records.length} record(s); the source count says ${input.source.count}` };
+    const sourceDigest = sourceDigestOf(records);
+    if (sourceDigest !== input.source.manifest) return { error: 'The source manifest is not the digest of the per-record manifest\'s sources (kind source, id and SHA-256 of each record, sorted)' };
+    manifest = { count: records.length, sourceDigest, targetDigest: targetDigestOf(records), digest: manifestDigestOf(records) };
+  }
+  const m: Migration = { ...clone(rest), id: `MIG-${uuid7().slice(-12)}`, ...(manifest ? { manifest, records: records!.map(r => ({ ...clone(r), verification: [] })) } : {}) };
   db().migrations.push(m);
-  recordAudit(by, 'records.migration.approve', `Migration:${m.id}`, 'ok', `${m.source.system} → ${m.target.system} · ${m.source.count} records · ${m.source.manifest.slice(0, 12)}`);
+  recordAudit(by, 'records.migration.approve', `Migration:${m.id}`, 'ok', `${m.source.system} → ${m.target.system} · ${m.source.count} records · ${m.source.manifest.slice(0, 12)}${manifest ? ` · per-record manifest ${manifest.digest.slice(0, 12)}` : ''}`);
   return clone(m);
 }
 
-export function reconcileMigration(caseRef: string, r: { count: number; manifest: string; computed: boolean; discrepancies: string; corrective: string; by: string; at: string }): Migration | { error: string } {
+/**
+ * Record a reconciliation. With a per-record manifest, `perRecord` is the
+ * status the platform computed for each record (in the manifest's order) and
+ * `unexpected` the records under the target the manifest does not list: the
+ * migration matches only when every record is verified (or, for an external
+ * target, the entered count and manifest are the manifest's target side) and
+ * nothing unexpected is there.
+ */
+export function reconcileMigration(caseRef: string, r: { count: number; manifest: string; computed: boolean; discrepancies: string; corrective: string; by: string; at: string; perRecord?: { status: VerificationStatus; detail?: string }[]; unexpected?: number }): Migration | { error: string } {
   const m = db().migrations.find(x => x.case === caseRef);
   if (!m?.approved) return { error: 'This case has no approved migration' };
   if (m.closed) return { error: 'The migration is closed' };
-  const matched = r.count === m.source.count && r.manifest === m.source.manifest;
-  if (!matched && (!r.discrepancies.trim() || !r.corrective.trim())) return { error: `The target does not match the source (${r.count} of ${m.source.count} records${r.manifest === m.source.manifest ? '' : ', manifest differs'}): record the discrepancies and the corrective actions` };
-  (m.reconciliation ??= []).push({ ...r, matched });
-  recordAudit(r.by, 'records.migration.reconcile', `Migration:${m.id}`, 'ok', `${r.count} of ${m.source.count} · ${matched ? 'matched' : 'discrepancies recorded'}`);
+  const { perRecord, unexpected, ...entry } = r;
+  let matched: boolean, counts: ManifestCounts | undefined, problem: string;
+  if (m.records && m.manifest) {
+    if (!perRecord || perRecord.length !== m.records.length) return { error: 'Every record of the manifest is verified at each reconciliation' };
+    const n = (s: VerificationStatus) => perRecord.filter(x => x.status === s).length;
+    counts = { verified: n('verified'), mismatched: n('hash-mismatch'), missing: n('missing'), notVerifiable: n('not-verifiable-here'), unexpected: unexpected ?? 0 };
+    matched = m.target.kind === 'external'
+      ? r.count === m.manifest.count && r.manifest === m.manifest.targetDigest
+      : counts.verified === m.records.length && counts.unexpected === 0;
+    problem = m.target.kind === 'external'
+      ? `${r.count} of ${m.manifest.count} records${r.manifest === m.manifest.targetDigest ? '' : ', the target manifest differs from the manifest\'s target side'}`
+      : `${counts.verified} of ${m.records.length} records verified, ${counts.mismatched} with a different hash, ${counts.missing} missing, ${counts.unexpected} not in the manifest`;
+  } else {
+    matched = r.count === m.source.count && r.manifest === m.source.manifest;
+    problem = `${r.count} of ${m.source.count} records${r.manifest === m.source.manifest ? '' : ', manifest differs'}`;
+  }
+  if (!matched && (!r.discrepancies.trim() || !r.corrective.trim())) return { error: `The target does not match the source (${problem}): record the discrepancies and the corrective actions` };
+  const list = (m.reconciliation ??= []);
+  list.push({ ...entry, matched, ...(counts ? { records: counts } : {}) });
+  if (m.records && perRecord) m.records.forEach((rec, i) => rec.verification.push({ status: perRecord[i]!.status, at: r.at, reconciliation: list.length, ...(perRecord[i]!.detail ? { detail: perRecord[i]!.detail!.slice(0, 200) } : {}) }));
+  recordAudit(r.by, 'records.migration.reconcile', `Migration:${m.id}`, 'ok', `${counts ? `${counts.verified} verified, ${counts.mismatched} hash differs, ${counts.missing} missing, ${counts.notVerifiable} external, ${counts.unexpected} unexpected` : `${r.count} of ${m.source.count}`} · ${matched ? 'matched' : 'discrepancies recorded'}`);
   return clone(m);
 }
 
@@ -298,6 +366,30 @@ export const migrationsOf = (institution: string): Migration[] => db().migration
 export const migrationOfCase = (caseRef: string): Migration | undefined => { const m = db().migrations.find(x => x.case === caseRef); return m ? clone(m) : undefined; };
 
 /**
+ * Where a migrated record came from (acceptance P5-06): for a record of the
+ * institution (by its id here, or its id in the source system), the migration
+ * that brought it, the source system and the record's source id and hash,
+ * every transformation it went through and the status of every
+ * reconciliation, latest last. Undefined when no migration lists it.
+ */
+export function provenanceOf(institution: string, id: string): { migration: string; case: string; sourceSystem: string; targetSystem: string; record: MigratedRecord; status: VerificationStatus | 'not-yet-verified'; closed?: Migration['closed']; sample?: true } | undefined {
+  for (const m of [...db().migrations].reverse()) {
+    if (m.institution !== institution || !m.records) continue;
+    const rec = m.records.find(r => r.target.id === id) ?? m.records.find(r => r.source.id === id);
+    if (rec) return { migration: m.id, case: m.case, sourceSystem: m.source.system, targetSystem: m.target.system, record: clone(rec), status: rec.verification.at(-1)?.status ?? 'not-yet-verified', ...(m.closed ? { closed: clone(m.closed) } : {}), ...(m.sample ? { sample: true as const } : {}) };
+  }
+  return undefined;
+}
+
+// ── Per-record manifests (digests) ──────────────────────────────────────────
+/** The source side of a per-record manifest: the digest a source system computes over kind `source`, id and SHA-256 of each record. */
+export const sourceDigestOf = (records: Pick<MigratedRecord, 'source'>[]): string => sha(records.map(r => `source:${r.source.id}:${r.source.sha256}`).sort().join('\n'));
+/** The target side: kind, id and expected SHA-256 of each record where it lands. */
+export const targetDigestOf = (records: Pick<MigratedRecord, 'target'>[]): string => sha(records.map(r => `${r.target.kind}:${r.target.id}:${r.target.sha256 ?? ''}`).sort().join('\n'));
+/** The whole manifest, transformations included, in its order. */
+export const manifestDigestOf = (records: Omit<MigratedRecord, 'verification'>[]): string => sha(JSON.stringify(records.map(r => [r.source.id, r.source.sha256, r.transformations.map(t => [t.step, t.rule ?? '', t.version ?? '']), r.target.kind, r.target.id, r.target.sha256 ?? ''])));
+
+/**
  * The hold in force that covers a record, if any: one on the record itself,
  * on its case, or on its class at its institution. Read by disposal, transfer
  * and the platform's retention sweep (lib/data/retention.ts).
@@ -308,6 +400,40 @@ export function holdCovering(r: { institution: string; class?: string; document?
     || (x.scope.kind === 'document' && !!r.document && x.scope.ref === r.document)
     || (x.scope.kind === 'case' && !!r.case?.includes(x.scope.ref))));
   return h ? clone(h) : undefined;
+}
+
+/** Everything of one institution's records management register, as its portable export carries it (lib/portability/export.ts). */
+export function recordkeepingOf(institution: string): { classes: RecordClass[]; holds: Hold[]; incoming: IncomingItem[]; disposals: Disposal[]; transfers: Transfer[]; migrations: Migration[] } {
+  const d = db();
+  const mine = <T extends { institution: string }>(xs: T[]) => xs.filter(x => x.institution === institution).map(clone);
+  return { classes: mine(d.classes), holds: mine(d.holds), incoming: mine(d.incoming), disposals: mine(d.disposals), transfers: mine(d.transfers), migrations: mine(d.migrations) };
+}
+
+/**
+ * The confirmed import of an institution's own export (lib/portability/import.ts:
+ * two officials, the export verified, none of its records already here):
+ * every record as exported, identifiers unchanged, migrations with their
+ * per-record manifests and verification history. Returns the count restored.
+ */
+export function restoreRecordkeeping(part: ReturnType<typeof recordkeepingOf>): number {
+  const d = db();
+  const add = <T,>(into: T[], xs: T[] | undefined, same: (a: T, b: T) => boolean): number => { let n = 0; for (const x of xs ?? []) if (!into.some(y => same(y, x))) { into.push(clone(x)); n++; } return n; };
+  return add(d.classes, part.classes, (a, b) => a.institution === b.institution && a.key === b.key)
+    + add(d.holds, part.holds, (a, b) => a.id === b.id) + add(d.incoming, part.incoming, (a, b) => a.number === b.number)
+    + add(d.disposals, part.disposals, (a, b) => a.id === b.id) + add(d.transfers, part.transfers, (a, b) => a.id === b.id)
+    + add(d.migrations, part.migrations, (a, b) => a.id === b.id);
+}
+
+/** Records of an export already here (an import never overwrites one). */
+export function recordkeepingConflicts(part: Partial<ReturnType<typeof recordkeepingOf>>): string[] {
+  const d = db();
+  return [
+    ...(part.holds ?? []).filter(x => d.holds.some(y => y.id === x.id)).map(x => `legal hold ${x.id}`),
+    ...(part.incoming ?? []).filter(x => d.incoming.some(y => y.number === x.number)).map(x => `incoming item ${x.number}`),
+    ...(part.disposals ?? []).filter(x => d.disposals.some(y => y.id === x.id)).map(x => `disposal ${x.id}`),
+    ...(part.transfers ?? []).filter(x => d.transfers.some(y => y.id === x.id)).map(x => `transfer ${x.id}`),
+    ...(part.migrations ?? []).filter(x => d.migrations.some(y => y.id === x.id)).map(x => `migration ${x.id}`),
+  ];
 }
 
 /** Counts (no record content) for the console and the onboarding hub. */

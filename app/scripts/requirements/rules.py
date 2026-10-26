@@ -104,7 +104,7 @@ R(None, None, r'risk score|risk-based selection|automated student risk score', '
 
 # framing sentences of the acceptance lists
 R(None, None, r'(tests should be mandatory|should demonstrate that|require evidence for each of the following|Use this as a working checklist|Ticking an item|I would not accept these institutions)', 'Met',
-  'docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (60 proven, 24 partial, 7 not yet); plan §3.5 makes it the definition of done', '', '—')
+  'docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (61 proven, 23 partial, 7 not yet); plan §3.5 makes it the definition of done', '', '—')
 R(3, r'^G$', r'not ready for production simply because its interface renders', 'Met', COMPLETE, '', '—')
 R(3, r'^G$', r'Each service needs evidence', 'Partial', COMPLETE + ' (per institution)', 'Evidence per service (legal grounding, configuration, staffing, records, security, integration, operational testing)', 'I2')
 R(1, r'^2$', r'(CivicOS should use international standards|It is a disclosure standard)', 'Lower priority', 'Plan §4 "Reference lists of standards. Informative; cited where a feature uses one."', '', 'Unassigned')
@@ -123,7 +123,7 @@ R(0, None, r'^1 — A1', 'Partial', 'Tax, customs operational; since I5 budget a
 R(0, None, r'^2 — A2', 'Partial', 'CRVS, education, immigration, professions operational; health partial; labour, social protection, agriculture, water screens only', 'See Part 2 rows', 'I6', 'I4')
 R(0, None, r'^3 — A3', 'Partial', 'Judiciary, mapping operational; police, emergency, land, local partial; corrections, transport, energy, environment screens only; prosecution, defence, housing, public works absent', 'See Part 3 rows', 'I7', 'I11')
 R(0, None, r'^4 — A4', 'Partial', 'Legislature operational; public audit engagements, ombudsman and human rights complaints, protected disclosures and data-protection requests since plan I8 (' + OVS + '); statistics and regulators partial; electoral and PSC absent', 'See Part 4 rows', 'I8', 'I11')
-R(0, None, r'^5 — B and D', 'Partial', 'Kernel built and tested; institution export, migration manifest, event envelope missing', 'See Part 5 rows', 'I9')
+R(0, None, r'^5 — B and D', 'Partial', 'Kernel built and tested; institution export, event envelope and per-record migration manifest built (plan I9)', 'See Part 5 rows', 'I9')
 R(0, None, r'^6 — C, E and F', 'Partial', 'Console tokens and grounds exist; no workspace ground or component-state test', 'See Part 6 rows', 'I10')
 R(0, None, r'pre-approved in a universal package|legal forms, fees, deadlines', 'Country decision', 'Platform provides: laws [] and rules [] ship empty, procedures and permit mappings ship as unapproved drafts (audit A §2.6-2.8)', PREFILL + '; spec wants no pre-filled numbers', 'I1')
 R(0, None, r'product architecture for every institution', 'Partial', 'Kernel exists; ' + CAPS, 'Operating models per institution type beyond the records each institution holds (plan I5 onward)', 'I2')
@@ -894,7 +894,13 @@ R(5, r'^I$', r'^(Institution-operated|National sovereign cloud|Private cloud|Hyb
 R(5, r'^I$', r'(Availability and recovery-time|Recovery-point|Backup frequency|Encryption and key ownership|Data residency|Administrator and subcontractor|Network zones|Vulnerability and patch|Monitoring and incident|Disaster-recovery location|Capacity, latency|Contractual and technical exit)', 'Country decision', 'Platform provides: backup schedule and retention, hosting paths, contracts (lib/data/contracts.ts), advisories', 'Per-deployment record of RTO/RPO, residency, admin access, network zones — no plan step', 'Unassigned')
 R(5, r'^I$', r'No universal uptime', 'Met', 'No uptime or RTO typed in (estimates labelled, hosting-model)', '', '—')
 R(5, r'^I$', r'.', 'Partial', 'Hosting paths and DR docs', '', 'Unassigned')
-R(5, r'^J$', r'.', 'Partial', 'Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06)', 'Migration manifest with lifecycle, reconciliation counts, per-field provenance status', 'I9')
+# leftovers (plan I9, acceptance P5-06): the per-record migration manifest of rec.migration.
+MIGMAN = 'lib/recordkeeping/register.ts, migration-manifest.ts and procedures.ts rec.migration (plan, approval by two officials, per-record manifest: source id and SHA-256, transformations step:rule@version, target; every reconciliation verifies each record against the platform\'s own records and keeps its status; provenanceOf(), /api/records-management?record=; carried by the institution export and verified offline); tests lib/recordkeeping/migration-manifest.test.ts, recordkeeping.test.ts (acceptance P5-06, P6-11)'
+R(5, r'^J$', r'^Reconcile\.', 'Met', MIGMAN, '', '—')
+R(5, r'^J$', r'^Contract field (migration_id|source_system|target_deployment|record_type|mapping_version|source_snapshot|started_at|completed_at|reconciliation\.|approval\.)', 'Met', MIGMAN + ' (migration id, source and target systems, target kind and class or procedure, rule@version per transformation, source manifest SHA-256, approval and closure times, counts verified, differing, missing and unexpected, matched or accepted with corrections, the two officials of each decision and its sealed decision)', '', '—')
+R(5, r'^J$', r'actual measured results', 'Met', MIGMAN + ' (counts computed from the platform\'s own records, never entered, for targets here)', '', '—')
+R(5, r'^J$', r'^Record whether a field', 'Partial', MIGMAN, 'Status per record (verified, hash differs, missing, not verifiable here), not per field; inferred values are not distinguished', 'I9')
+R(5, r'^J$', r'.', 'Partial', 'Case import and organisations import keep file SHA-256, refused rows, two officials; ' + MIGMAN, 'Discovery inventories, authoritative-source decisions per field, a non-production test run and cut-over and retirement records', 'I9')
 R(5, r'^K$', r'(Institutional readiness|Platform completeness|must not be conflated|two distinct forms of completeness)', 'Met', COMPLETE + '; ' + CAPS + '; Update Center readiness (software) apart', '', '—')
 R(5, r'^K$', r'single overall percentage|Every verified state must have evidence|explicit states|Illustrative interface|— Not assessed:|gap should lead to a specific action', 'Met', COMPLETE, '', '—')
 R(5, r'^K$', r'^(Legal|Configuration|Staffing|Data|Integrations|Security|Service|Continuity|Governance):', 'Partial', COMPLETE, 'Items still not assessed until a check exists (load test, restore exercise, reconciliation)', 'I2')

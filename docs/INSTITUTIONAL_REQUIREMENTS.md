@@ -23,16 +23,16 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | 2 | 141 | 300 | 118 | 16 | 0 | 0 | 575 |
 | 3 | 84 | 173 | 221 | 23 | 2 | 79 | 582 |
 | 4 | 178 | 146 | 105 | 0 | 1 | 50 | 480 |
-| 5 | 109 | 185 | 4 | 0 | 18 | 0 | 316 |
+| 5 | 128 | 166 | 4 | 0 | 18 | 0 | 316 |
 | 6 | 91 | 168 | 34 | 8 | 8 | 2 | 311 |
-| **All** | **714** | **1189** | **652** | **52** | **41** | **179** | **2827** |
+| **All** | **733** | **1170** | **652** | **52** | **41** | **179** | **2827** |
 
 
 ### By plan step
 
 | Step | Met | Partial | Not yet | Platform rule stricter | Country decision | Lower priority | Total |
 |---|---|---|---|---|---|---|---|
-| — | 714 | 0 | 0 | 39 | 5 | 0 | 758 |
+| — | 733 | 0 | 0 | 39 | 5 | 0 | 777 |
 | I1 | 0 | 59 | 14 | 0 | 3 | 0 | 76 |
 | I2 | 0 | 109 | 3 | 0 | 0 | 0 | 112 |
 | I3 | 0 | 123 | 30 | 0 | 0 | 0 | 153 |
@@ -41,12 +41,12 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | I6 | 0 | 123 | 111 | 4 | 0 | 0 | 238 |
 | I7 | 0 | 65 | 208 | 0 | 0 | 0 | 273 |
 | I8 | 0 | 63 | 105 | 0 | 0 | 0 | 168 |
-| I9 | 0 | 239 | 11 | 0 | 17 | 0 | 267 |
+| I9 | 0 | 220 | 11 | 0 | 17 | 0 | 248 |
 | I10 | 0 | 147 | 22 | 6 | 0 | 2 | 177 |
 | I11 | 0 | 44 | 5 | 3 | 0 | 166 | 218 |
 | I12 | 0 | 5 | 0 | 0 | 0 | 0 | 5 |
 | Throughout | 0 | 4 | 0 | 0 | 0 | 9 | 13 |
-| **All** | **714** | **1189** | **652** | **52** | **41** | **179** | **2827** |
+| **All** | **733** | **1170** | **652** | **52** | **41** | **179** | **2827** |
 
 
 ### By sector
@@ -66,7 +66,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Internal administration | 2 | 7 | 3 | 0 | 0 | 0 | 12 |
 | Forms (common contract) | 1 | 9 | 3 | 0 | 0 | 0 | 13 |
 | National twin | 50 | 8 | 7 | 0 | 0 | 2 | 67 |
-| Acceptance | 19 | 7 | 0 | 0 | 0 | 0 | 26 |
+| Acceptance | 20 | 6 | 0 | 0 | 0 | 0 | 26 |
 | Institution catalogue | 1 | 0 | 0 | 0 | 0 | 0 | 1 |
 | Civil registration and identity | 25 | 43 | 0 | 0 | 0 | 0 | 68 |
 | Health | 10 | 43 | 1 | 3 | 0 | 0 | 57 |
@@ -119,7 +119,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Ownership and portability | 21 | 17 | 1 | 0 | 0 | 0 | 39 |
 | Security and keys | 5 | 25 | 2 | 0 | 1 | 0 | 33 |
 | Hosting | 1 | 5 | 0 | 0 | 17 | 0 | 23 |
-| Migration | 0 | 28 | 0 | 0 | 0 | 0 | 28 |
+| Migration | 18 | 10 | 0 | 0 | 0 | 0 | 28 |
 | Completeness model | 15 | 9 | 0 | 0 | 0 | 0 | 24 |
 | Design system | 2 | 39 | 19 | 7 | 0 | 2 | 69 |
 | Workspace shell and screens | 20 | 75 | 11 | 0 | 0 | 0 | 106 |
@@ -128,7 +128,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Roadmap | 23 | 9 | 4 | 0 | 8 | 0 | 44 |
 | Risks | 14 | 8 | 0 | 0 | 0 | 0 | 22 |
 | Launch checklist | 17 | 6 | 0 | 0 | 0 | 0 | 23 |
-| **All** | **714** | **1189** | **652** | **52** | **41** | **179** | **2827** |
+| **All** | **733** | **1170** | **652** | **52** | **41** | **179** | **2827** |
 
 
 ### By category
@@ -136,8 +136,8 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | Category | Met | Partial | Not yet | Platform rule stricter | Country decision | Lower priority | Total |
 |---|---|---|---|---|---|---|---|
 | KPI | 1 | 96 | 76 | 1 | 0 | 21 | 195 |
-| acceptance | 60 | 24 | 7 | 0 | 0 | 0 | 91 |
-| architecture | 105 | 154 | 7 | 0 | 25 | 0 | 291 |
+| acceptance | 61 | 23 | 7 | 0 | 0 | 0 | 91 |
+| architecture | 123 | 136 | 7 | 0 | 25 | 0 | 291 |
 | department | 0 | 179 | 152 | 13 | 0 | 47 | 391 |
 | design | 26 | 122 | 30 | 8 | 0 | 2 | 188 |
 | exchange | 29 | 68 | 7 | 0 | 0 | 2 | 106 |
@@ -151,7 +151,7 @@ Read-only trace of every requirement in `docs/INSTITUTIONAL_ARCHITECTURE_SPEC.md
 | security | 45 | 36 | 2 | 0 | 1 | 0 | 84 |
 | service | 3 | 12 | 13 | 0 | 0 | 0 | 28 |
 | twin | 52 | 29 | 16 | 0 | 0 | 2 | 99 |
-| **All** | **714** | **1189** | **652** | **52** | **41** | **179** | **2827** |
+| **All** | **733** | **1170** | **652** | **52** | **41** | **179** | **2827** |
 
 
 ## Plan gaps closed by the revised plan
@@ -258,7 +258,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S0-intro-06 | 48-52 | prose-rule | 2 — A2 — Human services and population administration: Civil registration, identity, health, education, immigration, labour, social protection, agriculture, water and professional licensing. | Partial | CRVS, education, immigration, professions operational; health partial; labour, social protection, agriculture, water screens only | See Part 2 rows | I6 (+I4) |
 | S0-intro-07 | 54-58 | prose-rule | 3 — A3 — Justice, security, territory and infrastructure: Judiciary, legislature, police, civilian defence administration, foreign affairs, lands, transport, energy, environment, disaster management and local government. | Partial | Judiciary, mapping operational; police, emergency, land, local partial; corrections, transport, energy, environment screens only; prosecution, defence | See Part 3 rows | I7 (+I11) |
 | S0-intro-08 | 60-64 | prose-rule | 4 — A4 — Independent bodies and cross-government regulators: Elections, audit, statistics, anti-corruption, ombudsman, human rights, data protection, public service commissions, central bank and sector regulators. | Partial | Legislature operational; public audit engagements, ombudsman and human rights complaints, protected disclosures and data-protection requests since pla | See Part 4 rows | I8 (+I11) |
-| S0-intro-09 | 66-70 | prose-rule | 5 — B and D — Standalone/federated architecture and completeness: Institution kernel, portable records and signatures, progressive onboarding, mixed hosting, service boundaries, measurable department readiness and first- | Partial | Kernel built and tested; institution export, migration manifest, event envelope missing | See Part 5 rows | I9 |
+| S0-intro-09 | 66-70 | prose-rule | 5 — B and D — Standalone/federated architecture and completeness: Institution kernel, portable records and signatures, progressive onboarding, mixed hosting, service boundaries, measurable department readiness and first- | Partial | Kernel built and tested; institution export, event envelope and per-record migration manifest built (plan I9) | See Part 5 rows | I9 |
 | S0-intro-10 | 72-76 | prose-rule | 6 — C, E and F — Premium design system, build order and risk controls: Concrete UI specifications, institutional visual identity, accessible interaction patterns, deployment priorities, standards and security/legal accep | Partial | Console tokens and grounds exist; no workspace ground or component-state test | See Part 6 rows | I10 |
 | S0-intro-11 | 78 | prose-rule | The aim is an implementable specification, not a claim that every country's legal forms, fees, deadlines and powers can be safely pre-approved in a universal package. | Country decision | Platform provides: laws [] and rules [] ship empty, procedures and permit mappings ship as unapproved drafts (audit A §2.6-2.8) | reference procedures pre-fill deadline and appeal day counts (e.g. lib/civil/procedures.ts:122-124, lib/courts/procedures.ts:91-92, lib/immigration/pr | I1 |
 
@@ -2181,7 +2181,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 |---|---|---|---|---|---|---|---|
 | S3-G-01 | 2719 | prose-rule | A department is not ready for production simply because its interface renders. | Met | lib/onboarding/completeness.ts institutionCompleteness() (items over nine dimensions, each read from its record: state not_started, in_progress, verif |  | — |
 | S3-G-02 | 2719 | prose-rule | Each service needs evidence of legal grounding, configuration, staffing, records, security, integration and successful operational testing. | Partial | lib/onboarding/completeness.ts institutionCompleteness() (items over nine dimensions, each read from its record: state not_started, in_progress, verif | Evidence per service (legal grounding, configuration, staffing, records, security, integration, operational testing) | I2 |
-| S3-G-03 | 2721 | prose-rule | The following tests should be mandatory for this part: | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (60 proven, 24 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
+| S3-G-03 | 2721 | prose-rule | The following tests should be mandatory for this part: | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (61 proven, 23 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
 | S3-G-04 | 2723 | acceptance | A court can administer cases independently without an executive administrator altering case assignment or judicial decisions. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P3-01: `app/src/lib/courts/procedures.test.ts` "…stays isolated from other institutions" (another ministry and an adm |  | — |
 | S3-G-05 | 2724 | acceptance | A judgment cannot be silently overwritten; corrections and appeals produce separate, traceable events. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P3-02: `app/src/lib/records/decisions.test.ts` "seals the canonical record and detects any change", "needs reasons an | Sealing and correction-by-supersession are proven generically. No court test corrects a judgment or runs an appeal as a separate traceable event. | I11 |
 | S3-G-06 | 2725 | acceptance | A police allegation remains distinguishable from verified findings and judicial outcomes. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P3-03: `app/src/lib/police/procedures.test.ts` "takes a report from a person, classifies it only with a cited provisi |  | — |
@@ -2750,7 +2750,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S4-F-11 | 3374-3376 | architecture | Continuity tested: Recovery, backups, key management, incident response and manual fallback procedures are exercised. | Not yet | No institution-specific recovery | I9 export and restore | I9 |
 | S4-F-12 | 3378 | architecture | Each item should be marked not_started, in_progress, verified, blocked or not_applicable, with evidence, an accountable owner, a verification date and the next corrective action. | Met | lib/onboarding/completeness.ts institutionCompleteness() (items over nine dimensions, each read from its record: state not_started, in_progress, verif |  | — |
 | S4-F-13 | 3378 | architecture | A high aggregate percentage must not conceal a failed critical safeguard. | Met | lib/onboarding/completeness.ts institutionCompleteness() (items over nine dimensions, each read from its record: state not_started, in_progress, verif |  | — |
-| S4-G-01 | 3382 | prose-rule | Before production, CivicOS should demonstrate that: | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (60 proven, 24 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
+| S4-G-01 | 3382 | prose-rule | Before production, CivicOS should demonstrate that: | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (61 proven, 23 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
 | S4-G-02 | 3384 | acceptance | An executive-wide administrator cannot read a protected parliamentary, judicial or independent-investigation record merely by virtue of their platform role. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P4-01: `app/src/lib/auth/negative-authorization.test.ts` "refuses a whole-government administrator, officer and audit |  | — |
 | S4-G-03 | 3385 | acceptance | An independent institution can manage its own users without giving its administrator authority over another independent institution. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P4-02: `app/src/lib/auth/negative-authorization.test.ts` "the court's own administrator acts directly; another instit |  | — |
 | S4-G-04 | 3386 | acceptance | An election result cannot be silently overwritten, and provisional results cannot be misrepresented as officially declared results. | Not yet | docs/INSTITUTIONAL_ACCEPTANCE.md P4-03: None. | Elections are not built (plan §4). | I11 |
@@ -3079,38 +3079,38 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S5-I-22 | 3918 | architecture | Contractual and technical exit requirements | Country decision | Platform provides: backup schedule and retention, hosting paths, contracts (lib/data/contracts.ts), advisories | Per-deployment record of RTO/RPO, residency, admin access, network zones | I9 |
 | S5-I-23 | 3920 | architecture | No universal uptime percentage or recovery time should be invented before the deployment's service criticality, budget and risk assessment are established. | Met | No uptime or RTO typed in (estimates labelled, hosting-model) |  | — |
 
-### Migration — Partial 28
+### Migration — Met 18, Partial 10
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
-| S5-J-01 | 3924 | architecture | CivicOS should not require every institution to abandon these systems simultaneously. | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06) | Migration manifest with lifecycle, reconciliation counts, per-field provenance status | I9 |
-| S5-J-02 | 3928 | architecture | Discover. Inventory systems, registers, record owners, data dictionaries, documents, interfaces, retention rules and known data-quality issues. | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06) | Migration manifest with lifecycle, reconciliation counts, per-field provenance status | I9 |
-| S5-J-03 | 3929 | architecture | Assign authority. Determine the authoritative source for each record type and field. Resolve conflicting ownership before migration. | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06) | Migration manifest with lifecycle, reconciliation counts, per-field provenance status | I9 |
-| S5-J-04 | 3930 | architecture | Map. Define source-to-target field mappings, identifier strategy, classification, transformation rules and rejected-record handling. | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06) | Migration manifest with lifecycle, reconciliation counts, per-field provenance status | I9 |
-| S5-J-05 | 3931 | architecture | Test. Run a representative migration in a non-production environment. Measure completeness, duplicates, referential integrity, document readability and provenance preservation. | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06) | Migration manifest with lifecycle, reconciliation counts, per-field provenance status | I9 |
-| S5-J-06 | 3932 | architecture | Reconcile. Compare source and target counts, totals, status distributions and selected record samples. Explain every material difference. | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06) | Migration manifest with lifecycle, reconciliation counts, per-field provenance status | I9 |
-| S5-J-07 | 3933 | architecture | Cut over. Obtain authorised approval, define a freeze or change-capture strategy, verify backups and document the rollback process. | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06) | Migration manifest with lifecycle, reconciliation counts, per-field provenance status | I9 |
-| S5-J-08 | 3934 | architecture | Operate in parallel where necessary. Establish which system is authoritative for each operation. Avoid two systems independently issuing conflicting legal decisions. | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06) | Migration manifest with lifecycle, reconciliation counts, per-field provenance status | I9 |
-| S5-J-09 | 3935 | architecture | Retire deliberately. Preserve required archives, evidence and audit history; revoke old credentials and interfaces; record the retirement decision. | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06) | Migration manifest with lifecycle, reconciliation counts, per-field provenance status | I9 |
-| S5-J-10 | 3939-3962 | architecture | Contract field migration_id (example: "generated-migration-id") | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06) | Migration manifest with lifecycle, reconciliation counts, per-field provenance status | I9 |
-| S5-J-11 | 3939-3962 | architecture | Contract field source_system (example: "legacy-system-reference") | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06) | Migration manifest with lifecycle, reconciliation counts, per-field provenance status | I9 |
-| S5-J-12 | 3939-3962 | architecture | Contract field target_deployment (example: "civicos-deployment-reference") | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06) | Migration manifest with lifecycle, reconciliation counts, per-field provenance status | I9 |
-| S5-J-13 | 3939-3962 | architecture | Contract field record_type (example: "institution-register") | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06) | Migration manifest with lifecycle, reconciliation counts, per-field provenance status | I9 |
-| S5-J-14 | 3939-3962 | architecture | Contract field mapping_version (example: "1.0") | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06) | Migration manifest with lifecycle, reconciliation counts, per-field provenance status | I9 |
-| S5-J-15 | 3939-3962 | architecture | Contract field source_snapshot (example: "snapshot-reference") | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06) | Migration manifest with lifecycle, reconciliation counts, per-field provenance status | I9 |
-| S5-J-16 | 3939-3962 | architecture | Contract field started_at (example: null) | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06) | Migration manifest with lifecycle, reconciliation counts, per-field provenance status | I9 |
-| S5-J-17 | 3939-3962 | architecture | Contract field completed_at (example: null) | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06) | Migration manifest with lifecycle, reconciliation counts, per-field provenance status | I9 |
-| S5-J-18 | 3939-3962 | architecture | Contract field reconciliation.source_count (example: null) | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06) | Migration manifest with lifecycle, reconciliation counts, per-field provenance status | I9 |
-| S5-J-19 | 3939-3962 | architecture | Contract field reconciliation.accepted_count (example: null) | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06) | Migration manifest with lifecycle, reconciliation counts, per-field provenance status | I9 |
-| S5-J-20 | 3939-3962 | architecture | Contract field reconciliation.rejected_count (example: null) | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06) | Migration manifest with lifecycle, reconciliation counts, per-field provenance status | I9 |
-| S5-J-21 | 3939-3962 | architecture | Contract field reconciliation.unresolved_count (example: null) | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06) | Migration manifest with lifecycle, reconciliation counts, per-field provenance status | I9 |
-| S5-J-22 | 3939-3962 | architecture | Contract field reconciliation.status (example: "not_started") | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06) | Migration manifest with lifecycle, reconciliation counts, per-field provenance status | I9 |
-| S5-J-23 | 3939-3962 | architecture | Contract field approval.approved_by (example: null) | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06) | Migration manifest with lifecycle, reconciliation counts, per-field provenance status | I9 |
-| S5-J-24 | 3939-3962 | architecture | Contract field approval.confirmed_by (example: null) | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06) | Migration manifest with lifecycle, reconciliation counts, per-field provenance status | I9 |
-| S5-J-25 | 3939-3962 | architecture | Contract field approval.evidence_reference (example: null) | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06) | Migration manifest with lifecycle, reconciliation counts, per-field provenance status | I9 |
-| S5-J-26 | 3964 | architecture | Production migration reports must contain actual measured results, not example counts. | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06) | Migration manifest with lifecycle, reconciliation counts, per-field provenance status | I9 |
-| S5-J-27 | 3966 | architecture | Hard rule: migration must not silently transform an unverified legacy value into an authoritative fact. | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06) | Migration manifest with lifecycle, reconciliation counts, per-field provenance status | I9 |
-| S5-J-28 | 3966 | architecture | Record whether a field was imported, verified, transformed, inferred or left unresolved. | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials (acceptance P5-06) | Migration manifest with lifecycle, reconciliation counts, per-field provenance status | I9 |
+| S5-J-01 | 3924 | architecture | CivicOS should not require every institution to abandon these systems simultaneously. | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials; lib/recordkeeping/register.ts, migration-manifest.ts and procedur | Discovery inventories, authoritative-source decisions per field, a non-production test run and cut-over and retirement records | I9 |
+| S5-J-02 | 3928 | architecture | Discover. Inventory systems, registers, record owners, data dictionaries, documents, interfaces, retention rules and known data-quality issues. | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials; lib/recordkeeping/register.ts, migration-manifest.ts and procedur | Discovery inventories, authoritative-source decisions per field, a non-production test run and cut-over and retirement records | I9 |
+| S5-J-03 | 3929 | architecture | Assign authority. Determine the authoritative source for each record type and field. Resolve conflicting ownership before migration. | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials; lib/recordkeeping/register.ts, migration-manifest.ts and procedur | Discovery inventories, authoritative-source decisions per field, a non-production test run and cut-over and retirement records | I9 |
+| S5-J-04 | 3930 | architecture | Map. Define source-to-target field mappings, identifier strategy, classification, transformation rules and rejected-record handling. | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials; lib/recordkeeping/register.ts, migration-manifest.ts and procedur | Discovery inventories, authoritative-source decisions per field, a non-production test run and cut-over and retirement records | I9 |
+| S5-J-05 | 3931 | architecture | Test. Run a representative migration in a non-production environment. Measure completeness, duplicates, referential integrity, document readability and provenance preservation. | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials; lib/recordkeeping/register.ts, migration-manifest.ts and procedur | Discovery inventories, authoritative-source decisions per field, a non-production test run and cut-over and retirement records | I9 |
+| S5-J-06 | 3932 | architecture | Reconcile. Compare source and target counts, totals, status distributions and selected record samples. Explain every material difference. | Met | lib/recordkeeping/register.ts, migration-manifest.ts and procedures.ts rec.migration (plan, approval by two officials, per-record manifest: source id  |  | — |
+| S5-J-07 | 3933 | architecture | Cut over. Obtain authorised approval, define a freeze or change-capture strategy, verify backups and document the rollback process. | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials; lib/recordkeeping/register.ts, migration-manifest.ts and procedur | Discovery inventories, authoritative-source decisions per field, a non-production test run and cut-over and retirement records | I9 |
+| S5-J-08 | 3934 | architecture | Operate in parallel where necessary. Establish which system is authoritative for each operation. Avoid two systems independently issuing conflicting legal decisions. | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials; lib/recordkeeping/register.ts, migration-manifest.ts and procedur | Discovery inventories, authoritative-source decisions per field, a non-production test run and cut-over and retirement records | I9 |
+| S5-J-09 | 3935 | architecture | Retire deliberately. Preserve required archives, evidence and audit history; revoke old credentials and interfaces; record the retirement decision. | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials; lib/recordkeeping/register.ts, migration-manifest.ts and procedur | Discovery inventories, authoritative-source decisions per field, a non-production test run and cut-over and retirement records | I9 |
+| S5-J-10 | 3939-3962 | architecture | Contract field migration_id (example: "generated-migration-id") | Met | lib/recordkeeping/register.ts, migration-manifest.ts and procedures.ts rec.migration (plan, approval by two officials, per-record manifest: source id  |  | — |
+| S5-J-11 | 3939-3962 | architecture | Contract field source_system (example: "legacy-system-reference") | Met | lib/recordkeeping/register.ts, migration-manifest.ts and procedures.ts rec.migration (plan, approval by two officials, per-record manifest: source id  |  | — |
+| S5-J-12 | 3939-3962 | architecture | Contract field target_deployment (example: "civicos-deployment-reference") | Met | lib/recordkeeping/register.ts, migration-manifest.ts and procedures.ts rec.migration (plan, approval by two officials, per-record manifest: source id  |  | — |
+| S5-J-13 | 3939-3962 | architecture | Contract field record_type (example: "institution-register") | Met | lib/recordkeeping/register.ts, migration-manifest.ts and procedures.ts rec.migration (plan, approval by two officials, per-record manifest: source id  |  | — |
+| S5-J-14 | 3939-3962 | architecture | Contract field mapping_version (example: "1.0") | Met | lib/recordkeeping/register.ts, migration-manifest.ts and procedures.ts rec.migration (plan, approval by two officials, per-record manifest: source id  |  | — |
+| S5-J-15 | 3939-3962 | architecture | Contract field source_snapshot (example: "snapshot-reference") | Met | lib/recordkeeping/register.ts, migration-manifest.ts and procedures.ts rec.migration (plan, approval by two officials, per-record manifest: source id  |  | — |
+| S5-J-16 | 3939-3962 | architecture | Contract field started_at (example: null) | Met | lib/recordkeeping/register.ts, migration-manifest.ts and procedures.ts rec.migration (plan, approval by two officials, per-record manifest: source id  |  | — |
+| S5-J-17 | 3939-3962 | architecture | Contract field completed_at (example: null) | Met | lib/recordkeeping/register.ts, migration-manifest.ts and procedures.ts rec.migration (plan, approval by two officials, per-record manifest: source id  |  | — |
+| S5-J-18 | 3939-3962 | architecture | Contract field reconciliation.source_count (example: null) | Met | lib/recordkeeping/register.ts, migration-manifest.ts and procedures.ts rec.migration (plan, approval by two officials, per-record manifest: source id  |  | — |
+| S5-J-19 | 3939-3962 | architecture | Contract field reconciliation.accepted_count (example: null) | Met | lib/recordkeeping/register.ts, migration-manifest.ts and procedures.ts rec.migration (plan, approval by two officials, per-record manifest: source id  |  | — |
+| S5-J-20 | 3939-3962 | architecture | Contract field reconciliation.rejected_count (example: null) | Met | lib/recordkeeping/register.ts, migration-manifest.ts and procedures.ts rec.migration (plan, approval by two officials, per-record manifest: source id  |  | — |
+| S5-J-21 | 3939-3962 | architecture | Contract field reconciliation.unresolved_count (example: null) | Met | lib/recordkeeping/register.ts, migration-manifest.ts and procedures.ts rec.migration (plan, approval by two officials, per-record manifest: source id  |  | — |
+| S5-J-22 | 3939-3962 | architecture | Contract field reconciliation.status (example: "not_started") | Met | lib/recordkeeping/register.ts, migration-manifest.ts and procedures.ts rec.migration (plan, approval by two officials, per-record manifest: source id  |  | — |
+| S5-J-23 | 3939-3962 | architecture | Contract field approval.approved_by (example: null) | Met | lib/recordkeeping/register.ts, migration-manifest.ts and procedures.ts rec.migration (plan, approval by two officials, per-record manifest: source id  |  | — |
+| S5-J-24 | 3939-3962 | architecture | Contract field approval.confirmed_by (example: null) | Met | lib/recordkeeping/register.ts, migration-manifest.ts and procedures.ts rec.migration (plan, approval by two officials, per-record manifest: source id  |  | — |
+| S5-J-25 | 3939-3962 | architecture | Contract field approval.evidence_reference (example: null) | Met | lib/recordkeeping/register.ts, migration-manifest.ts and procedures.ts rec.migration (plan, approval by two officials, per-record manifest: source id  |  | — |
+| S5-J-26 | 3964 | architecture | Production migration reports must contain actual measured results, not example counts. | Met | lib/recordkeeping/register.ts, migration-manifest.ts and procedures.ts rec.migration (plan, approval by two officials, per-record manifest: source id  |  | — |
+| S5-J-27 | 3966 | architecture | Hard rule: migration must not silently transform an unverified legacy value into an authoritative fact. | Partial | Case import and organisations import keep file SHA-256, refused rows, two officials; lib/recordkeeping/register.ts, migration-manifest.ts and procedur | Discovery inventories, authoritative-source decisions per field, a non-production test run and cut-over and retirement records | I9 |
+| S5-J-28 | 3966 | architecture | Record whether a field was imported, verified, transformed, inferred or left unresolved. | Partial | lib/recordkeeping/register.ts, migration-manifest.ts and procedures.ts rec.migration (plan, approval by two officials, per-record manifest: source id  | Status per record (verified, hash differs, missing, not verifiable here), not per field; inferred values are not distinguished | I9 |
 
 ### Completeness model — Met 15, Partial 9
 
@@ -3141,7 +3141,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S5-K-23 | 4035 | architecture | A gap should lead to a specific action: name an owner, explain what evidence is missing, state the dependency and define the acceptance test. | Met | lib/onboarding/completeness.ts institutionCompleteness() (items over nine dimensions, each read from its record: state not_started, in_progress, verif |  | — |
 | S5-K-24 | 4035 | architecture | A single overall percentage is not enough, especially if a critical legal or security requirement remains unverified. | Met | lib/onboarding/completeness.ts institutionCompleteness() (items over nine dimensions, each read from its record: state not_started, in_progress, verif |  | — |
 
-### Acceptance — Met 13, Partial 3
+### Acceptance — Met 14, Partial 2
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
@@ -3150,7 +3150,7 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 | S5-L-03 | 4043 | acceptance | A remote institution cannot query protected records without a valid, purpose-limited authorisation. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-03: `app/src/lib/exchange/services.test.ts` "purposes approved per caller and service" (all four tests); `app/src/ |  | — |
 | S5-L-04 | 4044 | acceptance | An event retry cannot duplicate a legally material action. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-04: `app/src/lib/customs/idempotency.test.ts` "a repeated open, decision, notice, transfer and reconciliation each |  | — |
 | S5-L-05 | 4045 | acceptance | A revoked institutional relationship stops new exchanges while preserving prior records. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-05: `app/src/lib/data/store/relationships.test.ts` "suspending, ending or expiring stops the grant; earlier versio |  | — |
-| S5-L-06 | 4046 | acceptance | A migrated record retains its source, transformation history and verification status. | Partial | docs/INSTITUTIONAL_ACCEPTANCE.md P5-06: Step I13: `app/src/lib/recordkeeping/recordkeeping.test.ts` "registers incoming correspondence, and reconciles | Source and file hash are proven for loads; since step I13 a migration has a manifest and reconciliation counts (`rec.migration`). Transformation histo | I9 |
+| S5-L-06 | 4046 | acceptance | A migrated record retains its source, transformation history and verification status. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-06: Step I13: `app/src/lib/recordkeeping/recordkeeping.test.ts` "registers incoming correspondence, and reconciles |  | — |
 | S5-L-07 | 4047 | acceptance | A correction produces an auditable new state rather than silently erasing history. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-07: `app/src/lib/records/decisions.test.ts` "…a correction supersedes"; `app/src/lib/civil/register.test.ts` "…cor |  | — |
 | S5-L-08 | 4048 | acceptance | An institution can export structured records, documents, schemas and audit evidence. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-08: `app/src/lib/portability/export.test.ts` "carries the institution's own records and nothing of another's, seal |  | — |
 | S5-L-09 | 4049 | acceptance | An exported record can be validated without depending on access to the original production interface. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P5-09: `app/src/lib/portability/export.test.ts` "carries the institution's own records and nothing of another's, seal |  | — |
@@ -3487,9 +3487,9 @@ Each item was verified in `app/src` on 21 October 2026, in the main checkout.
 
 | ID | Lines | Cat. | Requirement | Status | Evidence | Missing | Step |
 |---|---|---|---|---|---|---|---|
-| S6-K-01 | 4675 | design | Before CivicOS is declared ready for a real institution, require evidence for each of the following. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (60 proven, 24 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
-| S6-K-02 | 4681 | design | Use this as a working checklist. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (60 proven, 24 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
-| S6-K-03 | 4681 | design | Ticking an item tracks your review here; it does not verify the underlying system or certify production readiness. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (60 proven, 24 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
+| S6-K-01 | 4675 | design | Before CivicOS is declared ready for a real institution, require evidence for each of the following. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (61 proven, 23 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
+| S6-K-02 | 4681 | design | Use this as a working checklist. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (61 proven, 23 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
+| S6-K-03 | 4681 | design | Ticking an item tracks your review here; it does not verify the underlying system or certify production readiness. | Met | docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (61 proven, 23 partial, 7 not yet); plan §3.5 makes it the defini |  | — |
 | S6-K-04 | 4685 | acceptance | Institution mandate and record ownership approved | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-01: `app/src/lib/data/store/institutions.test.ts` "after setup changes only by proposal citing the law and a diffe |  | — |
 | S6-K-05 | 4687 | acceptance | Legal instruments versioned and effective dates validated | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-02: `app/src/lib/law/register.test.ts` "records a version that cannot be cited until a different official confirms |  | — |
 | S6-K-06 | 4689 | acceptance | Decision authorities and delegations verified | Met | docs/INSTITUTIONAL_ACCEPTANCE.md P6-03: `app/src/lib/permits/authority.test.ts` "governs decisions only once a second official approves a version with |  | — |
