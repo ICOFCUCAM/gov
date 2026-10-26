@@ -104,7 +104,7 @@ R(None, None, r'risk score|risk-based selection|automated student risk score', '
 
 # framing sentences of the acceptance lists
 R(None, None, r'(tests should be mandatory|should demonstrate that|require evidence for each of the following|Use this as a working checklist|Ticking an item|I would not accept these institutions)', 'Met',
-  'docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (61 proven, 23 partial, 7 not yet); plan §3.5 makes it the definition of done', '', '—')
+  'docs/INSTITUTIONAL_ACCEPTANCE.md records every acceptance item with its proving test (62 proven, 22 partial, 7 not yet); plan §3.5 makes it the definition of done', '', '—')
 R(3, r'^G$', r'not ready for production simply because its interface renders', 'Met', COMPLETE, '', '—')
 R(3, r'^G$', r'Each service needs evidence', 'Partial', COMPLETE + ' (per institution)', 'Evidence per service (legal grounding, configuration, staffing, records, security, integration, operational testing)', 'I2')
 R(1, r'^2$', r'(CivicOS should use international standards|It is a disclosure standard)', 'Lower priority', 'Plan §4 "Reference lists of standards. Informative; cited where a feature uses one."', '', 'Unassigned')
@@ -882,7 +882,7 @@ R(5, r'^H$', r'^Application:', 'Met', 'Input validation, CSRF (middleware Sec-Fe
 R(5, r'^H$', r'^Data:', 'Partial', 'Envelope-encrypted backups, encrypted documents', 'Per-institution keys', 'I9')
 R(5, r'^H$', r'^Infrastructure:', 'Country decision', 'Helm values, hosting paths', '', '—')
 R(5, r'^H$', r'^Audit:', 'Met', AUDIT, '', '—')
-R(5, r'^H$', r'^Supply chain:', 'Partial', 'SBOM, SLSA provenance records, escrow (lib/data/supply-chain.ts)', 'Release signatures are placeholders, digests synthetic (audit C 5.15)', 'I9')
+R(5, r'^H$', r'^Supply chain:', 'Partial', 'SBOM, SLSA provenance records, escrow (lib/data/supply-chain.ts); since plan I9 every release, shipment of update media and provenance attestation signed for real (DSSE over in-toto, Ed25519, lib/updates/release-signing.ts), verified on the disconnected side with publisher keys two officials trusted (lib/data/release-trust.ts, mirror.ts; app/scripts/verify-update-media.mjs; tests lib/data/release-signing.test.ts, acceptance P5-15)', 'The demonstration releases\' digests are synthetic and the builder a placeholder (integration register 3.1, 3.2); the publisher\'s real release key and build', 'I9')
 R(5, r'^H$', r'^Continuity:', 'Partial', BACKUP, 'Institution-specific exit plans', 'I9')
 R(5, r'^H$', r'(Event ID and event type|Actor or service identity|Action and result|Timestamp and correlation ID|Before/after|Integrity metadata)', 'Partial', 'AuditEntry {id, at, actor, action, resource, outcome, detail, seq, hash}', 'Correlation id, institution, purpose fields (audit C A-1)', 'I8', 'I9')
 R(5, r'^H$', r'(Institution and resource reference|Purpose and applicable authority)', 'Not yet', 'Institution and purpose only inside detail', 'Separate fields', 'I8')

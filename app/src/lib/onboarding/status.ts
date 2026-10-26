@@ -99,6 +99,8 @@ import { identityRoute } from '@/lib/frontdoor/journey';
 import { FRONTDOOR_PROCEDURES, frontdoorKey } from '@/lib/frontdoor/procedures';
 import { RECORDKEEPING_PROCEDURES, recordkeepingKey } from '@/lib/recordkeeping/procedures';
 import { recordkeepingCounts } from '@/lib/recordkeeping/register';
+// leftovers (plan I9): publisher keys waiting for a second official.
+import { waitingPublisherKeys } from '@/lib/data/release-trust';
 
 export type TrackState = 'done' | 'in-progress' | 'not-started' | 'blocked';
 /**
@@ -748,6 +750,8 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
   safe(() => { for (const w of waitingSealKeys()) if (!/review/.test(w.what) || w.overdue) wait({ what: w.what, proposedBy: w.by, at: w.at, href: '/gov/configuration/seal-keys' }); });
   safe(() => { for (const h of waitingHoldings()) wait({ what: `${h.holderName} to hold an office — waiting for a second official`, proposedBy: h.proposedBy, at: h.proposedAt, href: '/gov/configuration/offices' }); });
   safe(() => { for (const d of waitingDepartmentChanges()) wait({ what: `Departments: ${d.what} — waiting for a second official`, proposedBy: d.pending.by, at: d.pending.at, href: `/gov/institutions/departments?institution=${d.id}` }); });
+  // leftovers (plan I9, P5-15): a publisher key the nation is asked to trust for its software.
+  safe(() => { for (const k of waitingPublisherKeys()) wait({ what: `Publisher key ${k.keyId} for software updates: waiting for a second official`, proposedBy: k.proposed.by, at: k.proposed.at, href: '/updates/mirror' }); });
 
   waiting.sort((a, b) => (a.at ?? '').localeCompare(b.at ?? ''));
   // Completeness per institution (plan I2): read from the records, never a score.
