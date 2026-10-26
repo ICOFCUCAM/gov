@@ -45,6 +45,10 @@ import { taxServicesView } from '@/lib/tax/services-view';
 import { economicServicesView } from '@/lib/finance/services-view';
 import { cabinetRuleChanges } from '@/lib/cabinet/register';
 import { smallCellRule, smallCellChanges } from '@/lib/health/small-cells';
+// I12: security governance and resilience.
+import { SECURITY_PROCEDURES, SECURITY_PERMITS, SECURITY_SLOT_OF } from '@/lib/security/procedures';
+import { classificationStatus, securityClassificationChanges } from '@/lib/security/classification';
+import { securityCounts } from '@/lib/security/register';
 import { indicatorSmallCells } from '@/lib/indicators/disclosure';
 import { listDefinitions as listIndicators, approvedAt as indicatorApprovedAt } from '@/lib/indicators/register';
 import { SITE_IDS } from '@/lib/public-sites';
@@ -648,6 +652,29 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
     }));
   }
 
+  // I12: security governance and resilience: only where the nation names one of its bodies (all optional, none named by default).
+  const SECURITY_SLOTS: AuthorityKey[] = ['cyberAuthority', 'criticalInfrastructure', 'securityAccreditation', 'nationalSecurity'];
+  const secBodies = SECURITY_SLOTS.filter(k => !!authorityFor(k));
+  if (secBodies.length) {
+    tracks.push(track({ key: 'security', title: 'Security governance and resilience', why: 'National cyber incidents, vulnerability coordination, supplier security, exceptions and exercises; critical infrastructure designations, dependencies, risk and resilience plans; clearance decisions; national security directives. Metadata only: nothing above the installation\'s accreditation is held. Only where the nation names its bodies.', href: '/gov/security/resilience', seeded: true }, () => {
+      const mine = SECURITY_PROCEDURES.filter(p => secBodies.includes(SECURITY_SLOT_OF[p.key]!));
+      const approved = mine.filter(p => listPackages({ key: p.key, state: 'approved' }).length);
+      const types = [...new Set(mine.map(p => SECURITY_PERMITS[p.key]).filter((t): t is string => !!t))];
+      const mapped = types.filter(t => listMappings(t).some(m => m.state === 'approved'));
+      const signers = secBodies.map(k => ({ k, n: listAccounts().filter(a => !a.disabled && a.institution === authorityFor(k) && a.role === 'signatory').length }));
+      const cls = classificationStatus();
+      const c = securityCounts();
+      return { checks: [
+        { label: 'Security bodies named (Who is responsible)', done: true, href: '/gov/configuration/responsible#who-is-responsible', detail: secBodies.join(', ') },
+        { label: 'Two officials who can sign at each body', done: signers.every(x => x.n >= 2), href: '/admin/officials', detail: signers.map(x => `${x.k}: ${x.n}`).join(' · ') },
+        { label: 'Classification scheme and the installation\'s accreditation adopted by two officials citing the law', done: !!cls.scheme && !!cls.accreditation, href: '/gov/security/resilience', detail: cls.statement },
+        { label: 'Their procedures approved', done: mine.length > 0 && approved.length === mine.length, href: '/gov/law/procedures', detail: `${approved.length} of ${mine.length} approved` },
+        { label: 'Who decides each kind of decision approved (permit authorities)', done: types.length > 0 && mapped.length === types.length, href: '/gov/law/permit-authorities', detail: `${mapped.length} of ${types.length}: ${types.join(', ')}` },
+        { label: 'Records through decided cases', done: c.incident + c.designation + c.clearance > 0, href: '/gov/security/resilience', detail: `${c.incident} incident(s), ${c.vulnerability} vulnerability case(s), ${c.designation} designation(s), ${c.clearance} clearance decision(s)${c.samples ? ` (${c.samples} samples)` : ''}` },
+      ] };
+    }));
+  }
+
   if (samplesAllowed(env)) {
     tracks.push(track({ key: 'demo', title: 'Demonstration', why: 'Sample officials and records to try every feature. Only in demo and training installations; never in production.', href: '/admin/onboarding#demo', samplesOnly: true }, () => ({
       checks: [
@@ -671,6 +698,8 @@ export function onboardingStatus(env: NodeJS.ProcessEnv = process.env): Onboardi
   safe(() => { for (const x of listExports()) if (x.state === 'proposed') wait({ what: `Export of ${listMinistries().find(m => m.id === x.institution)?.name ?? x.institution}: waiting for an official who can sign there`, proposedBy: x.by, at: x.at, href: `/gov/configuration/edition?institution=${encodeURIComponent(x.institution)}#export` }); });
   safe(() => { for (const x of listImports()) if (x.state === 'proposed') wait({ what: `Import of ${x.institutionName}'s export ${x.exportId}: waiting for a second administrator`, proposedBy: x.by, at: x.at, href: '/gov/configuration/edition#export' }); });
   safe(() => { const p = classificationChanges().pending; if (p) wait({ what: 'Classification of the state: a change waiting for a second official', proposedBy: p.by, at: p.at, href: '/gov/configuration/offices' }); });
+  // I12: the security classification scheme and the installation's accreditation.
+  safe(() => { const p = securityClassificationChanges().pending; if (p) wait({ what: 'Security classification scheme and accreditation: a change waiting for a second official', proposedBy: p.by, at: p.at, href: '/gov/security/resilience' }); });
   safe(() => { for (const w of waitingLegislative()) wait({ what: w.what, proposedBy: w.by, at: w.at, href: w.href }); });
   safe(() => {
     for (const i of listInstruments({ state: 'any' })) for (const v of i.versions) {

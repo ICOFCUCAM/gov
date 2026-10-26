@@ -123,6 +123,7 @@
   "/gov/registry",
   "/gov/search",
   "/gov/security",
+  "/gov/security/resilience",
   "/gov/shell",
   "/gov/signatures",
   "/gov/simulation",

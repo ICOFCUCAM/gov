@@ -1,8 +1,9 @@
 // POST /api/cases/[id]/documents — attach a document to a case: JSON
-// { class, title, data (base64), note? } (lib/records/documents.ts: PDF,
+// { class, title, data (base64), note?, classification? } (lib/records/documents.ts: PDF,
 // PNG, JPEG or WebP by their bytes, up to 5 MB, sealed at rest). Kept with
 // the case's institution and sensitivity, then attached by the workflow
-// engine (the case rules apply).
+// engine (the case rules apply). A file marked above the installation's
+// accreditation is refused, never stored (I12, lib/security/classification.ts).
 import { NextRequest, NextResponse } from 'next/server';
 import { getCase, attach } from '@/lib/casework/engine';
 import { getPackage } from '@/lib/casework/packages';
@@ -17,7 +18,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
   const { id } = await props.params;
   const c = getCase(id);
   if (!c) return NextResponse.json({ error: 'No such case' }, { status: 404 });
-  const b = (await req.json().catch(() => ({}))) as { class?: string; title?: string; data?: string; note?: string; by?: string };
+  const b = (await req.json().catch(() => ({}))) as { class?: string; title?: string; data?: string; note?: string; by?: string; classification?: string };
   const actor = await routeActor(b.by);
   if (actor.scope) {
     const why = caseActRefusal(actor.scope, caseFacts(c));
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
   }
   if (typeof b.data !== 'string' || !/^[A-Za-z0-9+/]+={0,2}$/.test(b.data)) return NextResponse.json({ error: 'Send the file as base64 data' }, { status: 422 });
   const pkg = getPackage(c.package.key, c.package.version);
-  const d = addDocument({ class: String(b.class ?? ''), title: String(b.title ?? ''), institution: c.owner, belongsTo: { kind: 'case', id: c.id }, sensitivity: c.sensitivity, ...(pkg ? { retention: pkg.retention } : {}), bytes: new Uint8Array(Buffer.from(b.data, 'base64')), ...(b.note ? { note: b.note } : {}) }, actor.name);
+  const d = addDocument({ class: String(b.class ?? ''), title: String(b.title ?? ''), institution: c.owner, belongsTo: { kind: 'case', id: c.id }, sensitivity: c.sensitivity, ...(pkg ? { retention: pkg.retention } : {}), bytes: new Uint8Array(Buffer.from(b.data, 'base64')), ...(b.note ? { note: b.note } : {}), ...(typeof b.classification === 'string' ? { classification: b.classification } : {}) }, actor.name);
   if ('error' in d) return NextResponse.json(d, { status: 422 });
   const r = attach(c.id, d.id, actor);
   if ('error' in r) return NextResponse.json(r, { status: 422 });

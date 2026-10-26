@@ -24,6 +24,8 @@ BATCH_LABEL[10] = 'territory and infrastructure'
 # Batch 8 (owner's assignment, plan step I5): the executive office, Cabinet, treasury and budget forms of the field series Part 2.
 BATCH_LABEL[8] = 'executive office, Cabinet, treasury and budget'
 BATCH_LABEL[9] = 'human services forms'
+# Batch 13 (plan step I12): security governance and resilience, the Part 11 forms the cyber, critical infrastructure and clearance procedures carry or wait for.
+BATCH_LABEL[13] = 'security governance and resilience'
 GATES = [
     'The form owner and competent authority are verified.',
     'Legal references and their versions have been approved.',

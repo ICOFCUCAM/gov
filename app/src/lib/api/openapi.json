@@ -218,6 +218,9 @@
       "name": "seal-keys"
     },
     {
+      "name": "security"
+    },
+    {
       "name": "session"
     },
     {
@@ -8326,7 +8329,9 @@
                                         "civilRegistration",
                                         "constitutionalCourt",
                                         "controlledSubstances",
+                                        "criticalInfrastructure",
                                         "customs",
+                                        "cyberAuthority",
                                         "dataProtection",
                                         "education",
                                         "electoral",
@@ -8344,12 +8349,14 @@
                                         "lawRegister",
                                         "legislature",
                                         "medicinesRegulation",
+                                        "nationalSecurity",
                                         "ombudsman",
                                         "police",
                                         "procurementReview",
                                         "professionalRegulation",
                                         "publicHealth",
                                         "roadAuthority",
+                                        "securityAccreditation",
                                         "socialProtection",
                                         "statistics",
                                         "supremeAudit",
@@ -8373,7 +8380,9 @@
                                         "civilRegistration",
                                         "constitutionalCourt",
                                         "controlledSubstances",
+                                        "criticalInfrastructure",
                                         "customs",
+                                        "cyberAuthority",
                                         "dataProtection",
                                         "education",
                                         "electoral",
@@ -8391,12 +8400,14 @@
                                         "lawRegister",
                                         "legislature",
                                         "medicinesRegulation",
+                                        "nationalSecurity",
                                         "ombudsman",
                                         "police",
                                         "procurementReview",
                                         "professionalRegulation",
                                         "publicHealth",
                                         "roadAuthority",
+                                        "securityAccreditation",
                                         "socialProtection",
                                         "statistics",
                                         "supremeAudit",
@@ -10083,7 +10094,7 @@
         ],
         "operationId": "post_cases_id_documents",
         "summary": "POST /api/cases/{id}/documents",
-        "description": "POST /api/cases/[id]/documents — attach a document to a case: JSON { class, title, data (base64), note? } (lib/records/documents.ts: PDF, PNG, JPEG or WebP by their bytes, up to 5 MB, sealed at rest). Kept with the case's institution and sensitivity, then attached by the workflow engine (the case rules apply).",
+        "description": "POST /api/cases/[id]/documents — attach a document to a case: JSON { class, title, data (base64), note?, classification? } (lib/records/documents.ts: PDF, PNG, JPEG or WebP by their bytes, up to 5 MB, sealed at rest). Kept with the case's institution and sensitivity, then attached by the workflow engine (the case rules apply). A file marked above the installation's accreditation is refused, never stored (I12, lib/security/classification.ts).",
         "parameters": [
           {
             "name": "id",
@@ -10115,6 +10126,9 @@
                   },
                   "by": {
                     "type": "string"
+                  },
+                  "classification": {
+                    "type": "string"
                   }
                 }
               },
@@ -10126,7 +10140,8 @@
                     "title": "Example",
                     "data": "string",
                     "note": "Text",
-                    "by": "A. Official"
+                    "by": "A. Official",
+                    "classification": "string"
                   }
                 }
               }
@@ -11760,6 +11775,7 @@
                           "offices",
                           "relationships",
                           "sealKeys",
+                          "securityClassification",
                           "suspension",
                           "transitionRules"
                         ]
@@ -11783,6 +11799,7 @@
                               "offices",
                               "relationships",
                               "sealKeys",
+                              "securityClassification",
                               "suspension",
                               "transitionRules"
                             ]
@@ -12061,6 +12078,9 @@
                             "sealKeys": {
                               "type": "string"
                             },
+                            "securityClassification": {
+                              "type": "string"
+                            },
                             "suspension": {
                               "type": "string"
                             },
@@ -12078,6 +12098,7 @@
                             "offices",
                             "relationships",
                             "sealKeys",
+                            "securityClassification",
                             "suspension",
                             "transitionRules"
                           ]
@@ -12216,6 +12237,7 @@
                           "offices": "string",
                           "relationships": "string",
                           "sealKeys": "string",
+                          "securityClassification": "string",
                           "suspension": "string",
                           "transitionRules": "string"
                         }
@@ -12374,6 +12396,7 @@
                           "offices",
                           "relationships",
                           "sealKeys",
+                          "securityClassification",
                           "suspension",
                           "transitionRules"
                         ]
@@ -12397,6 +12420,7 @@
                               "offices",
                               "relationships",
                               "sealKeys",
+                              "securityClassification",
                               "suspension",
                               "transitionRules"
                             ]
@@ -12675,6 +12699,9 @@
                             "sealKeys": {
                               "type": "string"
                             },
+                            "securityClassification": {
+                              "type": "string"
+                            },
                             "suspension": {
                               "type": "string"
                             },
@@ -12692,6 +12719,7 @@
                             "offices",
                             "relationships",
                             "sealKeys",
+                            "securityClassification",
                             "suspension",
                             "transitionRules"
                           ]
@@ -12827,6 +12855,7 @@
                           "offices": "string",
                           "relationships": "string",
                           "sealKeys": "string",
+                          "securityClassification": "string",
                           "suspension": "string",
                           "transitionRules": "string"
                         }
@@ -18018,7 +18047,9 @@
                               "civilRegistration",
                               "constitutionalCourt",
                               "controlledSubstances",
+                              "criticalInfrastructure",
                               "customs",
+                              "cyberAuthority",
                               "dataProtection",
                               "education",
                               "electoral",
@@ -18036,12 +18067,14 @@
                               "lawRegister",
                               "legislature",
                               "medicinesRegulation",
+                              "nationalSecurity",
                               "ombudsman",
                               "police",
                               "procurementReview",
                               "professionalRegulation",
                               "publicHealth",
                               "roadAuthority",
+                              "securityAccreditation",
                               "socialProtection",
                               "statistics",
                               "supremeAudit",
@@ -28660,7 +28693,9 @@
                                           "civilRegistration",
                                           "constitutionalCourt",
                                           "controlledSubstances",
+                                          "criticalInfrastructure",
                                           "customs",
+                                          "cyberAuthority",
                                           "dataProtection",
                                           "education",
                                           "electoral",
@@ -28678,12 +28713,14 @@
                                           "lawRegister",
                                           "legislature",
                                           "medicinesRegulation",
+                                          "nationalSecurity",
                                           "ombudsman",
                                           "police",
                                           "procurementReview",
                                           "professionalRegulation",
                                           "publicHealth",
                                           "roadAuthority",
+                                          "securityAccreditation",
                                           "socialProtection",
                                           "statistics",
                                           "supremeAudit",
@@ -55820,7 +55857,9 @@
                                       "civilRegistration",
                                       "constitutionalCourt",
                                       "controlledSubstances",
+                                      "criticalInfrastructure",
                                       "customs",
+                                      "cyberAuthority",
                                       "dataProtection",
                                       "education",
                                       "electoral",
@@ -55838,12 +55877,14 @@
                                       "lawRegister",
                                       "legislature",
                                       "medicinesRegulation",
+                                      "nationalSecurity",
                                       "ombudsman",
                                       "police",
                                       "procurementReview",
                                       "professionalRegulation",
                                       "publicHealth",
                                       "roadAuthority",
+                                      "securityAccreditation",
                                       "socialProtection",
                                       "statistics",
                                       "supremeAudit",
@@ -73691,7 +73732,9 @@
                             "civilRegistration",
                             "constitutionalCourt",
                             "controlledSubstances",
+                            "criticalInfrastructure",
                             "customs",
+                            "cyberAuthority",
                             "dataProtection",
                             "education",
                             "electoral",
@@ -73709,12 +73752,14 @@
                             "lawRegister",
                             "legislature",
                             "medicinesRegulation",
+                            "nationalSecurity",
                             "ombudsman",
                             "police",
                             "procurementReview",
                             "professionalRegulation",
                             "publicHealth",
                             "roadAuthority",
+                            "securityAccreditation",
                             "socialProtection",
                             "statistics",
                             "supremeAudit",
@@ -74076,6 +74121,1515 @@
         ],
         "x-permission-rule": "official",
         "x-source": "src/app/api/seal-keys/route.ts"
+      }
+    },
+    "/api/security": {
+      "get": {
+        "tags": [
+          "security"
+        ],
+        "operationId": "get_security",
+        "summary": "GET /api/security",
+        "description": "/api/security — security governance and resilience (plan step I12; lib/security). Metadata only: no classified content, no intelligence register, source, target or attribution, no score about a person. Cyber incidents, vulnerabilities, supplier assessments, exceptions, exercises, critical infrastructure records and clearances move only through /api/cases under their own approved procedures; this route carries what sits around them. GET: the bodies the nation named (cyberAuthority, criticalInfrastructure, securityAccreditation, nationalSecurity; each empty by default), where the classification scheme and the installation's accreditation stand, the procedures and their state, counts (no content), and for the signed-in official the records they may see listed (listing view: no terms), the security directives of their institution as issuer or recipient, and its cross-domain transfer records. ?record=<number>&purpose=…&view=full|recipient one record, read under the access rule (need to know, purpose, action, clearance for a marked record); every attempt in the access log. ?view=public what the officials published: vulnerability summaries on or after their disclosure date. Nothing else is public. POST (signed-in officials; checked again in lib/security against the record): { op: 'propose-classification', scheme?, accreditation?, legalBasis: [{ instrument, eId }] } (an administrator) { op: 'confirm-classification' } (a different official) · { op: 'withdraw-classification', reason } { op: 'need-to-know', record, grant: true|false, official: { id, name }, reason } (one who can sign at the keeping institution; logged) { op: 'directive-draft', … } · { op: 'directive-amend', ref, … } · { op: 'directive-issue', ref } (a different signatory) { op: 'directive-end', ref, reason } · { op: 'directive-acknowledge', ref } · { op: 'directive-compliance', ref, state, note } { op: 'transfer-record', … } · { op: 'transfer-decide', ref, outcome, reason } (a different signatory) · { op: 'transfer-receipt', ref, reference } { op: 'disclosure', procedure, fields, identity, materialMarking?, materialReference? } protected intake (lib/oversight)",
+        "parameters": [
+          {
+            "name": "action",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "purpose",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "record",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "view",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "advisories": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "number": {
+                                "type": "string"
+                              },
+                              "summary": {
+                                "type": "string"
+                              },
+                              "published": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "number",
+                              "summary",
+                              "published"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "advisories"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "record": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/components/schemas/RecipientView"
+                            },
+                            {
+                              "$ref": "#/components/schemas/SecurityRecord"
+                            }
+                          ]
+                        },
+                        "view": {
+                          "type": "string",
+                          "enum": [
+                            "full",
+                            "recipient"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "record",
+                        "view"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "bodies": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "slot": {
+                                "type": "string",
+                                "enum": [
+                                  "anticorruption",
+                                  "buildingControl",
+                                  "businessRegister",
+                                  "cabinetOffice",
+                                  "centralBank",
+                                  "citizenship",
+                                  "civilRegistration",
+                                  "constitutionalCourt",
+                                  "controlledSubstances",
+                                  "criticalInfrastructure",
+                                  "customs",
+                                  "cyberAuthority",
+                                  "dataProtection",
+                                  "education",
+                                  "electoral",
+                                  "finance",
+                                  "headOfState",
+                                  "healthRegulation",
+                                  "higherEducationAccreditation",
+                                  "housing",
+                                  "humanRights",
+                                  "identity",
+                                  "immigration",
+                                  "judiciary",
+                                  "labour",
+                                  "landRegistry",
+                                  "lawRegister",
+                                  "legislature",
+                                  "medicinesRegulation",
+                                  "nationalSecurity",
+                                  "ombudsman",
+                                  "police",
+                                  "procurementReview",
+                                  "professionalRegulation",
+                                  "publicHealth",
+                                  "roadAuthority",
+                                  "securityAccreditation",
+                                  "socialProtection",
+                                  "statistics",
+                                  "supremeAudit",
+                                  "tax",
+                                  "transportRegulator",
+                                  "travelDocuments",
+                                  "trustServices",
+                                  "vehicleRegistration"
+                                ]
+                              },
+                              "label": {
+                                "type": "string"
+                              },
+                              "institution": {
+                                "anyOf": [
+                                  {
+                                    "type": "null"
+                                  },
+                                  {
+                                    "type": "string"
+                                  }
+                                ]
+                              },
+                              "name": {
+                                "anyOf": [
+                                  {
+                                    "type": "null"
+                                  },
+                                  {
+                                    "type": "string"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "slot",
+                              "label",
+                              "institution",
+                              "name"
+                            ]
+                          }
+                        },
+                        "classification": {
+                          "type": "object",
+                          "properties": {
+                            "scheme": {
+                              "anyOf": [
+                                {
+                                  "$ref": "#/components/schemas/ClassificationScheme"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "accreditation": {
+                              "anyOf": [
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "level": {
+                                      "type": "string",
+                                      "description": "The highest level of the scheme this installation may hold."
+                                    },
+                                    "statement": {
+                                      "type": "string",
+                                      "description": "The accreditation decision it rests on (reference of the competent authority's decision)."
+                                    },
+                                    "label": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "level",
+                                    "statement",
+                                    "label"
+                                  ]
+                                }
+                              ]
+                            },
+                            "version": {
+                              "type": "number"
+                            },
+                            "waiting": {
+                              "type": "boolean"
+                            },
+                            "highest": {
+                              "type": "string"
+                            },
+                            "statement": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "scheme",
+                            "accreditation",
+                            "version",
+                            "waiting",
+                            "highest",
+                            "statement"
+                          ]
+                        },
+                        "classificationChanges": {
+                          "type": "object",
+                          "properties": {
+                            "pending": {
+                              "type": "object",
+                              "properties": {
+                                "values": {
+                                  "$ref": "#/components/schemas/SecurityClassificationValues"
+                                },
+                                "basis": {
+                                  "type": "array",
+                                  "items": {
+                                    "$ref": "#/components/schemas/Citation"
+                                  }
+                                },
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "confirmed": {
+                                  "type": "object",
+                                  "properties": {
+                                    "by": {
+                                      "type": "string"
+                                    },
+                                    "byId": {
+                                      "type": "string"
+                                    },
+                                    "at": {
+                                      "type": "string"
+                                    },
+                                    "independence": {
+                                      "type": "string",
+                                      "enum": [
+                                        "accounts-only",
+                                        "identity-provider",
+                                        "unverified"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "by",
+                                    "at",
+                                    "independence"
+                                  ]
+                                },
+                                "expiresAt": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "values",
+                                "basis",
+                                "by",
+                                "at",
+                                "expiresAt"
+                              ],
+                              "description": "A proposal waiting for its second official."
+                            },
+                            "history": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "values": {
+                                    "$ref": "#/components/schemas/SecurityClassificationValues"
+                                  },
+                                  "basis": {
+                                    "type": "array",
+                                    "items": {
+                                      "$ref": "#/components/schemas/Citation"
+                                    }
+                                  },
+                                  "by": {
+                                    "type": "string"
+                                  },
+                                  "byId": {
+                                    "type": "string"
+                                  },
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "confirmed": {
+                                    "type": "object",
+                                    "properties": {
+                                      "by": {
+                                        "type": "string"
+                                      },
+                                      "byId": {
+                                        "type": "string"
+                                      },
+                                      "at": {
+                                        "type": "string"
+                                      },
+                                      "independence": {
+                                        "type": "string",
+                                        "enum": [
+                                          "accounts-only",
+                                          "identity-provider",
+                                          "unverified"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "by",
+                                      "at",
+                                      "independence"
+                                    ]
+                                  },
+                                  "outcome": {
+                                    "type": "string",
+                                    "enum": [
+                                      "adopted",
+                                      "lapsed",
+                                      "withdrawn"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "values",
+                                  "basis",
+                                  "by",
+                                  "at",
+                                  "outcome"
+                                ]
+                              },
+                              "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+                            }
+                          }
+                        },
+                        "procedures": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "slot": {
+                                "type": "string",
+                                "enum": [
+                                  "anticorruption",
+                                  "buildingControl",
+                                  "businessRegister",
+                                  "cabinetOffice",
+                                  "centralBank",
+                                  "citizenship",
+                                  "civilRegistration",
+                                  "constitutionalCourt",
+                                  "controlledSubstances",
+                                  "criticalInfrastructure",
+                                  "customs",
+                                  "cyberAuthority",
+                                  "dataProtection",
+                                  "education",
+                                  "electoral",
+                                  "finance",
+                                  "headOfState",
+                                  "healthRegulation",
+                                  "higherEducationAccreditation",
+                                  "housing",
+                                  "humanRights",
+                                  "identity",
+                                  "immigration",
+                                  "judiciary",
+                                  "labour",
+                                  "landRegistry",
+                                  "lawRegister",
+                                  "legislature",
+                                  "medicinesRegulation",
+                                  "nationalSecurity",
+                                  "ombudsman",
+                                  "police",
+                                  "procurementReview",
+                                  "professionalRegulation",
+                                  "publicHealth",
+                                  "roadAuthority",
+                                  "securityAccreditation",
+                                  "socialProtection",
+                                  "statistics",
+                                  "supremeAudit",
+                                  "tax",
+                                  "transportRegulator",
+                                  "travelDocuments",
+                                  "trustServices",
+                                  "vehicleRegistration"
+                                ]
+                              },
+                              "state": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "title",
+                              "state"
+                            ]
+                          }
+                        },
+                        "counts": {
+                          "type": "object",
+                          "properties": {
+                            "directives": {
+                              "type": "object",
+                              "properties": {
+                                "total": {
+                                  "type": "number"
+                                },
+                                "inForce": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "total",
+                                "inForce"
+                              ]
+                            },
+                            "transfers": {
+                              "type": "object",
+                              "properties": {
+                                "total": {
+                                  "type": "number"
+                                },
+                                "released": {
+                                  "type": "number"
+                                },
+                                "awaiting": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": [
+                                "total",
+                                "released",
+                                "awaiting"
+                              ]
+                            },
+                            "incident": {
+                              "type": "number"
+                            },
+                            "supplier": {
+                              "type": "number"
+                            },
+                            "plan": {
+                              "type": "number"
+                            },
+                            "vulnerability": {
+                              "type": "number"
+                            },
+                            "exception": {
+                              "type": "number"
+                            },
+                            "exercise": {
+                              "type": "number"
+                            },
+                            "designation": {
+                              "type": "number"
+                            },
+                            "dependency": {
+                              "type": "number"
+                            },
+                            "risk": {
+                              "type": "number"
+                            },
+                            "clearance": {
+                              "type": "number"
+                            },
+                            "marked": {
+                              "type": "number"
+                            },
+                            "samples": {
+                              "type": "number"
+                            },
+                            "expired": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "directives",
+                            "transfers",
+                            "incident",
+                            "supplier",
+                            "plan",
+                            "vulnerability",
+                            "exception",
+                            "exercise",
+                            "designation",
+                            "dependency",
+                            "risk",
+                            "clearance",
+                            "marked",
+                            "samples",
+                            "expired"
+                          ]
+                        },
+                        "records": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/SecurityListing"
+                          }
+                        },
+                        "directives": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "ref": {
+                                "type": "string"
+                              },
+                              "issuer": {
+                                "type": "string"
+                              },
+                              "versions": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "title": {
+                                      "type": "string"
+                                    },
+                                    "kind": {
+                                      "type": "string"
+                                    },
+                                    "force": {
+                                      "type": "string",
+                                      "enum": [
+                                        "binding-order",
+                                        "policy-directive"
+                                      ]
+                                    },
+                                    "authority": {
+                                      "type": "array",
+                                      "items": {
+                                        "$ref": "#/components/schemas/Citation"
+                                      }
+                                    },
+                                    "scope": {
+                                      "type": "string"
+                                    },
+                                    "recipients": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "marking": {
+                                      "type": "string"
+                                    },
+                                    "caveats": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "effectiveFrom": {
+                                      "type": "string"
+                                    },
+                                    "expiresOn": {
+                                      "type": "string"
+                                    },
+                                    "reviewOn": {
+                                      "type": "string"
+                                    },
+                                    "compliance": {
+                                      "type": "string",
+                                      "description": "What each recipient must do and report."
+                                    },
+                                    "challengeRoute": {
+                                      "type": "string",
+                                      "description": "How a recipient challenges it, asks for review or reports an unlawful directive."
+                                    },
+                                    "n": {
+                                      "type": "number"
+                                    },
+                                    "at": {
+                                      "type": "string"
+                                    },
+                                    "by": {
+                                      "$ref": "#/components/schemas/Who_security_directives"
+                                    },
+                                    "reason": {
+                                      "type": "string"
+                                    },
+                                    "confirmed": {
+                                      "type": "object",
+                                      "properties": {
+                                        "by": {
+                                          "$ref": "#/components/schemas/Who_security_directives"
+                                        },
+                                        "at": {
+                                          "type": "string"
+                                        },
+                                        "independence": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "by",
+                                        "at",
+                                        "independence"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "title",
+                                    "kind",
+                                    "force",
+                                    "authority",
+                                    "scope",
+                                    "recipients",
+                                    "marking",
+                                    "caveats",
+                                    "effectiveFrom",
+                                    "compliance",
+                                    "challengeRoute",
+                                    "n",
+                                    "at",
+                                    "by",
+                                    "reason"
+                                  ]
+                                }
+                              },
+                              "pending": {
+                                "type": "object",
+                                "properties": {
+                                  "title": {
+                                    "type": "string"
+                                  },
+                                  "kind": {
+                                    "type": "string"
+                                  },
+                                  "force": {
+                                    "type": "string",
+                                    "enum": [
+                                      "binding-order",
+                                      "policy-directive"
+                                    ]
+                                  },
+                                  "authority": {
+                                    "type": "array",
+                                    "items": {
+                                      "$ref": "#/components/schemas/Citation"
+                                    }
+                                  },
+                                  "scope": {
+                                    "type": "string"
+                                  },
+                                  "recipients": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "marking": {
+                                    "type": "string"
+                                  },
+                                  "caveats": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "effectiveFrom": {
+                                    "type": "string"
+                                  },
+                                  "expiresOn": {
+                                    "type": "string"
+                                  },
+                                  "reviewOn": {
+                                    "type": "string"
+                                  },
+                                  "compliance": {
+                                    "type": "string",
+                                    "description": "What each recipient must do and report."
+                                  },
+                                  "challengeRoute": {
+                                    "type": "string",
+                                    "description": "How a recipient challenges it, asks for review or reports an unlawful directive."
+                                  },
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "by": {
+                                    "$ref": "#/components/schemas/Who_security_directives"
+                                  },
+                                  "reason": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "title",
+                                  "kind",
+                                  "force",
+                                  "authority",
+                                  "scope",
+                                  "recipients",
+                                  "marking",
+                                  "caveats",
+                                  "effectiveFrom",
+                                  "compliance",
+                                  "challengeRoute",
+                                  "at",
+                                  "by",
+                                  "reason"
+                                ],
+                                "description": "A version waiting for its second official (the first draft, or an amendment)."
+                              },
+                              "issuedAt": {
+                                "type": "string"
+                              },
+                              "acknowledgements": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "institution": {
+                                      "type": "string"
+                                    },
+                                    "by": {
+                                      "$ref": "#/components/schemas/Who_security_directives"
+                                    },
+                                    "at": {
+                                      "type": "string"
+                                    },
+                                    "version": {
+                                      "type": "number"
+                                    }
+                                  },
+                                  "required": [
+                                    "institution",
+                                    "by",
+                                    "at",
+                                    "version"
+                                  ]
+                                }
+                              },
+                              "compliance": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "institution": {
+                                      "type": "string"
+                                    },
+                                    "by": {
+                                      "$ref": "#/components/schemas/Who_security_directives"
+                                    },
+                                    "at": {
+                                      "type": "string"
+                                    },
+                                    "version": {
+                                      "type": "number"
+                                    },
+                                    "state": {
+                                      "type": "string",
+                                      "enum": [
+                                        "exception-requested",
+                                        "implemented",
+                                        "not-implemented",
+                                        "partly-implemented"
+                                      ]
+                                    },
+                                    "note": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "institution",
+                                    "by",
+                                    "at",
+                                    "version",
+                                    "state",
+                                    "note"
+                                  ]
+                                }
+                              },
+                              "ended": {
+                                "type": "object",
+                                "properties": {
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "by": {
+                                    "$ref": "#/components/schemas/Who_security_directives"
+                                  },
+                                  "reason": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "at",
+                                  "by",
+                                  "reason"
+                                ]
+                              },
+                              "sample": {
+                                "type": "boolean",
+                                "const": true
+                              },
+                              "status": {
+                                "type": "string"
+                              },
+                              "markingLabel": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "ref",
+                              "issuer",
+                              "versions",
+                              "acknowledgements",
+                              "compliance",
+                              "status",
+                              "markingLabel"
+                            ]
+                          }
+                        },
+                        "transfers": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/CrossDomainTransfer"
+                          }
+                        },
+                        "labels": {
+                          "type": "object",
+                          "properties": {
+                            "kinds": {
+                              "type": "object",
+                              "properties": {
+                                "clearance": {
+                                  "type": "string"
+                                },
+                                "dependency": {
+                                  "type": "string"
+                                },
+                                "designation": {
+                                  "type": "string"
+                                },
+                                "exception": {
+                                  "type": "string"
+                                },
+                                "exercise": {
+                                  "type": "string"
+                                },
+                                "incident": {
+                                  "type": "string"
+                                },
+                                "plan": {
+                                  "type": "string"
+                                },
+                                "risk": {
+                                  "type": "string"
+                                },
+                                "supplier": {
+                                  "type": "string"
+                                },
+                                "vulnerability": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "clearance",
+                                "dependency",
+                                "designation",
+                                "exception",
+                                "exercise",
+                                "incident",
+                                "plan",
+                                "risk",
+                                "supplier",
+                                "vulnerability"
+                              ]
+                            },
+                            "registers": {
+                              "type": "object",
+                              "properties": {
+                                "clearance": {
+                                  "type": "string"
+                                },
+                                "dependency": {
+                                  "type": "string"
+                                },
+                                "designation": {
+                                  "type": "string"
+                                },
+                                "exception": {
+                                  "type": "string"
+                                },
+                                "exercise": {
+                                  "type": "string"
+                                },
+                                "incident": {
+                                  "type": "string"
+                                },
+                                "plan": {
+                                  "type": "string"
+                                },
+                                "risk": {
+                                  "type": "string"
+                                },
+                                "supplier": {
+                                  "type": "string"
+                                },
+                                "vulnerability": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "clearance",
+                                "dependency",
+                                "designation",
+                                "exception",
+                                "exercise",
+                                "incident",
+                                "plan",
+                                "risk",
+                                "supplier",
+                                "vulnerability"
+                              ]
+                            },
+                            "directiveKinds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "compliance": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": [
+                                  "exception-requested",
+                                  "implemented",
+                                  "not-implemented",
+                                  "partly-implemented"
+                                ]
+                              }
+                            },
+                            "transferOutcomes": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": [
+                                  "quarantined",
+                                  "rejected",
+                                  "released"
+                                ]
+                              }
+                            },
+                            "disclosureProcedures": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "required": [
+                            "kinds",
+                            "registers",
+                            "directiveKinds",
+                            "compliance",
+                            "transferOutcomes",
+                            "disclosureProcedures"
+                          ]
+                        },
+                        "names": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "bodies",
+                        "classification",
+                        "classificationChanges",
+                        "procedures",
+                        "counts",
+                        "records",
+                        "directives",
+                        "transfers",
+                        "labels",
+                        "names"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "advisories": [
+                        {
+                          "number": "string",
+                          "summary": "Text",
+                          "published": "string"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/security/route.ts"
+      },
+      "post": {
+        "tags": [
+          "security"
+        ],
+        "operationId": "post_security",
+        "summary": "POST /api/security",
+        "description": "/api/security — security governance and resilience (plan step I12; lib/security). Metadata only: no classified content, no intelligence register, source, target or attribution, no score about a person. Cyber incidents, vulnerabilities, supplier assessments, exceptions, exercises, critical infrastructure records and clearances move only through /api/cases under their own approved procedures; this route carries what sits around them. GET: the bodies the nation named (cyberAuthority, criticalInfrastructure, securityAccreditation, nationalSecurity; each empty by default), where the classification scheme and the installation's accreditation stand, the procedures and their state, counts (no content), and for the signed-in official the records they may see listed (listing view: no terms), the security directives of their institution as issuer or recipient, and its cross-domain transfer records. ?record=<number>&purpose=…&view=full|recipient one record, read under the access rule (need to know, purpose, action, clearance for a marked record); every attempt in the access log. ?view=public what the officials published: vulnerability summaries on or after their disclosure date. Nothing else is public. POST (signed-in officials; checked again in lib/security against the record): { op: 'propose-classification', scheme?, accreditation?, legalBasis: [{ instrument, eId }] } (an administrator) { op: 'confirm-classification' } (a different official) · { op: 'withdraw-classification', reason } { op: 'need-to-know', record, grant: true|false, official: { id, name }, reason } (one who can sign at the keeping institution; logged) { op: 'directive-draft', … } · { op: 'directive-amend', ref, … } · { op: 'directive-issue', ref } (a different signatory) { op: 'directive-end', ref, reason } · { op: 'directive-acknowledge', ref } · { op: 'directive-compliance', ref, state, note } { op: 'transfer-record', … } · { op: 'transfer-decide', ref, outcome, reason } (a different signatory) · { op: 'transfer-receipt', ref, reference } { op: 'disclosure', procedure, fields, identity, materialMarking?, materialReference? } protected intake (lib/oversight)",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {}
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "result": {
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "result"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "result": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "error": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "error"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "ok": {
+                                  "type": "boolean",
+                                  "const": true
+                                }
+                              },
+                              "required": [
+                                "ok"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "values": {
+                                  "$ref": "#/components/schemas/SecurityClassificationValues"
+                                },
+                                "basis": {
+                                  "type": "array",
+                                  "items": {
+                                    "$ref": "#/components/schemas/Citation"
+                                  }
+                                },
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "confirmed": {
+                                  "type": "object",
+                                  "properties": {
+                                    "by": {
+                                      "type": "string"
+                                    },
+                                    "byId": {
+                                      "type": "string"
+                                    },
+                                    "at": {
+                                      "type": "string"
+                                    },
+                                    "independence": {
+                                      "type": "string",
+                                      "enum": [
+                                        "accounts-only",
+                                        "identity-provider",
+                                        "unverified"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "by",
+                                    "at",
+                                    "independence"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "values",
+                                "basis",
+                                "by",
+                                "at"
+                              ]
+                            }
+                          ]
+                        },
+                        "classification": {
+                          "type": "object",
+                          "properties": {
+                            "scheme": {
+                              "anyOf": [
+                                {
+                                  "$ref": "#/components/schemas/ClassificationScheme"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "accreditation": {
+                              "anyOf": [
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "level": {
+                                      "type": "string",
+                                      "description": "The highest level of the scheme this installation may hold."
+                                    },
+                                    "statement": {
+                                      "type": "string",
+                                      "description": "The accreditation decision it rests on (reference of the competent authority's decision)."
+                                    },
+                                    "label": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "level",
+                                    "statement",
+                                    "label"
+                                  ]
+                                }
+                              ]
+                            },
+                            "version": {
+                              "type": "number"
+                            },
+                            "waiting": {
+                              "type": "boolean"
+                            },
+                            "highest": {
+                              "type": "string"
+                            },
+                            "statement": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "scheme",
+                            "accreditation",
+                            "version",
+                            "waiting",
+                            "highest",
+                            "statement"
+                          ]
+                        },
+                        "classificationChanges": {
+                          "type": "object",
+                          "properties": {
+                            "pending": {
+                              "type": "object",
+                              "properties": {
+                                "values": {
+                                  "$ref": "#/components/schemas/SecurityClassificationValues"
+                                },
+                                "basis": {
+                                  "type": "array",
+                                  "items": {
+                                    "$ref": "#/components/schemas/Citation"
+                                  }
+                                },
+                                "by": {
+                                  "type": "string"
+                                },
+                                "byId": {
+                                  "type": "string"
+                                },
+                                "at": {
+                                  "type": "string"
+                                },
+                                "confirmed": {
+                                  "type": "object",
+                                  "properties": {
+                                    "by": {
+                                      "type": "string"
+                                    },
+                                    "byId": {
+                                      "type": "string"
+                                    },
+                                    "at": {
+                                      "type": "string"
+                                    },
+                                    "independence": {
+                                      "type": "string",
+                                      "enum": [
+                                        "accounts-only",
+                                        "identity-provider",
+                                        "unverified"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "by",
+                                    "at",
+                                    "independence"
+                                  ]
+                                },
+                                "expiresAt": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "values",
+                                "basis",
+                                "by",
+                                "at",
+                                "expiresAt"
+                              ],
+                              "description": "A proposal waiting for its second official."
+                            },
+                            "history": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "values": {
+                                    "$ref": "#/components/schemas/SecurityClassificationValues"
+                                  },
+                                  "basis": {
+                                    "type": "array",
+                                    "items": {
+                                      "$ref": "#/components/schemas/Citation"
+                                    }
+                                  },
+                                  "by": {
+                                    "type": "string"
+                                  },
+                                  "byId": {
+                                    "type": "string"
+                                  },
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "confirmed": {
+                                    "type": "object",
+                                    "properties": {
+                                      "by": {
+                                        "type": "string"
+                                      },
+                                      "byId": {
+                                        "type": "string"
+                                      },
+                                      "at": {
+                                        "type": "string"
+                                      },
+                                      "independence": {
+                                        "type": "string",
+                                        "enum": [
+                                          "accounts-only",
+                                          "identity-provider",
+                                          "unverified"
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "by",
+                                      "at",
+                                      "independence"
+                                    ]
+                                  },
+                                  "outcome": {
+                                    "type": "string",
+                                    "enum": [
+                                      "adopted",
+                                      "lapsed",
+                                      "withdrawn"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "values",
+                                  "basis",
+                                  "by",
+                                  "at",
+                                  "outcome"
+                                ]
+                              },
+                              "description": "Adopted versions, oldest first; lapsed and withdrawn proposals are kept too."
+                            }
+                          }
+                        }
+                      },
+                      "required": [
+                        "result",
+                        "classification",
+                        "classificationChanges"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "result": {}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "case": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "ref": {
+                          "type": "string"
+                        },
+                        "stage": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "ref",
+                        "stage"
+                      ]
+                    },
+                    "identity": {
+                      "$ref": "#/components/schemas/IdentityMarker"
+                    }
+                  },
+                  "required": [
+                    "case",
+                    "identity"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "case": {
+                        "id": "ID-0001",
+                        "ref": "string",
+                        "stage": "string"
+                      },
+                      "identity": {
+                        "id": "ID-0001",
+                        "role": "complainant",
+                        "anonymous": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/security/route.ts"
       }
     },
     "/api/session": {
@@ -74991,7 +76545,13 @@
                         "controlledSubstances": {
                           "type": "string"
                         },
+                        "criticalInfrastructure": {
+                          "type": "string"
+                        },
                         "customs": {
+                          "type": "string"
+                        },
+                        "cyberAuthority": {
                           "type": "string"
                         },
                         "dataProtection": {
@@ -75045,6 +76605,9 @@
                         "medicinesRegulation": {
                           "type": "string"
                         },
+                        "nationalSecurity": {
+                          "type": "string"
+                        },
                         "ombudsman": {
                           "type": "string"
                         },
@@ -75061,6 +76624,9 @@
                           "type": "string"
                         },
                         "roadAuthority": {
+                          "type": "string"
+                        },
+                        "securityAccreditation": {
                           "type": "string"
                         },
                         "socialProtection": {
@@ -75128,7 +76694,13 @@
                                     "controlledSubstances": {
                                       "type": "string"
                                     },
+                                    "criticalInfrastructure": {
+                                      "type": "string"
+                                    },
                                     "customs": {
+                                      "type": "string"
+                                    },
+                                    "cyberAuthority": {
                                       "type": "string"
                                     },
                                     "dataProtection": {
@@ -75182,6 +76754,9 @@
                                     "medicinesRegulation": {
                                       "type": "string"
                                     },
+                                    "nationalSecurity": {
+                                      "type": "string"
+                                    },
                                     "ombudsman": {
                                       "type": "string"
                                     },
@@ -75198,6 +76773,9 @@
                                       "type": "string"
                                     },
                                     "roadAuthority": {
+                                      "type": "string"
+                                    },
+                                    "securityAccreditation": {
                                       "type": "string"
                                     },
                                     "socialProtection": {
@@ -75324,7 +76902,13 @@
                                       "controlledSubstances": {
                                         "type": "string"
                                       },
+                                      "criticalInfrastructure": {
+                                        "type": "string"
+                                      },
                                       "customs": {
+                                        "type": "string"
+                                      },
+                                      "cyberAuthority": {
                                         "type": "string"
                                       },
                                       "dataProtection": {
@@ -75378,6 +76962,9 @@
                                       "medicinesRegulation": {
                                         "type": "string"
                                       },
+                                      "nationalSecurity": {
+                                        "type": "string"
+                                      },
                                       "ombudsman": {
                                         "type": "string"
                                       },
@@ -75394,6 +76981,9 @@
                                         "type": "string"
                                       },
                                       "roadAuthority": {
+                                        "type": "string"
+                                      },
+                                      "securityAccreditation": {
                                         "type": "string"
                                       },
                                       "socialProtection": {
@@ -75514,7 +77104,9 @@
                         "civilRegistration": "string",
                         "constitutionalCourt": "string",
                         "controlledSubstances": "string",
+                        "criticalInfrastructure": "string",
                         "customs": "string",
+                        "cyberAuthority": "string",
                         "dataProtection": "string",
                         "education": "string",
                         "electoral": "string",
@@ -75532,12 +77124,14 @@
                         "lawRegister": "string",
                         "legislature": "string",
                         "medicinesRegulation": "string",
+                        "nationalSecurity": "string",
                         "ombudsman": "string",
                         "police": "string",
                         "procurementReview": "string",
                         "professionalRegulation": "string",
                         "publicHealth": "string",
                         "roadAuthority": "string",
+                        "securityAccreditation": "string",
                         "socialProtection": "string",
                         "statistics": "string",
                         "supremeAudit": "string",
@@ -75678,7 +77272,13 @@
                         "controlledSubstances": {
                           "type": "string"
                         },
+                        "criticalInfrastructure": {
+                          "type": "string"
+                        },
                         "customs": {
+                          "type": "string"
+                        },
+                        "cyberAuthority": {
                           "type": "string"
                         },
                         "dataProtection": {
@@ -75732,6 +77332,9 @@
                         "medicinesRegulation": {
                           "type": "string"
                         },
+                        "nationalSecurity": {
+                          "type": "string"
+                        },
                         "ombudsman": {
                           "type": "string"
                         },
@@ -75748,6 +77351,9 @@
                           "type": "string"
                         },
                         "roadAuthority": {
+                          "type": "string"
+                        },
+                        "securityAccreditation": {
                           "type": "string"
                         },
                         "socialProtection": {
@@ -75815,7 +77421,13 @@
                                     "controlledSubstances": {
                                       "type": "string"
                                     },
+                                    "criticalInfrastructure": {
+                                      "type": "string"
+                                    },
                                     "customs": {
+                                      "type": "string"
+                                    },
+                                    "cyberAuthority": {
                                       "type": "string"
                                     },
                                     "dataProtection": {
@@ -75869,6 +77481,9 @@
                                     "medicinesRegulation": {
                                       "type": "string"
                                     },
+                                    "nationalSecurity": {
+                                      "type": "string"
+                                    },
                                     "ombudsman": {
                                       "type": "string"
                                     },
@@ -75885,6 +77500,9 @@
                                       "type": "string"
                                     },
                                     "roadAuthority": {
+                                      "type": "string"
+                                    },
+                                    "securityAccreditation": {
                                       "type": "string"
                                     },
                                     "socialProtection": {
@@ -76011,7 +77629,13 @@
                                       "controlledSubstances": {
                                         "type": "string"
                                       },
+                                      "criticalInfrastructure": {
+                                        "type": "string"
+                                      },
                                       "customs": {
+                                        "type": "string"
+                                      },
+                                      "cyberAuthority": {
                                         "type": "string"
                                       },
                                       "dataProtection": {
@@ -76065,6 +77689,9 @@
                                       "medicinesRegulation": {
                                         "type": "string"
                                       },
+                                      "nationalSecurity": {
+                                        "type": "string"
+                                      },
                                       "ombudsman": {
                                         "type": "string"
                                       },
@@ -76081,6 +77708,9 @@
                                         "type": "string"
                                       },
                                       "roadAuthority": {
+                                        "type": "string"
+                                      },
+                                      "securityAccreditation": {
                                         "type": "string"
                                       },
                                       "socialProtection": {
@@ -76199,7 +77829,9 @@
                         "civilRegistration": "string",
                         "constitutionalCourt": "string",
                         "controlledSubstances": "string",
+                        "criticalInfrastructure": "string",
                         "customs": "string",
+                        "cyberAuthority": "string",
                         "dataProtection": "string",
                         "education": "string",
                         "electoral": "string",
@@ -76217,12 +77849,14 @@
                         "lawRegister": "string",
                         "legislature": "string",
                         "medicinesRegulation": "string",
+                        "nationalSecurity": "string",
                         "ombudsman": "string",
                         "police": "string",
                         "procurementReview": "string",
                         "professionalRegulation": "string",
                         "publicHealth": "string",
                         "roadAuthority": "string",
+                        "securityAccreditation": "string",
                         "socialProtection": "string",
                         "statistics": "string",
                         "supremeAudit": "string",
@@ -87742,6 +89376,23 @@
           "state"
         ]
       },
+      "Accreditation": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "string",
+            "description": "The highest level of the scheme this installation may hold."
+          },
+          "statement": {
+            "type": "string",
+            "description": "The accreditation decision it rests on (reference of the competent authority's decision)."
+          }
+        },
+        "required": [
+          "level",
+          "statement"
+        ]
+      },
       "ActionSpec": {
         "type": "object",
         "properties": {
@@ -87914,6 +89565,23 @@
         ]
       },
       "Actor": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "Actor_security_register": {
         "type": "object",
         "properties": {
           "id": {
@@ -94964,6 +96632,56 @@
           "createdAt"
         ]
       },
+      "ClassificationLevel": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "A short key (lowercase letters, digits, -), stable across versions."
+          },
+          "label": {
+            "type": "string",
+            "description": "The label as the nation's law writes it."
+          },
+          "handling": {
+            "type": "string",
+            "description": "How a record at this level is handled, in the nation's words."
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "handling"
+        ]
+      },
+      "ClassificationScheme": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The scheme's name and version as the nation's instrument gives them."
+          },
+          "levels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClassificationLevel"
+            },
+            "description": "Lowest first: a level's rank is its position (1 = lowest)."
+          },
+          "caveats": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Handling caveats the scheme allows (dissemination or distribution restrictions), by label."
+          }
+        },
+        "required": [
+          "name",
+          "levels",
+          "caveats"
+        ]
+      },
       "CloudEvent": {
         "type": "object",
         "properties": {
@@ -95513,6 +97231,7 @@
                 "offices",
                 "relationships",
                 "sealKeys",
+                "securityClassification",
                 "suspension",
                 "transitionRules"
               ]
@@ -97913,6 +99632,143 @@
           "outcome"
         ]
       },
+      "CrossDomainTransfer": {
+        "type": "object",
+        "properties": {
+          "ref": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "string"
+          },
+          "fromDomain": {
+            "type": "string"
+          },
+          "toDomain": {
+            "type": "string"
+          },
+          "dataClass": {
+            "type": "string",
+            "description": "The class of information moved: a level of the nation's scheme, or empty (not classified)."
+          },
+          "purpose": {
+            "type": "string"
+          },
+          "policy": {
+            "type": "string",
+            "description": "The approved transfer policy and its version."
+          },
+          "permitted": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Permitted fields and data classes."
+          },
+          "redaction": {
+            "type": "string"
+          },
+          "validation": {
+            "type": "object",
+            "properties": {
+              "result": {
+                "type": "string",
+                "enum": [
+                  "failed",
+                  "passed"
+                ]
+              },
+              "note": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "result",
+              "note"
+            ]
+          },
+          "marking": {
+            "type": "string",
+            "description": "The marking of this metadata record itself (checked against the accreditation)."
+          },
+          "recordedBy": {
+            "$ref": "#/components/schemas/Who_security_transfers"
+          },
+          "at": {
+            "type": "string"
+          },
+          "decision": {
+            "type": "object",
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "enum": [
+                  "quarantined",
+                  "rejected",
+                  "released"
+                ]
+              },
+              "by": {
+                "$ref": "#/components/schemas/Who_security_transfers"
+              },
+              "at": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              },
+              "independence": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "outcome",
+              "by",
+              "at",
+              "reason",
+              "independence"
+            ]
+          },
+          "receipt": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "reference": {
+                "type": "string"
+              },
+              "by": {
+                "$ref": "#/components/schemas/Who_security_transfers"
+              }
+            },
+            "required": [
+              "at",
+              "reference",
+              "by"
+            ]
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "ref",
+          "institution",
+          "fromDomain",
+          "toDomain",
+          "dataClass",
+          "purpose",
+          "policy",
+          "permitted",
+          "redaction",
+          "validation",
+          "marking",
+          "recordedBy",
+          "at"
+        ]
+      },
       "CrossMinistryIncident": {
         "type": "object",
         "properties": {
@@ -99800,7 +101656,13 @@
               "controlledSubstances": {
                 "type": "string"
               },
+              "criticalInfrastructure": {
+                "type": "string"
+              },
               "customs": {
+                "type": "string"
+              },
+              "cyberAuthority": {
                 "type": "string"
               },
               "dataProtection": {
@@ -99854,6 +101716,9 @@
               "medicinesRegulation": {
                 "type": "string"
               },
+              "nationalSecurity": {
+                "type": "string"
+              },
               "ombudsman": {
                 "type": "string"
               },
@@ -99870,6 +101735,9 @@
                 "type": "string"
               },
               "roadAuthority": {
+                "type": "string"
+              },
+              "securityAccreditation": {
                 "type": "string"
               },
               "socialProtection": {
@@ -101675,7 +103543,9 @@
                       "civilRegistration",
                       "constitutionalCourt",
                       "controlledSubstances",
+                      "criticalInfrastructure",
                       "customs",
+                      "cyberAuthority",
                       "dataProtection",
                       "education",
                       "electoral",
@@ -101693,12 +103563,14 @@
                       "lawRegister",
                       "legislature",
                       "medicinesRegulation",
+                      "nationalSecurity",
                       "ombudsman",
                       "police",
                       "procurementReview",
                       "professionalRegulation",
                       "publicHealth",
                       "roadAuthority",
+                      "securityAccreditation",
                       "socialProtection",
                       "statistics",
                       "supremeAudit",
@@ -101763,7 +103635,9 @@
                     "civilRegistration",
                     "constitutionalCourt",
                     "controlledSubstances",
+                    "criticalInfrastructure",
                     "customs",
+                    "cyberAuthority",
                     "dataProtection",
                     "education",
                     "electoral",
@@ -101781,12 +103655,14 @@
                     "lawRegister",
                     "legislature",
                     "medicinesRegulation",
+                    "nationalSecurity",
                     "ombudsman",
                     "police",
                     "procurementReview",
                     "professionalRegulation",
                     "publicHealth",
                     "roadAuthority",
+                    "securityAccreditation",
                     "socialProtection",
                     "statistics",
                     "supremeAudit",
@@ -101858,7 +103734,9 @@
                     "civilRegistration",
                     "constitutionalCourt",
                     "controlledSubstances",
+                    "criticalInfrastructure",
                     "customs",
+                    "cyberAuthority",
                     "dataProtection",
                     "education",
                     "electoral",
@@ -101876,12 +103754,14 @@
                     "lawRegister",
                     "legislature",
                     "medicinesRegulation",
+                    "nationalSecurity",
                     "ombudsman",
                     "police",
                     "procurementReview",
                     "professionalRegulation",
                     "publicHealth",
                     "roadAuthority",
+                    "securityAccreditation",
                     "socialProtection",
                     "statistics",
                     "supremeAudit",
@@ -108166,7 +110046,9 @@
                       "civilRegistration",
                       "constitutionalCourt",
                       "controlledSubstances",
+                      "criticalInfrastructure",
                       "customs",
+                      "cyberAuthority",
                       "dataProtection",
                       "education",
                       "electoral",
@@ -108184,12 +110066,14 @@
                       "lawRegister",
                       "legislature",
                       "medicinesRegulation",
+                      "nationalSecurity",
                       "ombudsman",
                       "police",
                       "procurementReview",
                       "professionalRegulation",
                       "publicHealth",
                       "roadAuthority",
+                      "securityAccreditation",
                       "socialProtection",
                       "statistics",
                       "supremeAudit",
@@ -111425,6 +113309,7 @@
               "offices",
               "relationships",
               "sealKeys",
+              "securityClassification",
               "suspension",
               "transitionRules"
             ]
@@ -116209,7 +118094,9 @@
               "civilRegistration",
               "constitutionalCourt",
               "controlledSubstances",
+              "criticalInfrastructure",
               "customs",
+              "cyberAuthority",
               "dataProtection",
               "education",
               "electoral",
@@ -116227,12 +118114,14 @@
               "lawRegister",
               "legislature",
               "medicinesRegulation",
+              "nationalSecurity",
               "ombudsman",
               "police",
               "procurementReview",
               "professionalRegulation",
               "publicHealth",
               "roadAuthority",
+              "securityAccreditation",
               "socialProtection",
               "statistics",
               "supremeAudit",
@@ -116256,7 +118145,9 @@
               "civilRegistration",
               "constitutionalCourt",
               "controlledSubstances",
+              "criticalInfrastructure",
               "customs",
+              "cyberAuthority",
               "dataProtection",
               "education",
               "electoral",
@@ -116274,12 +118165,14 @@
               "lawRegister",
               "legislature",
               "medicinesRegulation",
+              "nationalSecurity",
               "ombudsman",
               "police",
               "procurementReview",
               "professionalRegulation",
               "publicHealth",
               "roadAuthority",
+              "securityAccreditation",
               "socialProtection",
               "statistics",
               "supremeAudit",
@@ -116939,6 +118832,7 @@
               "offices",
               "relationships",
               "sealKeys",
+              "securityClassification",
               "suspension",
               "transitionRules"
             ]
@@ -121200,6 +123094,7 @@
                 "offices",
                 "relationships",
                 "sealKeys",
+                "securityClassification",
                 "suspension",
                 "transitionRules"
               ]
@@ -124260,6 +126155,148 @@
           "stillToProvide"
         ]
       },
+      "RecipientView": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "clearance",
+              "dependency",
+              "designation",
+              "exception",
+              "exercise",
+              "incident",
+              "plan",
+              "risk",
+              "supplier",
+              "vulnerability"
+            ]
+          },
+          "kindLabel": {
+            "type": "string"
+          },
+          "register": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "marking": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "terms": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "disclosureDate": {
+            "type": "string"
+          },
+          "validUntil": {
+            "type": "string"
+          },
+          "site": {
+            "type": "object",
+            "properties": {
+              "region": {
+                "type": "string"
+              },
+              "generalised": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "generalised"
+            ]
+          }
+        },
+        "required": [
+          "number",
+          "kind",
+          "kindLabel",
+          "register",
+          "owner",
+          "status",
+          "marking",
+          "summary",
+          "terms"
+        ]
+      },
+      "RecordVersion": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "number"
+          },
+          "at": {
+            "type": "string"
+          },
+          "by": {
+            "$ref": "#/components/schemas/Actor_security_register"
+          },
+          "step": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "terms": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "n",
+          "at",
+          "by",
+          "step",
+          "reason",
+          "status",
+          "terms"
+        ]
+      },
       "RecordedVote": {
         "type": "object",
         "properties": {
@@ -124862,7 +126899,9 @@
                       "civilRegistration",
                       "constitutionalCourt",
                       "controlledSubstances",
+                      "criticalInfrastructure",
                       "customs",
+                      "cyberAuthority",
                       "dataProtection",
                       "education",
                       "electoral",
@@ -124880,12 +126919,14 @@
                       "lawRegister",
                       "legislature",
                       "medicinesRegulation",
+                      "nationalSecurity",
                       "ombudsman",
                       "police",
                       "procurementReview",
                       "professionalRegulation",
                       "publicHealth",
                       "roadAuthority",
+                      "securityAccreditation",
                       "socialProtection",
                       "statistics",
                       "supremeAudit",
@@ -127451,7 +129492,9 @@
                   "civilRegistration",
                   "constitutionalCourt",
                   "controlledSubstances",
+                  "criticalInfrastructure",
                   "customs",
+                  "cyberAuthority",
                   "dataProtection",
                   "education",
                   "electoral",
@@ -127469,12 +129512,14 @@
                   "lawRegister",
                   "legislature",
                   "medicinesRegulation",
+                  "nationalSecurity",
                   "ombudsman",
                   "police",
                   "procurementReview",
                   "professionalRegulation",
                   "publicHealth",
                   "roadAuthority",
+                  "securityAccreditation",
                   "socialProtection",
                   "statistics",
                   "supremeAudit",
@@ -127644,7 +129689,9 @@
               "civilRegistration",
               "constitutionalCourt",
               "controlledSubstances",
+              "criticalInfrastructure",
               "customs",
+              "cyberAuthority",
               "dataProtection",
               "education",
               "electoral",
@@ -127662,12 +129709,14 @@
               "lawRegister",
               "legislature",
               "medicinesRegulation",
+              "nationalSecurity",
               "ombudsman",
               "police",
               "procurementReview",
               "professionalRegulation",
               "publicHealth",
               "roadAuthority",
+              "securityAccreditation",
               "socialProtection",
               "statistics",
               "supremeAudit",
@@ -127868,7 +129917,9 @@
               "civilRegistration",
               "constitutionalCourt",
               "controlledSubstances",
+              "criticalInfrastructure",
               "customs",
+              "cyberAuthority",
               "dataProtection",
               "education",
               "electoral",
@@ -127886,12 +129937,14 @@
               "lawRegister",
               "legislature",
               "medicinesRegulation",
+              "nationalSecurity",
               "ombudsman",
               "police",
               "procurementReview",
               "professionalRegulation",
               "publicHealth",
               "roadAuthority",
+              "securityAccreditation",
               "socialProtection",
               "statistics",
               "supremeAudit",
@@ -128242,6 +130295,35 @@
           "posture"
         ]
       },
+      "SecurityClassificationValues": {
+        "type": "object",
+        "properties": {
+          "scheme": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClassificationScheme"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "accreditation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Accreditation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "scheme",
+          "accreditation"
+        ]
+      },
       "SecurityDefinitions": {
         "type": "object",
         "properties": {
@@ -128334,6 +130416,68 @@
           "platformCovered",
           "nationSoftwareCovered",
           "reason"
+        ]
+      },
+      "SecurityListing": {
+        "description": "The listing view: what a list may carry (never the terms, recipients or who needs to know).",
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "clearance",
+              "dependency",
+              "designation",
+              "exception",
+              "exercise",
+              "incident",
+              "plan",
+              "risk",
+              "supplier",
+              "vulnerability"
+            ]
+          },
+          "register": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "case": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "marked": {
+            "type": "boolean"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "validUntil": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "number",
+          "kind",
+          "register",
+          "owner",
+          "case",
+          "status",
+          "marked",
+          "updatedAt"
         ]
       },
       "SecurityOrder": {
@@ -128761,6 +130905,228 @@
           "placeholder"
         ]
       },
+      "SecurityRecord": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "clearance",
+              "dependency",
+              "designation",
+              "exception",
+              "exercise",
+              "incident",
+              "plan",
+              "risk",
+              "supplier",
+              "vulnerability"
+            ]
+          },
+          "owner": {
+            "type": "string",
+            "description": "The keeping institution (the one named for the slot when the case opened)."
+          },
+          "case": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "ref": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "ref"
+            ]
+          },
+          "summary": {
+            "type": "string",
+            "description": "A summary that carries no exploitable detail: what a recipient and the listing see."
+          },
+          "marking": {
+            "type": "string",
+            "description": "The marking (empty: not classified) and handling caveats, checked against the accreditation when made."
+          },
+          "caveats": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string"
+          },
+          "terms": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "The kind's own terms as of the latest version (restricted)."
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordVersion"
+            }
+          },
+          "recipients": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "institution": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                },
+                "by": {
+                  "$ref": "#/components/schemas/Actor_security_register"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "institution",
+                "at",
+                "by",
+                "reason"
+              ]
+            },
+            "description": "Institutions it is shared with as restricted recipients, each with when, by whom and why."
+          },
+          "needToKnow": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string"
+                },
+                "by": {
+                  "$ref": "#/components/schemas/Actor_security_register"
+                },
+                "reason": {
+                  "type": "string"
+                },
+                "withdrawn": {
+                  "type": "object",
+                  "properties": {
+                    "at": {
+                      "type": "string"
+                    },
+                    "by": {
+                      "$ref": "#/components/schemas/Actor_security_register"
+                    },
+                    "reason": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "at",
+                    "by",
+                    "reason"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "at",
+                "by",
+                "reason"
+              ]
+            },
+            "description": "Officials who need to know it: the case's assignee and those one who can sign there named, with why; withdrawn ones kept."
+          },
+          "decisions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Sealed decision ids of the case's decisions about it."
+          },
+          "validUntil": {
+            "type": "string",
+            "description": "Validity: an exception's expiry, a clearance's end, a designation's review date (each the deciding officials' choice)."
+          },
+          "subject": {
+            "type": "string",
+            "description": "The subject by register number: a supplier or operator (organisations register), a cleared official (account id)."
+          },
+          "disclosure": {
+            "type": "object",
+            "properties": {
+              "date": {
+                "type": "string"
+              },
+              "publicSummary": {
+                "type": "string"
+              },
+              "published": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "date"
+            ],
+            "description": "Vulnerability coordination: the disclosure date the officials set and, once published, the public summary."
+          },
+          "at": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "sample": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "number",
+          "kind",
+          "owner",
+          "case",
+          "summary",
+          "marking",
+          "caveats",
+          "status",
+          "terms",
+          "versions",
+          "recipients",
+          "needToKnow",
+          "decisions",
+          "at",
+          "updatedAt"
+        ]
+      },
       "SensitivityRule": {
         "type": "object",
         "properties": {
@@ -129158,7 +131524,9 @@
                   "civilRegistration",
                   "constitutionalCourt",
                   "controlledSubstances",
+                  "criticalInfrastructure",
                   "customs",
+                  "cyberAuthority",
                   "dataProtection",
                   "education",
                   "electoral",
@@ -129176,12 +131544,14 @@
                   "lawRegister",
                   "legislature",
                   "medicinesRegulation",
+                  "nationalSecurity",
                   "ombudsman",
                   "police",
                   "procurementReview",
                   "professionalRegulation",
                   "publicHealth",
                   "roadAuthority",
+                  "securityAccreditation",
                   "socialProtection",
                   "statistics",
                   "supremeAudit",
@@ -138387,6 +140757,40 @@
             "type": "string"
           },
           "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "Who_security_directives": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "institution": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "Who_security_transfers": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "institution": {
             "type": "string"
           }
         },

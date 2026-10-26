@@ -69,7 +69,9 @@ export const CONSOLE_NAV: NavSection[] = [
         tab('Emergency screen', '/wall', 'NCCC Wall'), tab('Status history', '/gov/posture', 'Posture Board')] },
     { key: 'reg', icon: '◉', label: 'Regions', href: '/gov/regional', purpose: 'How each region is doing, side by side.', tabs: [tab('Regions', '/gov/regional', 'Regional Command')] },
     { key: 'fin', icon: '§', label: 'Public finances', href: '/gov/treasury', purpose: 'Revenue, spending, reserves and fiscal pressure.', tabs: [tab('Public finances', '/gov/treasury', 'Treasury Command'), tab('Tax', '/gov/tax'), tab('Tax services', '/gov/tax/services'), tab('Customs', '/gov/customs'), tab('Budget and treasury', '/gov/treasury/budget'), tab('Procurement', '/gov/treasury/procurement')] },
-    { key: 'sec', icon: '◈', label: 'Security & public order', href: '/gov/security', purpose: 'Threats, incidents and the readiness of security services.', tabs: [tab('Security & public order', '/gov/security', 'Security & Interior')] },
+    { key: 'sec', icon: '◈', label: 'Security & public order', href: '/gov/security', purpose: 'Threats, incidents and the readiness of security services.', tabs: [tab('Security & public order', '/gov/security', 'Security & Interior'),
+        // I12: cyber incidents, vulnerabilities, critical infrastructure, clearances (metadata), security directives and transfers.
+        tab('Cyber and resilience', '/gov/security/resilience')] },
     { key: 'geo', icon: '◷', label: 'Foreign relations', href: '/gov/geopolitical', purpose: 'Pressure from outside the borders: partners, markets and frontiers.', tabs: [tab('Foreign relations', '/gov/geopolitical', 'Geopolitical Monitor')] },
     { key: 'sim', icon: '⟁', label: 'What-if scenarios', href: '/gov/simulation', purpose: 'Try a scenario and see its likely effect before deciding. Results are modelled, never facts.', tabs: [tab('What-if scenarios', '/gov/simulation', 'National Simulation')] },
   ]},

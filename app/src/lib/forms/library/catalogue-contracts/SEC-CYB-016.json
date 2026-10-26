@@ -1,0 +1,232 @@
+{
+ "schema_version": "civicos.form-contract.v1",
+ "form_id": "SEC-CYB-016",
+ "record_type": "security.cyber",
+ "form_version": 1,
+ "procedure_package_id": "cyber.exercise",
+ "procedure_package_version": 1,
+ "legal_basis": [],
+ "country_decisions": [
+  "CFG-SEC-003: classification levels and handling restrictions (the nation's scheme, adopted by two officials; ships empty).",
+  "CFG-SEC-009: cyber incident reporting thresholds and notification deadlines (none ship).",
+  "CFG-SEC-010: vulnerability disclosure and coordination procedures.",
+  "CFG-SEC-013: national cryptographic and hosting accreditation requirements (the installation's declared accreditation).",
+  "CFG-SEC-016: data retention, archival, disclosure and destruction rules.",
+  "CFG-SEC-018: national security incident response and recovery responsibilities (the cyberAuthority slot; none ships)."
+ ],
+ "catalogue": {
+  "source": "docs/forms-catalogue/PARTS-08-11.md",
+  "id": "SEC-CYB-016",
+  "part": 11,
+  "section": "2.3",
+  "line": 1715,
+  "batch": 13
+ },
+ "library": {
+  "title": "Record cyber exercise findings",
+  "intro": "Record the lessons of an exercise, the owner of each finding and how completion is tracked.",
+  "owner": "cyberAuthority",
+  "filled_by": "An officer of the national cybersecurity authority.",
+  "authority": "The national cybersecurity authority the nation names (cyberAuthority slot, shipped empty).",
+  "procedure": {
+   "key": "cyber.exercise",
+   "stage": "held",
+   "action": "record-findings"
+  },
+  "lists": {},
+  "nation_values": [
+   {
+    "key": "security.cyber.notification-deadlines",
+    "kind": "days",
+    "source": "rule",
+    "decision": "CFG-SEC-009: when a notification or escalation is due, as the nation's law sets it; none ships"
+   }
+  ],
+  "deviations": [
+   {
+    "id": "minimisation",
+    "what": "The seven minimisation answers per field (Part 1 §1.6) are not in the library contract: they are given with the procedure package the nation approves and recorded in the data and privacy review (a human publication gate)",
+    "why": "Question 2 (the provision that authorises collection) is the nation's law; a library draft cannot answer it. No form is approved without the review.",
+    "rule": "CLAUDE.md forms: publication is lib/forms/publication.ts (human approvals by different signed-in officials)"
+   },
+   {
+    "id": "evidence-requirement",
+    "what": "Each evidence item names its kind and when it is needed; the civicos.evidence-requirement.v1 record that ties it to a provision of law is made with the nation's procedure package",
+    "why": "The legal basis of evidence is the nation's; until it is cited the evidence gate does not pass.",
+    "rule": "Field series Part 1 §1.4; lib/forms/publication.ts gate \"evidence\""
+   },
+   {
+    "id": "scanning",
+    "what": "Scanning, OCR, USSD/SMS and offline field capture are not on the platform: a paper form is transcribed by an official and the case records that it came on paper and who transcribed it",
+    "why": "Not built (integration register 20.6, 20.7).",
+    "rule": "CLAUDE.md Integration register"
+   },
+   {
+    "id": "metadata-only",
+    "what": "Metadata only: the form's marking is checked against the installation's declared accreditation, and anything marked above it is refused, never stored; the content stays in an accredited system and only its reference is recorded",
+    "why": "Catalogue Part 11 §3.3: an installation not accredited for a classification level must not store that class of information.",
+    "rule": "lib/security/classification.ts markingRefusal(), also on every upload (lib/records/documents.ts addDocument())"
+   },
+   {
+    "id": "slot-owner",
+    "what": "The competent body is the institution the nation names for its slot of the deployment profile (cyberAuthority, criticalInfrastructure, securityAccreditation), shipped empty; who holds each power over a decision comes from the permit authority registry, proposed and unapproved",
+    "why": "Authority comes from the deployment profile and the approved mappings, never a ministry by name; a production installation refuses a power no approved mapping covers.",
+    "rule": "CLAUDE.md Government operating model: authorityFor(); lib/permits/decisions.ts SECURITY_PERMITS (plan I12)"
+   },
+   {
+    "id": "need-to-know",
+    "what": "A record is read only by an official named for it (need to know), for a stated purpose, for the action asked and, when marked, with a clearance at its level valid today; a clearance, a role or a seniority alone gives nothing; recipients see coordination terms only",
+    "why": "Catalogue Part 11 §4.1 and §4.2: the clearance decision and the authorisation to access a specific record are separate controls.",
+    "rule": "lib/auth/roles.ts securityAccessRefusal(); lib/security/access.ts readSecurityRecord() (every attempt in the access log)"
+   },
+   {
+    "id": "no-attribution-no-score",
+    "what": "No field records a source, a collection method, a target, an attacker or an attribution, and nothing computes a score: severity is the officials' choice on the nation's scale, with reasons; a risk estimate is the assessor's under a named methodology version",
+    "why": "Catalogue Part 11 §5.3 and §6.2; plan I12 boundary: intelligence, attribution and scores about people are not built.",
+    "rule": "lib/security/procedures.ts (no such field); integration register 25"
+   },
+   {
+    "id": "no-ai-decision",
+    "what": "No step is decided by a model or a score: officials decide with reasons; AI never attributes an attack, accepts a risk, grants or withdraws a clearance or issues a directive",
+    "why": "Catalogue Part 11 §11 prohibited default behaviour; AI never makes a legally material decision.",
+    "rule": "CLAUDE.md Government operating model (AI never makes a legally material decision)"
+   },
+   {
+    "id": "two-officials",
+    "what": "Every decision is proposed by one official and confirmed by a different person; the platform's minimum adds suspensions, renewals and revocations whatever the procedure says",
+    "why": "Catalogue Part 11 §10.1: separation of duties for sensitive approvals and protected changes.",
+    "rule": "lib/casework/engine.ts act() (fourEyes); lib/data/dual-control.ts dualControlRefusal()"
+   },
+   {
+    "id": "nation-lists",
+    "what": "Classification levels, incident categories, severity scales, sectors and criteria are the nation's configured lists or rules; none ship (a proposed list is marked proposed)",
+    "why": "Catalogue Part 11 §3 and §12: CivicOS must not assume that security labels, clearance levels or handling rules are identical across jurisdictions.",
+    "rule": "lib/forms/contract.ts configured lists; lib/security/classification.ts (ships empty)"
+   }
+  ],
+  "catalogue_items": [
+   {
+    "source": "docs/forms-catalogue/PARTS-08-11.md",
+    "line": 1715,
+    "quotes": [
+     "SEC-CYB-016",
+     "Cyber exercise findings",
+     "Lessons, owners and completion tracking"
+    ],
+    "met_by": {
+     "procedure": "record-findings"
+    }
+   }
+  ]
+ },
+ "fields": [
+  {
+   "id": "exercise_findings.exercise",
+   "type": "identifier_reference",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "case_exists_and_is_open",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "The exercise (its number)"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter the exercise (its number)."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "exercise_findings.lessons",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 8000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "restricted",
+   "evidence": [],
+   "label": {
+    "en": "Findings and lessons"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter findings and lessons.",
+     "length": "Findings and lessons is too long."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "exercise_findings.owners",
+   "type": "long_text",
+   "required": true,
+   "validation": [
+    {
+     "rule": "required",
+     "params": {}
+    },
+    {
+     "rule": "length",
+     "params": {
+      "max": 8000
+     }
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Owner and completion tracking of each finding"
+   },
+   "error_text": {
+    "en": {
+     "required": "Enter owner and completion tracking of each finding.",
+     "length": "Owner and completion tracking of each finding is too long."
+    }
+   },
+   "country_decision": null
+  },
+  {
+   "id": "exercise_findings.recorded_at",
+   "type": "timestamp",
+   "required": false,
+   "validation": [
+    {
+     "rule": "server_recorded_timestamp",
+     "params": {}
+    }
+   ],
+   "values_source": null,
+   "personal_data_class": "administrative",
+   "evidence": [],
+   "label": {
+    "en": "Recorded at"
+   },
+   "hint": {
+    "en": "Recorded by the platform when the form is received."
+   },
+   "country_decision": null
+  }
+ ]
+}

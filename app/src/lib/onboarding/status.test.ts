@@ -120,6 +120,20 @@ describe('where setup stands', () => {
     setSovereign({ deployment: { authorities: {} } }, 'test');
   });
 
+  // I12: security governance and resilience, a track only once a security body is named; it states where classification stands.
+  it('shows the security governance track only once the nation names a security body, and says nothing is held above the platform default', async () => {
+    const { setSovereign } = await import('@/lib/data/store/sovereign');
+    const { listMinistries } = await import('@/lib/data/store/ministries');
+    expect(onboardingStatus(env('production')).tracks.some(t => t.key === 'security')).toBe(false);
+    const id = listMinistries().find(m => m.status === 'active')!.id;
+    setSovereign({ deployment: { authorities: { cyberAuthority: id } } }, 'test');
+    const t = onboardingStatus(env('production')).tracks.find(x => x.key === 'security')!;
+    expect(t.checks.find(c => /Classification scheme/.test(c.label))).toMatchObject({ done: false, detail: expect.stringMatching(/holds nothing above the platform default/) });
+    expect(t.checks.find(c => /procedures approved/.test(c.label))).toMatchObject({ done: false, detail: '0 of 5 approved' });
+    for (const h of [t.href, ...t.checks.map(c => c.href)]) expect(locked.has(h.split('#')[0]!), h).toBe(true);
+    setSovereign({ deployment: { authorities: {} } }, 'test');
+  });
+
   it('says which tracks may be done only because of samples', () => {
     expect(onboardingStatus(env('demo')).tracks.find(t => t.key === 'exchange')!.samplesCounted).toBe(true);
   });

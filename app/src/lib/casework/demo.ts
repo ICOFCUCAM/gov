@@ -16,7 +16,7 @@ import { LAND_PROCEDURES } from '@/lib/land/procedures';
 import { BUILDING_PROCEDURES } from '@/lib/building/procedures';
 import { HOUSING_PROCEDURES } from '@/lib/housing/procedures';
 import { TRANSPORT_PROCEDURES } from '@/lib/transport/procedures';
-import { REFERENCE_PROCEDURES, ORGANISATION_PROCEDURES, IMMIGRATION_PROCEDURES, POLICE_PROCEDURES, COURT_PROCEDURES, TAX_PROCEDURES, EDUCATION_PROCEDURES, PROFESSION_PROCEDURES, HEALTH_PROCEDURES, CUSTOMS_PROCEDURES, PRODUCT_PROCEDURES, PROGRAMME_PROCEDURES, COMPLAINT_PROCEDURES, FINANCE_PROCEDURES, CABINET_PROCEDURES, REFERENCE_PROCUREMENT_COMPLAINT, IDENTITY_PROCEDURES, PASSPORT_PROCEDURES, CITIZENSHIP_PROCEDURES, LABOUR_PROCEDURES, SOCIAL_PROCEDURES, installReferenceProcedures } from '@/lib/casework/modules';
+import { REFERENCE_PROCEDURES, ORGANISATION_PROCEDURES, IMMIGRATION_PROCEDURES, POLICE_PROCEDURES, COURT_PROCEDURES, TAX_PROCEDURES, EDUCATION_PROCEDURES, PROFESSION_PROCEDURES, HEALTH_PROCEDURES, CUSTOMS_PROCEDURES, PRODUCT_PROCEDURES, PROGRAMME_PROCEDURES, COMPLAINT_PROCEDURES, FINANCE_PROCEDURES, CABINET_PROCEDURES, REFERENCE_PROCUREMENT_COMPLAINT, IDENTITY_PROCEDURES, PASSPORT_PROCEDURES, CITIZENSHIP_PROCEDURES, LABOUR_PROCEDURES, SOCIAL_PROCEDURES, SECURITY_PROCEDURES, installReferenceProcedures } from '@/lib/casework/modules';
 import type { AuthorityKey } from '@/lib/nation/deployment';
 import { activePackage, approvePackage, draftPackage, listPackages, withSampleDeadlines } from '@/lib/casework/packages';
 import { registeredEffects } from '@/lib/casework/engine';
@@ -202,6 +202,24 @@ const MORE_ACTS: { title: string; number: string; authority: AuthorityKey; provi
   } },
   { title: 'Roads Act (sample for demonstration)', number: 'sample-i7-5', authority: 'roadAuthority', procedures: TRANSPORT_PROCEDURES.filter(p => p.key === 'transport.road-works'), provisions: {
     'transport.road-works': P('sec_12', '12', 'No person shall excavate or obstruct a public road except under a permit of the road authority.'),
+  } },
+  // I12: security governance and resilience. Powers only: no severity scale, threshold, period or classification level is sampled
+  // (the scheme and the accreditation stay for the nation to adopt), and the mappings stay drafts.
+  { title: 'Cybersecurity Act (sample for demonstration)', number: 'sample-i12-1', authority: 'cyberAuthority', procedures: SECURITY_PROCEDURES.filter(p => p.key.startsWith('cyber.')), provisions: {
+    'cyber.incident': P('sec_10', '10', 'An operator of an essential service shall report a cyber incident to the national cybersecurity authority, which shall coordinate the response.'),
+    'cyber.vulnerability': P('sec_14', '14', 'The authority may receive vulnerability reports in confidence and coordinate their remediation and disclosure with those affected.'),
+    'cyber.supplier': P('sec_18', '18', 'The authority may assess the security of a supplier to a public institution or an essential service.'),
+    'cyber.exception': P('sec_20', '20', 'The authority may approve a time-limited exception to a security requirement where compensating controls are in place.'),
+    'cyber.exercise': P('sec_22', '22', 'The authority may plan and hold national cyber exercises.'),
+  } },
+  { title: 'Critical Infrastructure Protection Act (sample for demonstration)', number: 'sample-i12-2', authority: 'criticalInfrastructure', procedures: SECURITY_PROCEDURES.filter(p => p.key.startsWith('ci.')), provisions: {
+    'ci.designation': P('sec_5', '5', 'The designating authority may designate an asset or service as critical infrastructure against the criteria the regulations set.'),
+    'ci.dependency': P('sec_8', '8', 'The authority shall keep a record of the dependencies of designated infrastructure.'),
+    'ci.risk': P('sec_10', '10', 'The operator of designated infrastructure shall assess its risks; a residual risk is accepted only by the authority.'),
+    'ci.resilience-plan': P('sec_12', '12', 'The operator of designated infrastructure shall keep a resilience plan approved by the authority and exercise it.'),
+  } },
+  { title: 'Security Vetting Act (sample for demonstration)', number: 'sample-i12-3', authority: 'securityAccreditation', procedures: SECURITY_PROCEDURES.filter(p => p.key === 'security.clearance'), provisions: {
+    'security.clearance': P('sec_6', '6', 'The security authority decides security clearances, their level, scope and validity, and may renew, vary, suspend or withdraw them.'),
   } },
   { title: 'Transport Licensing Act (sample for demonstration)', number: 'sample-i7-6', authority: 'transportRegulator', procedures: TRANSPORT_PROCEDURES.filter(p => p.key === 'transport.operator-licence'), provisions: {
     'transport.operator-licence': P('sec_8', '8', 'No person shall operate a public service vehicle except under an operator licence.'),

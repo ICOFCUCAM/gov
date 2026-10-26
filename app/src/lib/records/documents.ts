@@ -19,6 +19,8 @@ import { uuid7 } from '@/lib/data/uuid7';
 import { installationMode } from '@/lib/ops/mode';
 import { sniffImage } from '@/lib/public-sites/brand';
 import type { Sensitivity } from '@/lib/auth/roles';
+// I12: a file marked above the installation's declared accreditation is refused (catalogue Part 11 §3.3).
+import { markingRefusal } from '@/lib/security/classification';
 
 export const MAX_DOCUMENT_BYTES = 5 * 1024 * 1024;
 export const MAX_PER_RECORD_BYTES = 50 * 1024 * 1024;
@@ -102,7 +104,9 @@ export function documentsRefusal(): string | null {
   return installationMode() === 'production' && !encryptionAtRest().enabled ? 'Documents are kept encrypted: set CIVICOS_DATA_KEK (or the key provider) before attaching any' : null;
 }
 
-export interface AddInput { class: string; title: string; institution: string; belongsTo: DocumentRecord['belongsTo']; sensitivity?: Sensitivity; retention?: string; bytes: Uint8Array; note?: string }
+export interface AddInput { class: string; title: string; institution: string; belongsTo: DocumentRecord['belongsTo']; sensitivity?: Sensitivity; retention?: string; bytes: Uint8Array; note?: string;
+  /** I12: the file's security marking (a level of the nation's scheme; empty: not classified). Above the installation's accreditation it is refused, never stored. */
+  classification?: string }
 
 /** Keep a new document. */
 export function addDocument(input: AddInput, by: string, now = new Date()): DocumentRecord | { error: string } {
@@ -110,6 +114,8 @@ export function addDocument(input: AddInput, by: string, now = new Date()): Docu
   if (refused) return { error: refused };
   if (!/^[a-z0-9][a-z0-9-]{1,60}$/.test(input.class)) return { error: 'A document class is a short name in lowercase letters, digits and -' };
   if (!input.title?.trim()) return { error: 'Give the document a title' };
+  const marked = markingRefusal(input.classification ?? '');
+  if (marked) return { error: marked };
   const checked = checkBytes(input.bytes, input.belongsTo);
   if ('error' in checked) return checked;
   const id = uuid7();

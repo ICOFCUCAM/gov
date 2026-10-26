@@ -1,5 +1,5 @@
 {
- "about": "Catalogue passages answered the same way by many contracts, with how each is met. Every contract in applies_to answers the items without \"for\" (Part 1 shared rules, the supplement's conventions and gates); an item with \"for\" applies to that group only: \"health\" (batches 1 and 2: Part 6 common), \"tax\" (batch 3: Part 2 §2.6, §2.8 and §2.9, the specification's tax authority), \"adm\" (batch 5: the supplement's Part 21 internal administration rules and the specification's Part 1 §10), \"tax6\" (batch 6, tax services: the same parts beside registration), \"oversight\" (batch 7: Part 12's rules for independent institutions, findings and protected identities), \"econ8\" (batch 8: Part 2's implementation rules for the executive centre, finance, treasury and budget forms), \"human\" (batch 9, human services: the specification's separate institutional records and lawful authority, the field series' rule that a submission is not a decision, that a failed check is no ground for refusal and that no default is activated) and \"land\", \"hpc\", \"lrg\" and \"trn\" (batch 10: the territory and infrastructure families of Parts 8 and 9 and the supplement's Parts 19 and 20). Each contract lists its own passages; the conformance test (lib/forms/catalogue-contracts.test.ts) checks both against the documents.",
+ "about": "Catalogue passages answered the same way by many contracts, with how each is met. Every contract in applies_to answers the items without \"for\" (Part 1 shared rules, the supplement's conventions and gates); an item with \"for\" applies to that group only: \"health\" (batches 1 and 2: Part 6 common), \"tax\" (batch 3: Part 2 §2.6, §2.8 and §2.9, the specification's tax authority), \"adm\" (batch 5: the supplement's Part 21 internal administration rules and the specification's Part 1 §10), \"tax6\" (batch 6, tax services: the same parts beside registration), \"oversight\" (batch 7: Part 12's rules for independent institutions, findings and protected identities), \"econ8\" (batch 8: Part 2's implementation rules for the executive centre, finance, treasury and budget forms), \"human\" (batch 9, human services: the specification's separate institutional records and lawful authority, the field series' rule that a submission is not a decision, that a failed check is no ground for refusal and that no default is activated) and \"land\", \"hpc\", \"lrg\" and \"trn\" (batch 10: the territory and infrastructure families of Parts 8 and 9 and the supplement's Parts 19 and 20). \"sec\", \"cyb\", \"inf\" and \"clr\" (batch 13, plan I12: Part 11's classification, access, register-integrity and country-configuration rules for every security form, and the rules of its family: cybersecurity, critical infrastructure, clearances). Each contract lists its own passages; the conformance test (lib/forms/catalogue-contracts.test.ts) checks both against the documents.",
  "applies_to": [
   "HLT-FAC-001",
   "HLT-FAC-002",
@@ -408,7 +408,38 @@
   "SOC-BEN-015",
   "SOC-BEN-018",
   "SOC-BEN-019",
-  "SOC-BEN-020"
+  "SOC-BEN-020",
+  "SEC-CYB-001",
+  "SEC-CYB-002",
+  "SEC-CYB-003",
+  "SEC-CYB-004",
+  "SEC-CYB-008",
+  "SEC-CYB-009",
+  "SEC-CYB-010",
+  "SEC-CYB-011",
+  "SEC-CYB-012",
+  "SEC-CYB-013",
+  "SEC-CYB-014",
+  "SEC-CYB-015",
+  "SEC-CYB-016",
+  "SEC-CYB-017",
+  "SEC-INF-001",
+  "SEC-INF-002",
+  "SEC-INF-003",
+  "SEC-INF-004",
+  "SEC-INF-005",
+  "SEC-INF-006",
+  "SEC-INF-007",
+  "SEC-INF-009",
+  "SEC-INF-013",
+  "SEC-INF-014",
+  "SEC-INF-015",
+  "SEC-INF-016",
+  "SEC-INT-007",
+  "SEC-INT-008",
+  "CIP-REG-008",
+  "CIP-RSK-009",
+  "CIP-INC-010"
  ],
  "groups": {
   "health": [
@@ -840,6 +871,76 @@
    "SOC-BEN-018",
    "SOC-BEN-019",
    "SOC-BEN-020"
+  ],
+  "sec": [
+   "SEC-CYB-001",
+   "SEC-CYB-002",
+   "SEC-CYB-003",
+   "SEC-CYB-004",
+   "SEC-CYB-008",
+   "SEC-CYB-009",
+   "SEC-CYB-010",
+   "SEC-CYB-011",
+   "SEC-CYB-012",
+   "SEC-CYB-013",
+   "SEC-CYB-014",
+   "SEC-CYB-015",
+   "SEC-CYB-016",
+   "SEC-CYB-017",
+   "SEC-INF-001",
+   "SEC-INF-002",
+   "SEC-INF-003",
+   "SEC-INF-004",
+   "SEC-INF-005",
+   "SEC-INF-006",
+   "SEC-INF-007",
+   "SEC-INF-009",
+   "SEC-INF-013",
+   "SEC-INF-014",
+   "SEC-INF-015",
+   "SEC-INF-016",
+   "SEC-INT-007",
+   "SEC-INT-008",
+   "CIP-REG-008",
+   "CIP-RSK-009",
+   "CIP-INC-010"
+  ],
+  "cyb": [
+   "SEC-CYB-001",
+   "SEC-CYB-002",
+   "SEC-CYB-003",
+   "SEC-CYB-004",
+   "SEC-CYB-008",
+   "SEC-CYB-009",
+   "SEC-CYB-010",
+   "SEC-CYB-011",
+   "SEC-CYB-012",
+   "SEC-CYB-013",
+   "SEC-CYB-014",
+   "SEC-CYB-015",
+   "SEC-CYB-016",
+   "SEC-CYB-017"
+  ],
+  "inf": [
+   "SEC-INF-001",
+   "SEC-INF-002",
+   "SEC-INF-003",
+   "SEC-INF-004",
+   "SEC-INF-005",
+   "SEC-INF-006",
+   "SEC-INF-007",
+   "SEC-INF-009",
+   "SEC-INF-013",
+   "SEC-INF-014",
+   "SEC-INF-015",
+   "SEC-INF-016",
+   "CIP-REG-008",
+   "CIP-RSK-009",
+   "CIP-INC-010"
+  ],
+  "clr": [
+   "SEC-INT-007",
+   "SEC-INT-008"
   ]
  },
  "items": [
@@ -3841,6 +3942,735 @@
      "file": "app/src/lib/law/rules.ts",
      "how": "No fee, rate, period or amount ships: calculate() refuses without an approved, cited, tested rule version; the slots and lists ship empty"
     }
+   }
+  },
+  {
+   "for": "sec",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1621,
+   "quotes": [
+    "Architectural principle: CivicOS should govern the administrative and accountability layer around national security, not automatically become the operational command platform for intelligence collection, military targeting, covert operations or weapons systems.",
+    "Classified operational systems may remain separate and exchange only specifically authorized information."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/security/register.ts",
+     "how": "The administrative and accountability layer only: metadata records, no intelligence collection, targeting or operational command"
+    }
+   }
+  },
+  {
+   "for": "sec",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1623,
+   "quotes": [
+    "The catalogue IDs below are stable CivicOS identifiers.",
+    "They do not imply that a particular institution or power exists in every country.",
+    "Each jurisdiction must confirm its legal authorities, security classifications, disclosure rules and oversight arrangements before activation."
+   ],
+   "met_by": {
+    "deviation": "slot-owner"
+   }
+  },
+  {
+   "for": "sec",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1658,
+   "quotes": [
+    "These institutions must not be placed in one undifferentiated executive hierarchy.",
+    "Judicial bodies, independent regulators, legislative oversight and other constitutionally independent institutions retain their own authority and access boundaries."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "Independent institutions keep their boundaries (reaches(), directiveTargetRefusal()): an independent institution receives a request, never an instruction"
+    }
+   }
+  },
+  {
+   "for": "sec",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1739,
+   "quotes": [
+    "CivicOS must support a configurable classification system for each country.",
+    "It must not assume that security labels, clearance levels or handling rules are identical across jurisdictions."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/security/classification.ts",
+     "how": "The nation's scheme is a country rule set, adopted by two officials citing the law; it ships empty"
+    }
+   }
+  },
+  {
+   "for": "sec",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1753,
+   "quotes": [
+    "Classification must not be used as a substitute for defining the actual access policy.",
+    "A record may also contain personal, legally privileged, commercially confidential or operationally sensitive information requiring additional controls."
+   ],
+   "met_by": {
+    "deviation": "need-to-know"
+   }
+  },
+  {
+   "for": "sec",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1763,
+   "quotes": [
+    "Deny access by default when the classification policy or recipient authorization cannot be verified."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "securityAccessRefusal() denies unless every dimension holds"
+    }
+   }
+  },
+  {
+   "for": "sec",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1764,
+   "quotes": [
+    "Do not assume that a government employee's general account grants access to classified information."
+   ],
+   "met_by": {
+    "deviation": "need-to-know"
+   }
+  },
+  {
+   "for": "sec",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1765,
+   "quotes": [
+    "Record both successful and denied access attempts where appropriate."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/records/access-log.ts",
+     "how": "Every read and every refusal of a security record is written to the access log"
+    }
+   }
+  },
+  {
+   "for": "sec",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1766,
+   "quotes": [
+    "Prevent unauthorized exports, bulk downloads and cross-classification transfers."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/security/access.ts",
+     "how": "A marked record is never exported; a boundary crossing is recorded only as a cross-domain transfer released by a second official (lib/security/transfers.ts)"
+    }
+   }
+  },
+  {
+   "for": "sec",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1768,
+   "quotes": [
+    "Prevent logs from exposing classified content or sensitive credentials."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/records/access-log.ts",
+     "how": "The log holds who, which record, why, the result and the rule, never record content"
+    }
+   }
+  },
+  {
+   "for": "sec",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1772,
+   "quotes": [
+    "Important architecture decision: If CivicOS's hosting environment is not accredited for a classification level, it must not store that class of information.",
+    "It may hold approved metadata or a reference to a record in an accredited external system, provided even that metadata is permitted to reside in CivicOS."
+   ],
+   "met_by": {
+    "deviation": "metadata-only"
+   }
+  },
+  {
+   "for": "sec",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1954,
+   "quotes": [
+    "Avoid creating a single unrestricted database of intelligence sources, personnel vetting details and operational vulnerabilities."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/security/register.ts",
+     "how": "No intelligence source, no vetting content: references only; exploitable detail stays in the restricted full record"
+    }
+   }
+  },
+  {
+   "for": "sec",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1955,
+   "quotes": [
+    "Store only the metadata required for the register's authorized purpose."
+   ],
+   "met_by": {
+    "deviation": "metadata-only"
+   }
+  },
+  {
+   "for": "sec",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1956,
+   "quotes": [
+    "Use references to external accredited systems when the underlying record cannot lawfully or securely reside in CivicOS."
+   ],
+   "met_by": {
+    "deviation": "metadata-only"
+   }
+  },
+  {
+   "for": "sec",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1957,
+   "quotes": [
+    "Preserve stable identifiers and versioned events without exposing sensitive identifiers in public interfaces."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/security/register.ts",
+     "how": "Stable numbers and versioned events; lists and public views carry no sensitive identifier (listingOf(), publicSecurityView())"
+    }
+   }
+  },
+  {
+   "for": "sec",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1958,
+   "quotes": [
+    "Record classification changes, access decisions and disclosures."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/records/access-log.ts",
+     "how": "Access decisions, changes of who may see a record and disclosures are recorded"
+    }
+   }
+  },
+  {
+   "for": "sec",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1959,
+   "quotes": [
+    "Ensure an audit log does not itself become a source of sensitive operational intelligence."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/records/access-log.ts",
+     "how": "The log holds no record content"
+    }
+   }
+  },
+  {
+   "for": "sec",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1981,
+   "quotes": [
+    "Make the accreditation level and permitted data classes of each service explicit."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/security/classification.ts",
+     "how": "The installation's accreditation level is declared by two officials and shown (classificationStatus())"
+    }
+   }
+  },
+  {
+   "for": "sec",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 2043,
+   "quotes": [
+    "Every rule must identify its legal source, relevant provision, jurisdiction, effective period, authorized approving institution and review history."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/law/policy-change.ts",
+     "how": "Country rules cite the laws register by version, with who proposed and who confirmed them; every version kept"
+    }
+   }
+  },
+  {
+   "for": "sec",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 2045,
+   "quotes": [
+    "Where a mandate or authorization is uncertain, CivicOS must not infer permission from an institution's name, rank, classification label or possession of a user account.",
+    "The relevant workflow must remain inactive for the disputed action until the competent authority resolves the issue."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/permits/decisions.ts",
+     "how": "Every decision is classified under a proposed, unapproved mapping and refused in production until the nation approves it; no power is inferred from a name"
+    }
+   }
+  },
+  {
+   "for": "sec",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 2111,
+   "quotes": [
+    "A software test passing does not establish that a national security system is accredited or legally authorized.",
+    "Those approvals must come from the competent national authorities and relevant independent oversight bodies."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/forms/publication.ts",
+     "how": "Human gates by different signed-in officials; a library draft passes none"
+    }
+   }
+  },
+  {
+   "for": "sec",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 2122,
+   "quotes": [
+    "The production environment must contain no invented security clearances, fictitious threat intelligence or simulated incidents presented as live national records."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/ops/mode.ts",
+     "how": "A production installation holds no sample record; samples elsewhere are marked"
+    }
+   }
+  },
+  {
+   "for": "cyb",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1718,
+   "quotes": [
+    "A vulnerability report must be restricted to appropriate recipients.",
+    "The public or broadly accessible government portal must not expose exploitable details simply because an incident has been registered."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/security/access.ts",
+     "how": "Restricted recipients see coordination terms only; the public sees a summary only once its disclosure date has come"
+    }
+   }
+  },
+  {
+   "for": "cyb",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1842,
+   "quotes": [
+    "Do not automatically attribute an attack to a state, person or organization based on an IP address, tool signature or model output."
+   ],
+   "met_by": {
+    "deviation": "no-attribution-no-score"
+   }
+  },
+  {
+   "for": "cyb",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1843,
+   "quotes": [
+    "Separate technical indicators from confirmed incident facts and attribution assessments."
+   ],
+   "met_by": {
+    "deviation": "no-attribution-no-score"
+   }
+  },
+  {
+   "for": "cyb",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1844,
+   "quotes": [
+    "Limit the visibility of exploitable vulnerabilities and detailed defensive configurations."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/security/access.ts",
+     "how": "Technical detail stays in the full record (need to know); the recipient view and lists leave it out"
+    }
+   }
+  },
+  {
+   "for": "cyb",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1845,
+   "quotes": [
+    "Preserve original logs and relevant forensic evidence under an approved retention policy."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/security/procedures.ts",
+     "how": "Evidence preserved is recorded by reference, hash and custody (preserve-evidence); the logs stay in the accredited system"
+    }
+   }
+  },
+  {
+   "for": "cyb",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1846,
+   "quotes": [
+    "Ensure containment actions cannot be initiated by an untrusted reporter without the required authorization."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/security/procedures.ts",
+     "how": "Containment is approved and recorded by an official who can sign (approve-containment), never on a reporter's word"
+    }
+   }
+  },
+  {
+   "for": "cyb",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1847,
+   "quotes": [
+    "Record exceptions to standard security controls, their justification, expiry and compensating measures."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/security/procedures.ts",
+     "how": "cyber.exception: control, justification and compensating controls, approved by two officials until a date; it reads expired after it"
+    }
+   }
+  },
+  {
+   "for": "cyb",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1848,
+   "quotes": [
+    "Support confidential vulnerability disclosure and controlled coordination with affected suppliers."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/security/procedures.ts",
+     "how": "cyber.vulnerability: received in confidence, coordinated with restricted recipients, disclosed on the date the officials set"
+    }
+   }
+  },
+  {
+   "for": "cyb",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1849,
+   "quotes": [
+    "Prevent a public dashboard from disclosing information that would materially increase the risk of exploitation."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/security/access.ts",
+     "how": "publicSecurityView(): nothing but a published summary"
+    }
+   }
+  },
+  {
+   "for": "cyb",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 2015,
+   "quotes": [
+    "Attribute a cyberattack to a specific actor as an established fact without the required assessment."
+   ],
+   "met_by": {
+    "deviation": "no-ai-decision"
+   }
+  },
+  {
+   "for": "inf",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1737,
+   "quotes": [
+    "The designation of an asset as critical infrastructure must be based on applicable law and approved criteria.",
+    "A label in a national digital twin does not by itself create a legal designation."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/security/procedures.ts",
+     "how": "ci.designation: decided by two officials citing the law and the criteria version; a twin label designates nothing"
+    }
+   }
+  },
+  {
+   "for": "inf",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1851,
+   "quotes": [
+    "CivicOS's national digital twin can help institutions understand dependencies among electricity, water, telecommunications, transport, health, finance and government services.",
+    "This should be a controlled resilience model, not a public map of exploitable vulnerabilities."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/security/access.ts",
+     "how": "No public map, dependency list or designation list: only what the officials publish"
+    }
+   }
+  },
+  {
+   "for": "inf",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1873,
+   "quotes": [
+    "Risk scoring must use a documented methodology and version.",
+    "A score is an analytical aid, not a legal finding or a substitute for the responsible authority's decision."
+   ],
+   "met_by": {
+    "deviation": "risk-method"
+   }
+  },
+  {
+   "for": "inf",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1886,
+   "quotes": [
+    "Access to detailed dependency maps, security weaknesses and recovery procedures must be restricted to authorized users.",
+    "Public reporting should disclose approved resilience indicators without exposing sensitive operational details."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/security/access.ts",
+     "how": "Dependency maps, weaknesses and recovery procedures stay in the restricted full record; public reporting only through approved indicators (lib/indicators)"
+    }
+   }
+  },
+  {
+   "for": "inf",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 2018,
+   "quotes": [
+    "Accept material national security risks on behalf of an institution."
+   ],
+   "met_by": {
+    "deviation": "no-ai-decision"
+   }
+  },
+  {
+   "for": "clr",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1784,
+   "quotes": [
+    "The clearance decision and the actual authorization to access a specific record are separate controls.",
+    "A valid clearance alone must not grant access to every record at that level."
+   ],
+   "met_by": {
+    "deviation": "need-to-know"
+   }
+  },
+  {
+   "for": "clr",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1787,
+   "quotes": [
+    "Is the user authenticated to the required assurance level?"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "A marked record is read only after the second sign-in step in the session"
+    }
+   }
+  },
+  {
+   "for": "clr",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1788,
+   "quotes": [
+    "Is the user's clearance valid for the relevant classification?"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "A clearance at the record's level, valid today (clearanceOf())"
+    }
+   }
+  },
+  {
+   "for": "clr",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1789,
+   "quotes": [
+    "Is the user acting for an authorized institution?"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "Acting for the keeping institution, or a recipient it named"
+    }
+   }
+  },
+  {
+   "for": "clr",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1790,
+   "quotes": [
+    "Does the user have a legitimate need to know this specific information?"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "Named for the record (need to know), by one who can sign there"
+    }
+   }
+  },
+  {
+   "for": "clr",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1791,
+   "quotes": [
+    "Is the intended purpose permitted?"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "A stated purpose, written to the access log"
+    }
+   }
+  },
+  {
+   "for": "clr",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1792,
+   "quotes": [
+    "Are there additional compartment, source, jurisdiction or dissemination restrictions?"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/security/classification.ts",
+     "how": "Handling caveats from the nation's scheme only"
+    }
+   }
+  },
+  {
+   "for": "clr",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1793,
+   "quotes": [
+    "Is the proposed action—read, edit, export, share or approve—authorized?"
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "The action is checked: a marked record is never exported"
+    }
+   }
+  },
+  {
+   "for": "clr",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1794,
+   "quotes": [
+    "If any required condition fails, deny the operation and record an appropriate audit event without exposing protected information to the requester."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/security/access.ts",
+     "how": "Refused and logged; the refusal carries no protected content"
+    }
+   }
+  },
+  {
+   "for": "clr",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1796,
+   "quotes": [
+    "Security vetting is legally sensitive.",
+    "CivicOS should not invent universal vetting criteria or treat automated flags as proof of untrustworthiness."
+   ],
+   "met_by": {
+    "deviation": "vetting-elsewhere"
+   }
+  },
+  {
+   "for": "clr",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1797,
+   "quotes": [
+    "Only authorized personnel may access vetting information."
+   ],
+   "met_by": {
+    "deviation": "vetting-elsewhere"
+   }
+  },
+  {
+   "for": "clr",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1798,
+   "quotes": [
+    "Separate raw checks from an assessor's conclusions and the final decision."
+   ],
+   "met_by": {
+    "deviation": "vetting-elsewhere"
+   }
+  },
+  {
+   "for": "clr",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1799,
+   "quotes": [
+    "Record the source, date and permitted use of each check."
+   ],
+   "met_by": {
+    "deviation": "vetting-elsewhere"
+   }
+  },
+  {
+   "for": "clr",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1800,
+   "quotes": [
+    "Provide correction and review procedures where required."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/security/procedures.ts",
+     "how": "A refusal or withdrawal carries the review route; a correction is a new decision, the earlier kept"
+    }
+   }
+  },
+  {
+   "for": "clr",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1801,
+   "quotes": [
+    "Prevent protected characteristics or lawful political activity from being used as unauthorized decision criteria."
+   ],
+   "met_by": {
+    "deviation": "vetting-elsewhere"
+   }
+  },
+  {
+   "for": "clr",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1802,
+   "quotes": [
+    "Apply retention and deletion rules to vetting records."
+   ],
+   "met_by": {
+    "country_decision": "CFG-SEC-016"
+   }
+  },
+  {
+   "for": "clr",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 1803,
+   "quotes": [
+    "Do not allow a general HR administrator to access an entire security investigation merely because the person is an employee."
+   ],
+   "met_by": {
+    "platform": {
+     "file": "app/src/lib/auth/roles.ts",
+     "how": "Administrators and officials of other institutions have no access to a clearance record by their role"
+    }
+   }
+  },
+  {
+   "for": "clr",
+   "source": "docs/forms-catalogue/PARTS-08-11.md",
+   "line": 2014,
+   "quotes": [
+    "Grant, revoke or deny a security clearance as the final decision."
+   ],
+   "met_by": {
+    "deviation": "no-ai-decision"
    }
   }
  ]

@@ -106,6 +106,10 @@ const REGISTERS: Register[] = [
     changes: ['resetCabinet', 'proposeCabinetRules', 'confirmCabinetRules', 'withdrawCabinetRules', 'registerSubmission', 'reviewSubmission', 'setSubmissionState', 'recordCabinetDecision', 'attachCabinetDecision',
       'correctCabinetDecision', 'distribute', 'setDisclosure', 'assignAction', 'reportAction', 'proposeActionClosure', 'decideActionClosure'],
     reads: ['samePerson', 'CLASSIFICATIONS', 'cabinetRules', 'cabinetRuleChanges', 'checkVote', 'getSubmission', 'getCabinetDecision', 'getAction', 'actionsOf', 'cabinetRecords', 'cabinetIndicators', 'cabinetCounts'] },
+  // I12: security governance and resilience (lib/security): written only by the security procedures' effects.
+  { module: 'lib/security/register.ts', store: '__civicosSecurityRecords', procedures: 'lib/security/procedures.ts',
+    changes: ['resetSecurityRecords', 'openSecurityRecord', 'updateSecurityRecord', 'shareSecurityRecord', 'needToKnowGrant'],
+    reads: ['KIND_LABEL', 'KIND_REGISTER', 'SECURITY_REGISTER', 'effectiveStatus', 'listingOf', 'securityRecordRaw', 'securityRecordOfCase', 'securityRecordsRaw', 'clearanceOf', 'securityCounts'] },
   { module: 'lib/courts/hearings.ts', store: '__civicosHearings', procedures: 'lib/courts/procedures.ts',
     changes: ['resetHearings', 'scheduleHearing', 'concludeHearing'],
     reads: ['causeList', 'hearingsOf'] },
@@ -221,6 +225,9 @@ const EXCEPTIONS: { file: string; fn: string; why: string }[] = [
   { file: 'app/api/cabinet-office/route.ts', fn: 'proposeCabinetRules', why: 'the Cabinet rules, a country rule set: proposed citing the law, confirmed by a different official; records no decision' },
   { file: 'app/api/cabinet-office/route.ts', fn: 'confirmCabinetRules', why: 'the Cabinet rules, a country rule set: proposed citing the law, confirmed by a different official; records no decision' },
   { file: 'app/api/cabinet-office/route.ts', fn: 'withdrawCabinetRules', why: 'withdraws a waiting rules proposal' },
+  // I12: one who can sign at the keeping institution names an official who needs to know a security record (or withdraws that),
+  // with the reason, written to the access log as a change of who may see what; the record's terms are never changed by it.
+  { file: 'app/api/security/route.ts', fn: 'needToKnowGrant', why: 'names (or withdraws) an official who needs to know a security record: a signatory of the keeping institution, logged in the access log; the record itself is unchanged' },
   { file: 'lib/organisations/import.ts', fn: 'organisationsDb', why: 'the checked load of an existing register: proposed by one official of the keeping authority, confirmed by a different one, under the approved mapping in production' },
   { file: 'lib/organisations/import.ts', fn: 'nextOrganisationNumber', why: 'numbers the organisations a confirmed load enters' },
   // An institution's own records coming back from its portable export (Health I4 standalone-and-pilot): nothing is decided;
